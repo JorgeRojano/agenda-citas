@@ -2,13 +2,18 @@
 
 import { prisma } from "@/lib/prisma";
 
-export async function createAppointment(slot: string, serviceId: string) {
+export async function createAppointment(
+  slot: string,
+  serviceId: string,
+  clientName: string,
+  phone: string
+) {
   try {
     await prisma.appointment.create({
       data: {
         serviceId,
-        clientName: "Cliente Demo",
-        phone: "0000000000",
+        clientName,
+        phone,
         dateTime: new Date(slot),
         durationMinutes: await prisma.service
           .findUnique({ where: { id: serviceId } })
