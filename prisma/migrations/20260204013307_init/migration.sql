@@ -17,6 +17,7 @@ CREATE TABLE "Appointment" (
     "dateTime" TIMESTAMP(3) NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'confirmed',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "durationMinutes" INTEGER NOT NULL,
 
     CONSTRAINT "Appointment_pkey" PRIMARY KEY ("id")
 );
@@ -29,6 +30,9 @@ CREATE TABLE "BlockedTime" (
 
     CONSTRAINT "BlockedTime_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "appointment_unique_slot" ON "Appointment"("dateTime");
 
 -- AddForeignKey
 ALTER TABLE "Appointment" ADD CONSTRAINT "Appointment_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

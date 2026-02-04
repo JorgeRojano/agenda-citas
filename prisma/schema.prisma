@@ -8,22 +8,23 @@ datasource db {
 }
 
 model Service {
-  id        String        @id @default(uuid())
-  name      String
-  duration  Int
-  price     Int
+  id           String        @id @default(uuid())
+  name         String
+  duration     Int
+  price        Int
   appointments Appointment[]
 }
 
 model Appointment {
   id         String   @id @default(uuid())
   serviceId  String
-  service    Service  @relation(fields: [serviceId], references: [id])
   clientName String
   phone      String
-  dateTime   DateTime
+  dateTime   DateTime @unique(map: "appointment_unique_slot")
   status     String   @default("confirmed")
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  service    Service  @relation(fields: [serviceId], references: [id])
+  durationMinutes Int
 }
 
 model BlockedTime {
