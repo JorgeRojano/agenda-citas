@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Profile {
+  id    String @id
+  role  String @default("user")
+
+  @@map("profiles")
+}
+
 model Service {
   id           String        @id @default(uuid())
   name         String
