@@ -19,3 +19,22 @@ export async function getAppointmentsByDay(
     },
   });
 }
+
+export async function getBlockedTimeByDay(
+  start: Date,
+  end: Date
+) {
+  return prisma.blockedTime.findMany({
+    where: {
+      start: {
+        gte: start,
+      },
+      end: {
+        lte: end,
+      },
+    },
+    orderBy: {
+      start: "asc",
+    },
+  });
+}

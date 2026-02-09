@@ -5,41 +5,41 @@ import { DatePickerInput } from "@mantine/dates";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-function formatDateOnly(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+interface DayPickerProps {
+  onBlockTimeClick?: () => void;
 }
 
-export default function DayPicker() {
-    const router = useRouter();
-    const params = useSearchParams();
+export default function DayPicker({ onBlockTimeClick }: DayPickerProps) {
+  const router = useRouter();
+  const params = useSearchParams();
 
-    const initialDateString = params.get("date") ?? new Date().toISOString().split("T")[0];
+  const initialDateString =
+    params.get("date") ?? new Date().toISOString().split("T")[0];
 
-    const [dateString, setDateString] = useState(initialDateString);
+  const [dateString, setDateString] = useState(initialDateString);
 
-    function updateDate(value: string | null) {
-        if (!value) return;
+  function updateDate(value: string | null) {
+    if (!value) return;
 
-        setDateString(value);
-        router.push(`/admin/dashboard?date=${value}`);
-    }
+    setDateString(value);
+    router.push(`/admin/dashboard?date=${value}`);
+  }
 
-    return (
-        <Group mb="md">
-            <DatePickerInput
-                label="Fecha"
-                value={new Date(dateString + "T12:00:00")}
-                onChange={updateDate}
-            />
+  return (
+    <Group mb="md">
+      <DatePickerInput
+        label="Fecha"
+        value={new Date(dateString + "T12:00:00")}
+        onChange={updateDate}
+        style={{ flex: 1 }}
+      />
 
-            <Button onClick={() =>
-                updateDate(new Date().toISOString().split("T")[0])
-            }>
-                Hoy
-            </Button>
-        </Group>
-    );
+      <Button
+        style={{ alignSelf: "flex-end" }}
+        onClick={() => updateDate(new Date().toISOString().split("T")[0])}
+      >
+        Hoy
+      </Button>
+    </Group>
+  );
 }
