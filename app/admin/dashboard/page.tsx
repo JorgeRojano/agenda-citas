@@ -1,7 +1,8 @@
 import { getAppointmentsByDay, getBlockedTimeByDay } from "@/lib/appointments";
-import { Title, Stack, Text, Card, Badge, Group } from "@mantine/core";
+import { Title, Stack, Text, Card, Badge, Group, Flex } from "@mantine/core";
 import DayPicker from "./DayPicker";
 import BlockTimeButton from "./BlockTimeButton";
+import UnblockButton from "./UnblockButton";
 
 type Props = {
   searchParams: Promise<{
@@ -12,22 +13,14 @@ type Props = {
 export default async function AdminDashboardPage({ searchParams }: Props) {
   const params = await searchParams;
 
-  const dateString =
-    params.date ??
-    new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  const dateString = params.date ?? new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
   const startOfDay = new Date(`${dateString}T00:00:00`);
   const endOfDay = new Date(`${dateString}T23:59:59`);
 
-  const appointments = await getAppointmentsByDay(
-    startOfDay,
-    endOfDay
-  );
+  const appointments = await getAppointmentsByDay(startOfDay, endOfDay);
 
-  const blockedTimes = await getBlockedTimeByDay(
-    startOfDay,
-    endOfDay
-  );
+  const blockedTimes = await getBlockedTimeByDay(startOfDay, endOfDay);
 
   // Combine and sort appointments and blocked times by start time
   const items = [
@@ -60,13 +53,19 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
       <Stack mt="md">
         {items.length === 0 && (
-          <Text c="dimmed">No hay citas ni tiempos bloqueados para este día</Text>
+          <Text c="dimmed">
+            No hay citas ni tiempos bloqueados para este día
+          </Text>
         )}
 
         {items.map((item) => {
           if (item.type === "blocked") {
             return (
-              <Card key={item.id} withBorder style={{ borderColor: "#ff6b6b", backgroundColor: "#ffe0e0" }}>
+              <Card
+                key={item.id}
+                withBorder
+                style={{ borderColor: "#ff6b6b", backgroundColor: "#ffe0e0" }}
+              >
                 <Text fw={500}>
                   {item.start.toLocaleTimeString("es-MX", {
                     hour: "2-digit",
@@ -78,7 +77,12 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
                     minute: "2-digit",
                   })}
                 </Text>
-                <Badge mt="xs" color="red">Tiempo bloqueado</Badge>
+                <Flex justify="space-between" align="center">
+                  <Badge mt="xs" color="red">
+                    Tiempo bloqueado
+                  </Badge>
+                  <UnblockButton blockId={item.id} />
+                </Flex>
               </Card>
             );
           }
