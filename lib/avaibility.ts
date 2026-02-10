@@ -54,7 +54,8 @@ export async function getAvailableSlots(date: Date, serviceDuration: number) {
 
   const appointments = await prisma.appointment.findMany({
     where: {
-      dateTime: { gte: dayStart, lte: dayEnd },
+      dateTime: { gte: dayStart, lt: dayEnd },
+      status: "confirmed",
     },
     include: {
       service: true,

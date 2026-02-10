@@ -3,6 +3,7 @@ import { Title, Stack, Text, Card, Badge, Group, Flex } from "@mantine/core";
 import DayPicker from "./DayPicker";
 import BlockTimeButton from "./BlockTimeButton";
 import UnblockButton from "./UnblockButton";
+import CancelAppointmentButton from "./CancelAppointmentButton";
 
 type Props = {
   searchParams: Promise<{
@@ -31,6 +32,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
       end: new Date(a.dateTime.getTime() + a.durationMinutes * 60000),
       clientName: a.clientName,
       service: a.service.name,
+      status: a.status,
     })),
     ...blockedTimes.map((b) => ({
       type: "blocked" as const,
@@ -64,7 +66,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               <Card
                 key={item.id}
                 withBorder
-                style={{ borderColor: "#ff6b6b", backgroundColor: "#ffe0e0" }}
+                style={{ borderColor: "#ff6b6b", backgroundColor: "#ffe0e0", gap: 8 }}
               >
                 <Text fw={500}>
                   {item.start.toLocaleTimeString("es-MX", {
@@ -78,9 +80,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
                   })}
                 </Text>
                 <Flex justify="space-between" align="center">
-                  <Badge mt="xs" color="red">
-                    Tiempo bloqueado
-                  </Badge>
+                  <Badge color="red">Tiempo bloqueado</Badge>
                   <UnblockButton blockId={item.id} />
                 </Flex>
               </Card>
@@ -88,7 +88,24 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
           }
 
           return (
-            <Card key={item.id} withBorder>
+            <Card
+              key={item.id}
+              withBorder
+              style={
+                item.status === "cancelled"
+                  ? {
+                      borderColor: "#adb5bd",
+                      backgroundColor: "#f8f9fa",
+                      gap: 8,
+                      opacity: 0.85,
+                    }
+                  : {
+                      borderColor: "#4c6ef5",
+                      backgroundColor: "#e7f5ff",
+                      gap: 8,
+                    }
+              }
+            >
               <Text fw={500}>
                 {item.start.toLocaleTimeString("es-MX", {
                   hour: "2-digit",
@@ -102,7 +119,16 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               </Text>
 
               <Text>{item.clientName}</Text>
-              <Badge mt="xs">{item.service}</Badge>
+              <Flex justify="space-between" align="center">
+                {item.status === "cancelled" ? (
+                  <Badge color="gray">Cancelada</Badge>
+                ) : (
+                  <>
+                    <Badge>{item.service}</Badge>
+                    <CancelAppointmentButton appointmentId={item.id} />
+                  </>
+                )}
+              </Flex>
             </Card>
           );
         })}

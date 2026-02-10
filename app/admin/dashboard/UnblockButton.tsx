@@ -40,12 +40,11 @@ export default function UnblockButton({ blockId }: Props) {
 
   return (
     <Button
-      size="xs"
+      size="compact-xs"
       color="red"
       variant="light"
       onClick={handleUnblock}
       loading={loading}
-      mt="sm"
     >
       Quitar bloqueo
     </Button>
