@@ -37,29 +37,45 @@ export default function BlockTimeButton() {
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         setModalOpen(false);
         setStartTime("09:00");
         setEndTime("10:00");
+
         setNotification({
           type: "success",
           message: `Horario bloqueado de ${startTime} a ${endTime}`,
         });
+
         router.refresh();
-      } else {
-        alert("Error al bloquear el tiempo");
+        return;
       }
-    } catch (error) {
-      console.error("Error:", error);
+
+      // ⛔️ 409 — conflicto de negocio
+      if (response.status === 409) {
+        setNotification({
+          type: "error",
+          message: data.error ?? "El horario no está disponible",
+        });
+        return;
+      }
+
+      // ❌ otros errores
       setNotification({
         type: "error",
-        message: "No se pudo bloquear el horario",
+        message: "Error al bloquear el horario",
+      });
+    } catch (error) {
+      console.error(error);
+      setNotification({
+        type: "error",
+        message: "No se pudo conectar con el servidor",
       });
     } finally {
       setBlocking(false);
-      setTimeout(() => {
-        setNotification(null);
-      }, 4000);
+      setTimeout(() => setNotification(null), 5000);
     }
   }
 
