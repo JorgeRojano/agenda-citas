@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from '@mantine/notifications';
+import '@mantine/notifications/styles.css';
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "./globals.css";
@@ -31,6 +33,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <MantineProvider>
+          <Notifications position="bottom-right" zIndex={1000} />
           {children}
         </MantineProvider>
       </body>

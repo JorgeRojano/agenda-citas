@@ -2,7 +2,7 @@
 
 import { Group, Button } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useState } from "react";
 
 interface DayPickerProps {
@@ -11,18 +11,23 @@ interface DayPickerProps {
 
 export default function DayPicker({ onBlockTimeClick }: DayPickerProps) {
   const router = useRouter();
-  const params = useSearchParams();
+  const searchParams = useSearchParams();
+  const params = useParams();
+
+  const slug = params.slug as string;
 
   const initialDateString =
-    params.get("date") ?? new Date().toISOString().split("T")[0];
+    searchParams.get("date") ?? new Date().toLocaleDateString("en-CA");
 
   const [dateString, setDateString] = useState(initialDateString);
 
   function updateDate(value: string | null) {
     if (!value) return;
 
+    console.log({ value });
+
     setDateString(value);
-    router.push(`/admin/dashboard?date=${value}`);
+    router.push(`/${slug}/admin/dashboard?date=${value}`);
   }
 
   return (
@@ -36,7 +41,9 @@ export default function DayPicker({ onBlockTimeClick }: DayPickerProps) {
 
       <Button
         style={{ alignSelf: "flex-end" }}
-        onClick={() => updateDate(new Date().toISOString().split("T")[0])}
+        onClick={() => 
+          updateDate(new Date().toLocaleDateString("en-CA"))
+        }
       >
         Hoy
       </Button>

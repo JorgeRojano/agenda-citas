@@ -7,37 +7,121 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//////////////////////
+// ENUMS
+//////////////////////
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  USER
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+//////////////////////
+// USER / PROFILE
+//////////////////////
+
 model Profile {
-  id    String @id
-  role  String @default("user")
+  id   String   @id
+  role UserRole @default(USER)
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
 
   @@map("profiles")
 }
 
-model Service {
-  id           String        @id @default(uuid())
-  name         String
-  duration     Int
-  price        Int
+//////////////////////
+// BUSINESS (TENANT)
+//////////////////////
+
+model Business {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+
+  services     Service[]
   appointments Appointment[]
+  blockedTimes BlockedTime[]
+  users        Profile[]
+
+  @@index([slug])
 }
+
+//////////////////////
+// SERVICES
+//////////////////////
+
+model Service {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name     String
+  duration Int // minutos
+  price    Int // en centavos para evitar floats
+
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+}
+
+//////////////////////
+// APPOINTMENTS
+//////////////////////
 
 model Appointment {
-  id         String   @id @default(uuid())
-  serviceId  String
+  id String @id @default(uuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
   clientName String
   phone      String
-  dateTime   DateTime
-  status     String   @default("confirmed")
-  createdAt  DateTime @default(now())
-  service    Service  @relation(fields: [serviceId], references: [id])
-  durationMinutes Int
 
-  @@unique([dateTime, status], map: "unique_active_appointment")
+  startTime DateTime
+  endTime   DateTime
+
+  status AppointmentStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+  @@index([startTime])
+  @@index([status])
 }
 
+//////////////////////
+// BLOCKED TIMES
+//////////////////////
+
 model BlockedTime {
-  id    String   @id @default(uuid())
+  id String @id @default(uuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   start DateTime
   end   DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
 }

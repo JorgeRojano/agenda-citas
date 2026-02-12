@@ -1,7 +1,7 @@
-// lib/availability.ts
 import { prisma } from "./prisma";
 
 /* ========= HELPERS ========= */
+
 export function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60000);
 }
@@ -10,16 +10,16 @@ export function isOverlapping(
   startA: Date,
   endA: Date,
   startB: Date,
-  endB: Date,
+  endB: Date
 ) {
   return startA < endB && endA > startB;
 }
 
-/* ========= SLOT GENERATION ========= */
+/* ========= GENERATE DAY SLOTS ========= */
 /**
  * Business hours:
  * 09:00 – 18:00 MX (UTC-6)
- * Stored and processed in UTC
+ * Stored in UTC
  */
 function generateDaySlots(date: Date, serviceDuration: number) {
   const slots: Date[] = [];
@@ -31,6 +31,7 @@ function generateDaySlots(date: Date, serviceDuration: number) {
   end.setUTCHours(24, 0, 0, 0); // 18:00 MX
 
   let current = start;
+
   while (current < end) {
     const slotEnd = addMinutes(current, serviceDuration);
 
@@ -45,27 +46,36 @@ function generateDaySlots(date: Date, serviceDuration: number) {
 }
 
 /* ========= MAIN FUNCTION ========= */
-export async function getAvailableSlots(date: Date, serviceDuration: number) {
+
+export async function getAvailableSlots(
+  businessId: string,
+  date: Date,
+  serviceDuration: number
+) {
   const dayStart = new Date(date);
   dayStart.setUTCHours(0, 0, 0, 0);
 
   const dayEnd = new Date(date);
   dayEnd.setUTCHours(23, 59, 59, 999);
 
+  /* 🔒 Traer citas que bloquean horario */
   const appointments = await prisma.appointment.findMany({
     where: {
-      dateTime: { gte: dayStart, lt: dayEnd },
-      status: "confirmed",
-    },
-    include: {
-      service: true,
+      businessId,
+      status: {
+        in: ["PENDING", "CONFIRMED"],
+      },
+      startTime: { lt: dayEnd },
+      endTime: { gt: dayStart },
     },
   });
 
+  /* 🔒 Traer bloqueos manuales */
   const blocked = await prisma.blockedTime.findMany({
     where: {
-      start: { lte: dayEnd },
-      end: { gte: dayStart },
+      businessId,
+      start: { lt: dayEnd },
+      end: { gt: dayStart },
     },
   });
 
@@ -74,15 +84,14 @@ export async function getAvailableSlots(date: Date, serviceDuration: number) {
   return slots.filter((slot) => {
     const slotEnd = addMinutes(slot, serviceDuration);
 
-    return (
-      !appointments.some((a) =>
-        isOverlapping(
-          slot,
-          slotEnd,
-          a.dateTime,
-          addMinutes(a.dateTime, a.service.duration),
-        ),
-      ) && !blocked.some((b) => isOverlapping(slot, slotEnd, b.start, b.end))
+    const overlapsAppointment = appointments.some((a) =>
+      isOverlapping(slot, slotEnd, a.startTime, a.endTime)
     );
+
+    const overlapsBlocked = blocked.some((b) =>
+      isOverlapping(slot, slotEnd, b.start, b.end)
+    );
+
+    return !overlapsAppointment && !overlapsBlocked;
   });
 }

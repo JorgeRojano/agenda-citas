@@ -1,6 +1,6 @@
 import { getAppointmentsByDay, getBlockedTimeByDay } from "@/lib/appointments";
 import { Title, Stack, Text, Card, Badge, Group, Flex } from "@mantine/core";
-import DayPicker from "./DayPicker";
+/* import DayPicker from "../../[slug]/admin/dashboard/DayPicker"; */
 import BlockTimeButton from "./BlockTimeButton";
 import UnblockButton from "./UnblockButton";
 import CancelAppointmentButton from "./CancelAppointmentButton";
@@ -51,7 +51,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
         <BlockTimeButton />
       </Group>
 
-      <DayPicker />
+      {/* <DayPicker /> */}
 
       <Stack mt="md">
         {items.length === 0 && (

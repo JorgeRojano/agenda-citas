@@ -4,30 +4,47 @@ import { getAvailableSlots } from "@/lib/avaibility";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
+
   const date = searchParams.get("date");
   const serviceId = searchParams.get("serviceId");
+  const businessSlug = searchParams.get("businessSlug");
 
-  if (!date || !serviceId) {
+  if (!date || !serviceId || !businessSlug) {
     return NextResponse.json(
       { error: "Missing params" },
       { status: 400 }
     );
   }
 
-  const service = await prisma.service.findUnique({
-    where: { id: serviceId },
+  const business = await prisma.business.findUnique({
+    where: { slug: businessSlug },
+  });
+
+  if (!business) {
+    return NextResponse.json(
+      { error: "Business not found" },
+      { status: 404 }
+    );
+  }
+
+  const service = await prisma.service.findFirst({
+    where: {
+      id: serviceId,
+      businessId: business.id,
+    },
   });
 
   if (!service) {
     return NextResponse.json(
-      { error: "Service not found" },
+      { error: "Service not found for this business" },
       { status: 404 }
     );
   }
 
   const slots = await getAvailableSlots(
     new Date(date),
-    service.duration
+    service.duration,
+    business.id
   );
 
   return NextResponse.json(slots);
@@ -35,15 +52,28 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { date, startTime, endTime } = await req.json();
+    const { date, startTime, endTime, businessSlug } = await req.json();
 
-    if (!date || !startTime || !endTime) {
+    if (!date || !startTime || !endTime || !businessSlug) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
+    // 1️⃣ Find business
+    const business = await prisma.business.findUnique({
+      where: { slug: businessSlug },
+    });
+
+    if (!business) {
+      return NextResponse.json(
+        { error: "Business not found" },
+        { status: 404 }
+      );
+    }
+
+    // 2️⃣ Parse date & time
     const [year, month, day] = date.split("-").map(Number);
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
@@ -58,9 +88,10 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 1️⃣ Validar contra citas confirmadas */
+    /* 3️⃣ Validate against confirmed appointments (ONLY this business) */
     const appointments = await prisma.appointment.findMany({
       where: {
+        businessId: business.id,
         status: "confirmed",
         dateTime: { lt: end },
       },
@@ -80,9 +111,10 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 2️⃣ Validar contra otros bloqueos */
+    /* 4️⃣ Validate against other blocked times (ONLY this business) */
     const blockedOverlap = await prisma.blockedTime.findFirst({
       where: {
+        businessId: business.id,
         start: { lt: end },
         end: { gt: start },
       },
@@ -95,12 +127,17 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 3️⃣ Crear bloqueo */
+    /* 5️⃣ Create blocked time */
     const blockedTime = await prisma.blockedTime.create({
-      data: { start, end },
+      data: {
+        start,
+        end,
+        businessId: business.id,
+      },
     });
 
     return NextResponse.json(blockedTime, { status: 201 });
+
   } catch (error) {
     console.error(error);
     return NextResponse.json(
