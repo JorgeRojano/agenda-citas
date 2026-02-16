@@ -15,7 +15,7 @@ import { StatusButtons } from "./StatusButtons";
 import BlockTimeButton from "./BlockTimeButton";
 import UnblockButton from "./UnblockButton";
 import CancelAppointmentButton from "./CancelAppointmentButton";
-/* import CancelAppointmentButton from "./CancelAppointmentButton"; */
+import RefreshButton from "./RefreshButton";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -81,7 +81,10 @@ export default async function AdminDashboardPage({
         <Title order={2} style={{ margin: 0 }}>
           Citas del día — {business.name}
         </Title>
-        <BlockTimeButton slug={slug} />
+        <Flex align="center" justify="space-between" style={{ width: "100%" }}>
+          <BlockTimeButton slug={slug} />
+          <RefreshButton />
+        </Flex>
       </Group>
 
       <DayPicker />
@@ -94,28 +97,10 @@ export default async function AdminDashboardPage({
         )}
 
         {items.map((item) => {
-          const statusColors: Record<
-            string,
-            { border: string; bg: string; badge: string; label: string }
-          > = {
-            PENDING: {
-              border: "#fab005",
-              bg: "#fff9db",
-              badge: "yellow",
-              label: "Pendiente",
-            },
-            CONFIRMED: {
-              border: "#40c057",
-              bg: "#ebfbee",
-              badge: "green",
-              label: "Confirmada",
-            },
-            CANCELLED: {
-              border: "#adb5bd",
-              bg: "#f8f9fa",
-              badge: "gray",
-              label: "Cancelada",
-            },
+          const statusConfigs: Record<string, { color: string; label: string }> = {
+            PENDING: { color: "yellow", label: "Pendiente" },
+            CONFIRMED: { color: "green", label: "Confirmada" },
+            CANCELLED: { color: "gray", label: "Cancelada" },
           };
 
           if (item.type === "blocked") {
@@ -124,8 +109,8 @@ export default async function AdminDashboardPage({
                 key={item.id}
                 withBorder
                 style={{
-                  borderColor: "#ff6b6b",
-                  backgroundColor: "#ffe0e0",
+                  backgroundColor: "var(--mantine-color-red-light)",
+                  borderColor: "var(--mantine-color-red-outline)",
                   gap: 8,
                 }}
               >
@@ -161,7 +146,7 @@ export default async function AdminDashboardPage({
             );
           }
 
-          const config = statusColors[item.status] || statusColors.CONFIRMED;
+          const config = statusConfigs[item.status] || statusConfigs.CONFIRMED;
 
           return (
             <Card
@@ -170,16 +155,16 @@ export default async function AdminDashboardPage({
               padding="md"
               radius="md"
               style={{
-                borderColor: config.border,
-                backgroundColor: config.bg,
-                position: "relative", // Necesario para posicionar el badge
-                opacity: item.status === "CANCELLED" ? 0.7 : 1,
+                backgroundColor: `var(--mantine-color-${config.color}-light)`,
+                borderColor: `var(--mantine-color-${config.color}-outline)`,
+                position: "relative",
+                opacity: item.status === "CANCELLED" ? 0.6 : 1,
                 transition: "all 0.2s ease",
               }}
             >
               {/* Badge en la esquina superior derecha */}
               <Badge
-                color={config.badge}
+                color={config.color}
                 variant="filled"
                 radius="xs"
                 size="lg"
@@ -237,41 +222,6 @@ export default async function AdminDashboardPage({
             </Card>
           );
         })}
-
-        {/* {items.map((item) => {
-          if (item.type === "blocked") {
-            return (
-              <Card
-                key={item.id}
-                withBorder
-                style={{
-                  borderColor: "#ff6b6b",
-                  backgroundColor: "#ffe0e0",
-                  gap: 8,
-                }}
-              >
-                <Text fw={500}>
-                  {item.start.toLocaleTimeString("es-MX", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  –{" "}
-                  {item.end.toLocaleTimeString("es-MX", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Text>
-
-                <Flex justify="space-between" align="center">
-                  <Badge color="red">Tiempo bloqueado</Badge>
-                  <UnblockButton blockId={item.id} />
-                </Flex>
-              </Card>
-            );
-          }
-
-          
-        })} */}
       </Stack>
     </div>
   );

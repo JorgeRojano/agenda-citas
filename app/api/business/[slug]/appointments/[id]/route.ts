@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ slug: string; id: string }> }
+  { params }: { params: Promise<{ slug: string; id: string }> },
 ) {
   try {
     const { slug, id } = await params;
@@ -27,16 +27,20 @@ export async function PATCH(
     if (!appointment) {
       return NextResponse.json(
         { error: "Appointment not found in this business" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     const updated = await prisma.appointment.update({
       where: { id },
       data: { status },
+      include: {
+        service: true,
+        business: true,
+      },
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, appointment: updated });
   } catch (error) {
     console.error("Update error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

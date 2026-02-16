@@ -4,6 +4,7 @@ import { Button, Group } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { notifications } from "@mantine/notifications";
+import { getWhatsAppLink } from "@/lib/utils";
 
 interface Props {
   appointmentId: string;
@@ -16,17 +17,56 @@ export function StatusButtons({ appointmentId, slug }: Props) {
 
   const updateStatus = async (newStatus: string) => {
     setLoading(newStatus);
-    
-    try {
-      const res = await fetch(`/api/business/${slug}/appointments/${appointmentId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
-      });
 
-      if (res.ok) {
+    try {
+      const res = await fetch(
+        `/api/business/${slug}/appointments/${appointmentId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status: newStatus }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (res.ok && data.appointment) {
+        const appo = data.appointment;
+        const startDate = new Date(appo.startTime);
+
+        // Formato de fecha para México: dd/mm/yyyy
+        const fechaMx = startDate.toLocaleDateString("es-MX", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+
+        // Formato de hora para México: 12 horas con am/pm
+        const horaMx = startDate.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        const message =
+          newStatus === "CONFIRMED"
+            ? `*¡Cita Confirmada!* ✅\n\n` +
+              `Hola *${appo.clientName}*, te confirmamos tu cita:\n\n` +
+              `🔹 *Servicio:* ${appo.service.name}\n` +
+              `📅 *Día:* ${fechaMx}\n` +
+              `⏰ *Hora:* ${horaMx}\n` +
+              `📍 *Lugar:* ${appo.business.name}\n\n` +
+              `¡Te esperamos! 😊`
+            : `*Aviso de Cita* 🗓️\n\n` +
+              `Hola *${appo.clientName}*, lamentamos informarte que no pudimos confirmar tu espacio para *${appo.service.name}* en el horario solicitado.\n\n` +
+              `🙏 Por favor, intenta agendar en otro horario disponible. ¡Gracias!`;
+
+        const whatsappUrl = getWhatsAppLink(appo.phone, message);
+        window.open(whatsappUrl, "_blank");
+
         notifications.show({
-          title: newStatus === "CONFIRMED" ? "Cita Confirmada" : "Cita Rechazada",
-          message: `La cita ha sido actualizada correctamente.`,
+          title:
+            newStatus === "CONFIRMED" ? "Cita Confirmada" : "Cita Rechazada",
+          message: `Estado actualizado y WhatsApp preparado.`,
           color: newStatus === "CONFIRMED" ? "green" : "red",
           autoClose: 3000,
         });
