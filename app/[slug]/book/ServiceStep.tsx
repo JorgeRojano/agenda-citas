@@ -16,6 +16,7 @@ interface Service {
   name: string;
   duration: number;
   price: number;
+  businessId: string;
 }
 
 export function ServiceStep({ slug, selectedService, onNext }: any) {

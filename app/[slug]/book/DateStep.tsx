@@ -13,7 +13,8 @@ import {
 } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
 import classes from "./DateStep.module.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getBusinessSchedule } from "@/lib/schedule";
 
 /**
  * @param count - Cuántos días quieres mostrar
@@ -45,12 +46,31 @@ export function DateStep({
   selectedService,
   selectedDate,
 }: any) {
+  const [closedDays, setClosedDays] = useState<number[]>([]);
+
+  useEffect(() => {
+    async function loadSchedule() {
+      const businessId = selectedService?.businessId;
+      if (!businessId) return;
+
+      const schedule = await getBusinessSchedule(businessId);
+
+      if (schedule?.closedDays) {
+        setClosedDays(schedule.closedDays);
+      }
+    }
+
+    loadSchedule();
+  }, [selectedService]);
+
+  if (!closedDays) return null;
+
   // CONFIGURACIÓN SIMULADA (Esto vendrá de tu DB después)
   // Ejemplo: El admin no trabaja Lunes (1), Sábado (6) ni Domingo (0)
-  const businessConfig = {
-    closedDays: [0, 1, 6],
-  };
-  const days = getAvailableDays(30, businessConfig.closedDays);
+  const days = getAvailableDays(30, closedDays);
+
+  console.log("Días disponibles:", days);
+  console.log("Días cerrados (0=Dom, 1=Lun, ...):", closedDays);
 
   return (
     <Stack gap="xs" mb="lg">

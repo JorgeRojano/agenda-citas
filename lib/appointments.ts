@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { createClient } from "./supabaseServer";
+import { createServerSupabaseClient } from "./supabaseServer";
 import { revalidatePath } from "next/cache";
 
 /**
  * Función interna para validar que el usuario pertenece al negocio que pide
  */
 async function validateBusinessAccess(businessId: string) {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error("No autorizado");

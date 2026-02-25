@@ -57,7 +57,30 @@ model Business {
   blockedTimes BlockedTime[]
   users        Profile[]
 
+  schedule BusinessSchedule?
+
   @@index([slug])
+}
+
+//////////////////////
+// BUSINESS SCHEDULE
+//////////////////////
+
+model BusinessSchedule {
+  id String @id @default(uuid())
+
+  businessId String  @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Closing days (0-6) -> 0 = Sunday
+  closedDays Int[]
+
+  // General Opening Time (optional)
+  openTime  String? // "09:00"
+  closeTime String? // "18:00"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 //////////////////////
