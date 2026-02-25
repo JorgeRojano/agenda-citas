@@ -7,3 +7,29 @@ export function getWhatsAppLink(phone: string, message: string) {
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 }
+
+export function formatDateTimeMexico(selectedTime: string) {
+  const dt = new Date(selectedTime);
+    // use Mexico City timezone
+    const optsDate: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: "America/Mexico_City",
+    };
+    const optsTime: Intl.DateTimeFormatOptions = {
+      hour: "numeric",
+      minute: undefined,
+      hour12: true,
+      timeZone: "America/Mexico_City",
+    };
+    const datePart = dt.toLocaleDateString("es-MX", optsDate);
+    const timePart = dt.toLocaleTimeString("es-MX", optsTime);
+    // datePart comes like "martes, 25 de febrero de 2026"
+    // we want "Martes 25 de febrero a las 10 AM"
+    // remove year and commas
+    const withoutYear = datePart.replace(/,?\s*\d{4}/, "");
+    // remove trailing ' de'
+    const displayDateTime = `${withoutYear} a las ${timePart}`;
+    return displayDateTime;
+}
