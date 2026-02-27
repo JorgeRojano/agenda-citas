@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
-/* ========= HELPERS ========= */
+const TIME_ZONE = "America/Mexico_City";
 
 export function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60000);
@@ -15,81 +16,98 @@ export function isOverlapping(
   return startA < endB && endA > startB;
 }
 
-/* ========= GENERATE DAY SLOTS ========= */
-/**
- * Business hours:
- * 09:00 – 18:00 MX (UTC-6)
- * Stored in UTC
- */
-function generateDaySlots(date: Date, serviceDuration: number) {
+function generateSlotsFromTimeRanges(
+  mexicoDate: Date,
+  timeRanges: any[],
+  serviceDuration: number
+) {
   const slots: Date[] = [];
 
-  const start = new Date(date);
-  start.setUTCHours(15, 0, 0, 0); // 09:00 MX
+  timeRanges.forEach((range) => {
+    const [startHour, startMinute] = range.startTime.split(":").map(Number);
+    const [endHour, endMinute] = range.endTime.split(":").map(Number);
 
-  const end = new Date(date);
-  end.setUTCHours(24, 0, 0, 0); // 18:00 MX
+    const startLocal = new Date(mexicoDate);
+    startLocal.setHours(startHour, startMinute, 0, 0);
 
-  let current = start;
+    const endLocal = new Date(mexicoDate);
+    endLocal.setHours(endHour, endMinute, 0, 0);
 
-  while (current < end) {
-    const slotEnd = addMinutes(current, serviceDuration);
+    // 🔥 v3 usa fromZonedTime
+    let currentUTC = fromZonedTime(startLocal, TIME_ZONE);
+    const endUTC = fromZonedTime(endLocal, TIME_ZONE);
 
-    if (slotEnd <= end) {
-      slots.push(new Date(current));
+    while (currentUTC < endUTC) {
+      slots.push(new Date(currentUTC));
+      currentUTC = addMinutes(currentUTC, serviceDuration);
     }
-
-    current = addMinutes(current, serviceDuration);
-  }
+  });
 
   return slots;
 }
 
-/* ========= MAIN FUNCTION ========= */
-
 export async function getAvailableSlots(
   businessId: string,
-  date: Date,
+  date: string,
   serviceDuration: number
 ) {
-  const dayStart = new Date(date);
-  dayStart.setUTCHours(0, 0, 0, 0);
+  // 🔥 convertir UTC → México
+  const mexicoDate = toZonedTime(new Date(date), TIME_ZONE);
+  console.log("Calculando disponibilidad para fecha (México):", mexicoDate);
 
-  const dayEnd = new Date(date);
-  dayEnd.setUTCHours(23, 59, 59, 999);
+  const dayOfWeek = mexicoDate.getDay();
 
-  /* 🔒 Traer citas que bloquean horario */
+  const startOfDayMexico = new Date(mexicoDate);
+  startOfDayMexico.setHours(0, 0, 0, 0);
+
+  const endOfDayMexico = new Date(mexicoDate);
+  endOfDayMexico.setHours(23, 59, 59, 999);
+
+  // 🔥 convertir México → UTC
+  const dayStartUTC = fromZonedTime(startOfDayMexico, TIME_ZONE);
+  const dayEndUTC = fromZonedTime(endOfDayMexico, TIME_ZONE);
+
+  const timeRanges = await prisma.businessTimeSlot.findMany({
+    where: {
+      businessId,
+      dayOfWeek,
+    },
+  });
+
+  if (!timeRanges.length) return [];
+
   const appointments = await prisma.appointment.findMany({
     where: {
       businessId,
-      status: {
-        in: ["PENDING", "CONFIRMED"],
-      },
-      startTime: { lt: dayEnd },
-      endTime: { gt: dayStart },
+      status: { in: ["PENDING", "CONFIRMED"] },
+      startTime: { lt: dayEndUTC },
+      endTime: { gt: dayStartUTC },
     },
   });
 
-  /* 🔒 Traer bloqueos manuales */
   const blocked = await prisma.blockedTime.findMany({
     where: {
       businessId,
-      start: { lt: dayEnd },
-      end: { gt: dayStart },
+      start: { lt: dayEndUTC },
+      end: { gt: dayStartUTC },
     },
   });
 
-  const slots = generateDaySlots(date, serviceDuration);
+  const slots = generateSlotsFromTimeRanges(
+    mexicoDate,
+    timeRanges,
+    serviceDuration
+  );
 
-  return slots.filter((slot) => {
-    const slotEnd = addMinutes(slot, serviceDuration);
+  return slots.filter((slotUTC) => {
+    const slotEndUTC = addMinutes(slotUTC, serviceDuration);
 
     const overlapsAppointment = appointments.some((a) =>
-      isOverlapping(slot, slotEnd, a.startTime, a.endTime)
+      isOverlapping(slotUTC, slotEndUTC, a.startTime, a.endTime)
     );
 
     const overlapsBlocked = blocked.some((b) =>
-      isOverlapping(slot, slotEnd, b.start, b.end)
+      isOverlapping(slotUTC, slotEndUTC, b.start, b.end)
     );
 
     return !overlapsAppointment && !overlapsBlocked;

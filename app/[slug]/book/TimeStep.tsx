@@ -10,7 +10,13 @@ import {
 import { useEffect, useState } from "react";
 import classes from "./TimeStep.module.css";
 
-export function TimeStep({ selectedService, selectedDate, slug, selectedTime, onNext }: any) {
+export function TimeStep({
+  selectedService,
+  selectedDate,
+  slug,
+  selectedTime,
+  onNext,
+}: any) {
   const [slots, setSlots] = useState<string[]>([]);
 
   useEffect(() => {
@@ -29,29 +35,28 @@ export function TimeStep({ selectedService, selectedDate, slug, selectedTime, on
   return (
     <Stack gap="xs" mb="lg">
       <Stack gap="xs" mb="lg">
-        <Title order={4}>Selecciona una Fecha</Title>
+        <Title order={4}>Selecciona una Hora</Title>
         <Text size="sm" c="dimmed">
-          {selectedService?.name} · {selectedDate}
+          {/* {selectedService?.name} · {selectedDate} */}
         </Text>
       </Stack>
 
       <ScrollArea h={400} offsetScrollbars scrollbarSize={4}>
         <SimpleGrid cols={3} spacing="sm">
           {slots.map((slot) => {
-            const date = new Date(slot);
-            const hour = date.getHours();
-            const period = hour >= 12 ? "PM" : "AM";
-            const displayHour = hour % 12 || 12;
-            const time = `${displayHour} ${period}`;
+            const time = new Date(slot).toLocaleTimeString("es-MX", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+              timeZone: "America/Mexico_City",
+            });
 
             return (
               <UnstyledButton
                 key={slot}
                 className={classes.timeItem}
                 data-selected={selectedTime === slot || undefined}
-                onClick={() => {
-                  onNext(slot);
-                }}
+                onClick={() => onNext(slot)}
               >
                 <Text size="sm" fw={700} ta="center">
                   {time}

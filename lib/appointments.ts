@@ -97,5 +97,5 @@ export async function updateAppointmentStatus(
   });
 
   // Refrescar los datos en el cliente
-  revalidatePath(`/${slug}/admin/dashboard`);
+  revalidatePath(`/${slug}/admin/dashboard/bookings`);
 }

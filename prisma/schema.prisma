@@ -57,30 +57,31 @@ model Business {
   blockedTimes BlockedTime[]
   users        Profile[]
 
-  schedule BusinessSchedule?
+  timeSlots BusinessTimeSlot[] 
 
   @@index([slug])
 }
 
 //////////////////////
-// BUSINESS SCHEDULE
+// BUSINESS TIME
 //////////////////////
 
-model BusinessSchedule {
+model BusinessTimeSlot {
   id String @id @default(uuid())
 
-  businessId String  @unique
+  businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  // Closing days (0-6) -> 0 = Sunday
-  closedDays Int[]
+  // 0 = Sunday, 6 = Saturday
+  dayOfWeek Int
 
-  // General Opening Time (optional)
-  openTime  String? // "09:00"
-  closeTime String? // "18:00"
+  startTime String // "09:00"
+  endTime   String // "12:00"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([businessId, dayOfWeek])
 }
 
 //////////////////////

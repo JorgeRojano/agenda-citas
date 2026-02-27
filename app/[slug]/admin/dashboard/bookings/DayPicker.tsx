@@ -24,10 +24,8 @@ export default function DayPicker({ onBlockTimeClick }: DayPickerProps) {
   function updateDate(value: string | null) {
     if (!value) return;
 
-    console.log({ value });
-
     setDateString(value);
-    router.push(`/${slug}/admin/dashboard?date=${value}`);
+    router.push(`/${slug}/admin/dashboard/bookings?date=${value}`);
   }
 
   return (

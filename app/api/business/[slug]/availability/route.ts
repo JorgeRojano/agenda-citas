@@ -14,13 +14,13 @@ export async function GET(req: Request, context: { params: Promise<Params> }) {
   }
 
   const { searchParams } = new URL(req.url);
-
-  const date = searchParams.get("date");
+  const dateParam = searchParams.get("date");
   const serviceId = searchParams.get("serviceId");
 
-  if (!date || !serviceId) {
+  if (!dateParam || !serviceId) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
   }
+  const date = dateParam
 
   const business = await prisma.business.findUnique({
     where: { slug },
@@ -40,14 +40,14 @@ export async function GET(req: Request, context: { params: Promise<Params> }) {
   if (!service) {
     return NextResponse.json(
       { error: "Service not found for this business" },
-      { status: 404 },
+      { status: 404 }
     );
   }
 
   const slots = await getAvailableSlots(
     business.id,
-    new Date(date),
-    service.duration,
+    date,
+    service.duration
   );
 
   return NextResponse.json(slots);

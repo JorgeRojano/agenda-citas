@@ -10,35 +10,39 @@ import {
   Card,
   Title,
   rem,
+  Center,
+  Loader,
+  Alert,
 } from "@mantine/core";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { IconArrowLeft, IconInfoCircle } from "@tabler/icons-react";
 import classes from "./DateStep.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getBusinessSchedule } from "@/lib/schedule";
 
 /**
- * @param count - Cuántos días quieres mostrar
- * @param disabledDays - Array de días (0-6) que NO se deben mostrar
+ * Generates an array of available Date objects.
+ * @param {number} count - The number of days to look ahead.
+ * @param {number[]} closedDays - Array of numbers (0-6) representing closed days of the week.
+ * @returns {Date[]} - Array of available Date objects.
  */
-const getAvailableDays = (count: number, disabledDays: number[]) => {
-  const days = [];
-  let date = new Date();
+function getAvailableDays(count: number, closedDays: number[]): Date[] {
+  const availableDays: Date[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const date = new Date();
+    // We add 'i' days to the current timestamp
+    date.setDate(date.getDate() + i);
 
-  // Mientras no tengamos la cantidad de días solicitada...
-  while (days.length < count) {
-    // Evaluamos el día actual primero, así incluimos "hoy" en el conteo
     const dayOfWeek = date.getDay();
 
-    // Si el día de la semana NO está en la lista de desactivados, lo agregamos
-    if (!disabledDays.includes(dayOfWeek)) {
-      days.push(new Date(date));
+    if (!closedDays.includes(dayOfWeek)) {
+      // We push the date object as is, without .setHours(0,0,0,0)
+      availableDays.push(date);
     }
-
-    // Avanzamos al siguiente día antes de la siguiente iteración
-    date.setDate(date.getDate() + 1);
   }
-  return days;
-};
+
+  return availableDays;
+}
 
 export function DateStep({
   onBack,
@@ -47,30 +51,33 @@ export function DateStep({
   selectedDate,
 }: any) {
   const [closedDays, setClosedDays] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadSchedule() {
       const businessId = selectedService?.businessId;
-      if (!businessId) return;
 
-      const schedule = await getBusinessSchedule(businessId);
+      if (!businessId) {
+        setLoading(false);
+        return;
+      }
 
-      if (schedule?.closedDays) {
-        setClosedDays(schedule.closedDays);
+      try {
+        const schedule = await getBusinessSchedule(businessId);
+        if (schedule?.closedDays) {
+          setClosedDays(schedule.closedDays);
+        }
+      } catch (error) {
+        console.error("Error cargando calendario:", error);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadSchedule();
   }, [selectedService]);
 
-  if (!closedDays) return null;
-
-  // CONFIGURACIÓN SIMULADA (Esto vendrá de tu DB después)
-  // Ejemplo: El admin no trabaja Lunes (1), Sábado (6) ni Domingo (0)
-  const days = getAvailableDays(30, closedDays);
-
-  console.log("Días disponibles:", days);
-  console.log("Días cerrados (0=Dom, 1=Lun, ...):", closedDays);
+  const days = useMemo(() => getAvailableDays(30, closedDays), [closedDays]);
 
   return (
     <Stack gap="xs" mb="lg">
@@ -81,38 +88,61 @@ export function DateStep({
         </Text>
       </Stack>
 
-      <ScrollArea h={400} offsetScrollbars scrollbarSize={4}>
-        <SimpleGrid cols={3} spacing="sm">
-          {days.map((date) => {
-            const dayName = date.toLocaleDateString("es-MX", {
-              weekday: "long",
-            });
-            const monthDay = date.toLocaleDateString("es-MX", {
-              month: "short",
-              day: "numeric",
-            });
-            const dateId = date.toLocaleDateString("en-CA");
+      {loading ? (
+        <Center h={200}>
+          <Stack align="center" gap="xs">
+            <Loader size="sm" />
+            <Text size="sm" c="dimmed">
+              Buscando fechas disponibles...
+            </Text>
+          </Stack>
+        </Center>
+      ) : (
+        <ScrollArea h={400} offsetScrollbars scrollbarSize={4}>
+          {days.length === 0 ? (
+            <Alert
+              variant="light"
+              color="gray"
+              title="No hay fechas"
+              icon={<IconInfoCircle />}
+            >
+              Lo sentimos, no hay días disponibles para programar en este
+              momento.
+            </Alert>
+          ) : (
+            <SimpleGrid cols={3} spacing="sm">
+              {days.map((date) => {
+                const dayName = date.toLocaleDateString("es-MX", {
+                  weekday: "long",
+                });
+                const monthDay = date.toLocaleDateString("es-MX", {
+                  month: "short",
+                  day: "numeric",
+                });
+                const dateId = date.toLocaleDateString("en-CA");
 
-            return (
-              <UnstyledButton
-                key={dateId}
-                className={classes.dateItem}
-                data-selected={selectedDate === dateId || undefined}
-                onClick={() => {
-                  onNext(dateId);
-                }}
-              >
-                <Text size="xs" c="dimmed" fw={500} ta="center">
-                  {dayName}
-                </Text>
-                <Text size="sm" fw={700} ta="center">
-                  {monthDay}
-                </Text>
-              </UnstyledButton>
-            );
-          })}
-        </SimpleGrid>
-      </ScrollArea>
+                return (
+                  <UnstyledButton
+                    key={dateId}
+                    className={classes.dateItem}
+                    data-selected={selectedDate === dateId || undefined}
+                    onClick={() => {
+                      onNext(date);
+                    }}
+                  >
+                    <Text size="xs" c="dimmed" fw={500} ta="center">
+                      {dayName}
+                    </Text>
+                    <Text size="sm" fw={700} ta="center">
+                      {monthDay}
+                    </Text>
+                  </UnstyledButton>
+                );
+              })}
+            </SimpleGrid>
+          )}
+        </ScrollArea>
+      )}
     </Stack>
   );
 }

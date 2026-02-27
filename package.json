@@ -18,6 +18,8 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.94.1",
     "@tabler/icons-react": "^3.36.1",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dayjs": "^1.11.19",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
