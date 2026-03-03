@@ -49,11 +49,13 @@ const createEmptyAvailability = (): Availability => ({
 
 export default function AdminAvailabilityPage() {
   const { slug } = useParams();
-  const [availability, setAvailability] =
-    useState<Availability>(createEmptyAvailability());
+  const [availability, setAvailability] = useState<Availability>(
+    createEmptyAvailability(),
+  );
 
-  const [savedAvailability, setSavedAvailability] =
-    useState<Availability>(createEmptyAvailability());
+  const [savedAvailability, setSavedAvailability] = useState<Availability>(
+    createEmptyAvailability(),
+  );
 
   //////////////////////////////////////////////
   // Detectar cambios
@@ -70,9 +72,7 @@ export default function AdminAvailabilityPage() {
 
   useEffect(() => {
     const fetchSchedule = async () => {
-      const res = await fetch(
-        `/api/business/${slug}/schedule`,
-      );
+      const res = await fetch(`/api/business/${slug}/schedule`);
 
       if (!res.ok) return;
 
@@ -82,9 +82,7 @@ export default function AdminAvailabilityPage() {
       const grouped = createEmptyAvailability();
 
       data.forEach((slot: any) => {
-        const day = grouped.days.find(
-          (d) => d.dayOfWeek === slot.dayOfWeek,
-        );
+        const day = grouped.days.find((d) => d.dayOfWeek === slot.dayOfWeek);
         if (day) {
           day.slots.push({
             start: slot.startTime,
@@ -155,6 +153,49 @@ export default function AdminAvailabilityPage() {
   //////////////////////////////////////////////
 
   const handleSave = async () => {
+    const toMinutes = (time: string) => {
+      const [h, m] = time.split(":").map(Number);
+      return h * 60 + m;
+    };
+    // Validar overlaps antes de guardar
+    for (const day of availability.days) {
+      const dayLabel = weekDays.find((d) => d.value === day.dayOfWeek)?.label;
+
+      // Validar que cierre > apertura
+      for (const slot of day.slots) {
+        if (toMinutes(slot.end) <= toMinutes(slot.start)) {
+          showNotification({
+            title: "Rango inválido",
+            message: `El día ${dayLabel} tiene un rango donde el cierre no es mayor a la apertura`,
+            color: "red",
+          });
+          return;
+        }
+      }
+
+      for (let i = 0; i < day.slots.length; i++) {
+        for (let j = i + 1; j < day.slots.length; j++) {
+          const a = day.slots[i];
+          const b = day.slots[j];
+
+          const aStart = toMinutes(a.start);
+          const aEnd = toMinutes(a.end);
+          const bStart = toMinutes(b.start);
+          const bEnd = toMinutes(b.end);
+
+          if (aStart < bEnd && aEnd > bStart) {
+            showNotification({
+              title: "Rango inválido",
+              message: `El día ${dayLabel} tiene rangos que se solapan`,
+              color: "red",
+            });
+            return; // cortar y no guardar
+          }
+        }
+      }
+    }
+
+    // Si pasa la validación, continuar con el guardado...
     const flatSlots = availability.days.flatMap((day) =>
       day.slots.map((slot) => ({
         dayOfWeek: day.dayOfWeek,
@@ -163,14 +204,11 @@ export default function AdminAvailabilityPage() {
       })),
     );
 
-    const res = await fetch(
-      `/api/business/${slug}/schedule`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slots: flatSlots }),
-      },
-    );
+    const res = await fetch(`/api/business/${slug}/schedule`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slots: flatSlots }),
+    });
 
     if (!res.ok) {
       showNotification({
@@ -182,7 +220,6 @@ export default function AdminAvailabilityPage() {
     }
 
     setSavedAvailability(availability);
-
     showNotification({
       title: "Guardado",
       message: "Horario guardado correctamente",
@@ -261,10 +298,9 @@ export default function AdminAvailabilityPage() {
                       />
                       <Button
                         color="red"
+                        style={{ alignSelf: "flex-end" }}
                         variant="subtle"
-                        onClick={() =>
-                          removeSlot(day.dayOfWeek, index)
-                        }
+                        onClick={() => removeSlot(day.dayOfWeek, index)}
                       >
                         X
                       </Button>

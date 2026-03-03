@@ -19,6 +19,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import { useRealtimeAppointments } from "@/lib/hooks/useRealTimeAppointments";
 import { notifications } from "@mantine/notifications";
+import { useEffect, useState } from "react";
 
 const MessageNewAppointment = ({
   booking,
@@ -27,7 +28,7 @@ const MessageNewAppointment = ({
   booking: any;
   slug: string;
 }) => {
-    const router = useRouter();
+  const router = useRouter();
   const date = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Mexico_City",
     year: "numeric",
@@ -66,13 +67,15 @@ export const AppShellAdmin = ({
   business: any;
 }) => {
   const pathname = usePathname();
-  const [opened, { toggle }] = useDisclosure();
+  const [opened, { toggle, close }] = useDisclosure();
   const { slug } = useParams();
 
   const base = `/${slug}/admin/dashboard`;
   const dashboardPath = base;
   const bookingsPath = `${base}/bookings`;
   const availabilityPath = `${base}/availability`;
+
+  const [currentPath, setCurrentPath] = useState(pathname);
 
   const { newAppointmentAlert } = useRealtimeAppointments(
     business?.id,
@@ -88,6 +91,10 @@ export const AppShellAdmin = ({
       });
     },
   );
+
+  useEffect(() => {
+    close();
+  }, [pathname]);
 
   return (
     <AppShell
