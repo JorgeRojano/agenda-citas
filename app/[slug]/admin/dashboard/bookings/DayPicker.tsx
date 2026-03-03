@@ -3,7 +3,7 @@
 import { Group, Button } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface DayPickerProps {
   onBlockTimeClick?: () => void;
@@ -20,6 +20,10 @@ export default function DayPicker({ onBlockTimeClick }: DayPickerProps) {
     searchParams.get("date") ?? new Date().toLocaleDateString("en-CA");
 
   const [dateString, setDateString] = useState(initialDateString);
+
+  useEffect(() => {
+    setDateString(initialDateString);
+  }, [initialDateString]);
 
   function updateDate(value: string | null) {
     if (!value) return;

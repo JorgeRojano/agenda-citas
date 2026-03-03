@@ -1,11 +1,17 @@
-export default async function AdminDashboardPage() {
+import { prisma } from "@/lib/prisma";
+import DashboardAdmin from "./DashboardAdmin";
+
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ date?: string }>;
+};
+
+export default async function AdminDashboardPage({
+  params,
+  searchParams,
+}: Props) {
+
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>
-        Bienvenido al panel de administración. Aquí podrás gestionar tu negocio,
-        ver estadísticas y configurar tus servicios.
-      </p>
-    </div>
+    <DashboardAdmin />
   );
 }
