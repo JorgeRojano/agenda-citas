@@ -65,11 +65,13 @@ export async function createAppointment(
       },
     });
 
+    console.log("Enviando push notification...");
     await sendPushNotification({
       title: "📅 Nueva cita",
       message: `${clientName} - ${service.name}`,
       url: `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings`,
     });
+    console.log("Push notification enviada");
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new Error("Horario ya ocupado");
