@@ -2,7 +2,7 @@
 
 import { sendPushNotification } from "@/lib/oneSignal.server";
 import { prisma } from "@/lib/prisma";
-import { formatDateTimeForInput } from "@/lib/utils";
+import { formatDateTimeForInput, formatDateTimetoDisplay } from "@/lib/utils";
 
 export async function createAppointment(
   slug: string,
@@ -67,10 +67,11 @@ export async function createAppointment(
     });
 
     const date = formatDateTimeForInput(startTime);
+    const formattedDate = formatDateTimetoDisplay(startTime);
 
     await sendPushNotification({
       title: "📅 Nueva cita",
-      message: `${clientName} - ${service.name}`,
+      message: `${clientName} - ${service.name}\n${formattedDate}`,
       url: `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings?date=${date}`,
     });
   } catch (error: any) {

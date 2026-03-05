@@ -48,3 +48,20 @@ export function formatDateTimeForInput(selectedTime: string | Date) {
 
   return date;
 }
+
+export function formatDateTimetoDisplay(selectedTime: string | Date) {
+  if (typeof selectedTime === "string") {
+    selectedTime = new Date(selectedTime);
+  }
+
+  const formattedDate = new Intl.DateTimeFormat("es-MX", {
+    timeZone: "America/Mexico_City",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(selectedTime);
+
+  return formattedDate;
+}
