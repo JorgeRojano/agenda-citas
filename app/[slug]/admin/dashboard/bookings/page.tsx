@@ -17,6 +17,8 @@ import UnblockButton from "./UnblockButton";
 import CancelAppointmentButton from "./CancelAppointmentButton";
 import RefreshButton from "./RefreshButton";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ date?: string }>;
