@@ -19,6 +19,13 @@ export const sendPushNotification = async ({
       headings: { en: title },
       contents: { en: message },
       url,
+      web_buttons: [
+        {
+          id: "ver-cita",
+          text: "Ver cita →",
+          url,
+        },
+      ],
     }),
   });
 
