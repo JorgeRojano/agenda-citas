@@ -2,6 +2,7 @@
 
 import { sendPushNotification } from "@/lib/oneSignal.server";
 import { prisma } from "@/lib/prisma";
+import { formatDateTimeForInput } from "@/lib/utils";
 
 export async function createAppointment(
   slug: string,
@@ -65,13 +66,13 @@ export async function createAppointment(
       },
     });
 
-    console.log("Enviando push notification...");
+    const date = formatDateTimeForInput(startTime);
+
     await sendPushNotification({
       title: "📅 Nueva cita",
       message: `${clientName} - ${service.name}`,
-      url: `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings?date=${date}`,
     });
-    console.log("Push notification enviada");
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new Error("Horario ya ocupado");

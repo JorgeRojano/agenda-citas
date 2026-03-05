@@ -23,7 +23,6 @@ export const sendPushNotification = async ({
   });
 
   const data = await res.json();
-  console.log("OneSignal response:", JSON.stringify(data));
 
   if (!res.ok) {
     console.error("OneSignal error:", await res.text());
