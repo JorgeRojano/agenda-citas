@@ -1,5 +1,6 @@
 "use server";
 
+import { sendPushNotification } from "@/lib/oneSignal.server";
 import { prisma } from "@/lib/prisma";
 
 export async function createAppointment(
@@ -7,7 +8,7 @@ export async function createAppointment(
   slot: string,
   serviceId: string,
   clientName: string,
-  phone: string
+  phone: string,
 ) {
   try {
     // 1️⃣ Buscar el negocio por slug
@@ -33,9 +34,7 @@ export async function createAppointment(
 
     // 3️⃣ Calcular start y end
     const startTime = new Date(slot);
-    const endTime = new Date(
-      startTime.getTime() + service.duration * 60000
-    );
+    const endTime = new Date(startTime.getTime() + service.duration * 60000);
 
     // 4️⃣ Validar que no exista cruce (extra seguridad)
     const overlapping = await prisma.appointment.findFirst({
@@ -64,6 +63,12 @@ export async function createAppointment(
         endTime,
         status: "PENDING",
       },
+    });
+
+    await sendPushNotification({
+      title: "📅 Nueva cita",
+      message: `${clientName} - ${service.name}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings`,
     });
   } catch (error: any) {
     if (error.code === "P2002") {

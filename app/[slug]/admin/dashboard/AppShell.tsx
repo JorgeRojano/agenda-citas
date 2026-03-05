@@ -20,6 +20,7 @@ import { usePathname, useParams, useRouter } from "next/navigation";
 import { useRealtimeAppointments } from "@/lib/hooks/useRealTimeAppointments";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
+import { initOneSignal } from "@/lib/oneSignal";
 
 const MessageNewAppointment = ({
   booking,
@@ -95,6 +96,10 @@ export const AppShellAdmin = ({
   useEffect(() => {
     close();
   }, [pathname]);
+
+  useEffect(() => {
+    initOneSignal();
+  }, []);
 
   return (
     <AppShell
