@@ -3,7 +3,6 @@
 import { sendPushNotification } from "@/lib/oneSignal.server";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeForInput, formatDateTimetoDisplay } from "@/lib/utils";
-import { revalidatePath } from "next/cache";
 
 export async function createAppointment(
   slug: string,
@@ -75,8 +74,6 @@ export async function createAppointment(
       message: `${clientName} - ${service.name}\n${formattedDate}`,
       url: `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings?date=${date}`,
     });
-
-    revalidatePath(`/${slug}/admin/dashboard/bookings`);
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new Error("Horario ya ocupado");

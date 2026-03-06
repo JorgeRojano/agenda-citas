@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
 
   async function handleLogin(e?: React.FormEvent) {
@@ -42,7 +42,17 @@ export default function AdminLoginPage() {
 
     if (error) {
       setLoading(false);
-      setErrorMsg(error.message);
+      const errorMessages: Record<string, string> = {
+        "Invalid login credentials": "Email o contraseña incorrectos",
+        "Email not confirmed":
+          "Debes confirmar tu email antes de iniciar sesión",
+        "Too many requests": "Demasiados intentos, espera un momento",
+      };
+
+      setErrorMsg(
+        errorMessages[error.message] ??
+          "Error al iniciar sesión, intenta de nuevo",
+      );
       return;
     }
 
@@ -130,11 +140,11 @@ export default function AdminLoginPage() {
                   Entrar
                 </Button>
 
-                <div style={{ textAlign: "center" }}>
+                {/* <div style={{ textAlign: "center" }}>
                   <Anchor href={`/${slug}/admin/forgot`} size="sm">
                     Forgot password?
                   </Anchor>
-                </div>
+                </div> */}
               </Stack>
             </form>
           </Box>

@@ -3,6 +3,7 @@
 import {
   AppShell,
   Burger,
+  Button,
   Container,
   Group,
   NavLink,
@@ -13,6 +14,7 @@ import {
   IconCalendar,
   IconClock,
   IconLayoutDashboard,
+  IconLogout,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useDisclosure } from "@mantine/hooks";
@@ -21,6 +23,7 @@ import { useRealtimeAppointments } from "@/lib/hooks/useRealTimeAppointments";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import { initOneSignal } from "@/lib/oneSignal";
+import { browserSupabase } from "@/lib/supabaseBrowser";
 
 const MessageNewAppointment = ({
   booking,
@@ -68,6 +71,7 @@ export const AppShellAdmin = ({
   business: any;
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [opened, { toggle, close }] = useDisclosure();
   const { slug } = useParams();
 
@@ -77,6 +81,7 @@ export const AppShellAdmin = ({
   const availabilityPath = `${base}/availability`;
 
   const [currentPath, setCurrentPath] = useState(pathname);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const { newAppointmentAlert } = useRealtimeAppointments(
     business?.id,
@@ -100,6 +105,12 @@ export const AppShellAdmin = ({
   useEffect(() => {
     initOneSignal();
   }, []);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await browserSupabase.auth.signOut();
+    router.push(`/${slug}/admin/login`);
+  };
 
   return (
     <AppShell
@@ -145,6 +156,18 @@ export const AppShellAdmin = ({
         </AppShell.Section>
         <AppShell.Section p="md">
           Navbar footer – always at the bottom
+        </AppShell.Section>
+        <AppShell.Section p="md">
+          <Button
+            variant="subtle"
+            color="red"
+            fullWidth
+            leftSection={<IconLogout size={18} />}
+            onClick={handleLogout}
+            loading={loggingOut}
+          >
+            Cerrar sesión
+          </Button>
         </AppShell.Section>
       </AppShell.Navbar>
 
