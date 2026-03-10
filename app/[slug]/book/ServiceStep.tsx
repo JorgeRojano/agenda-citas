@@ -36,7 +36,7 @@ export function ServiceStep({ slug, selectedService, onNext }: any) {
         Selecciona un servicio
       </Title>
 
-      <ScrollArea h={400} offsetScrollbars scrollbarSize={6}>
+      <ScrollArea offsetScrollbars scrollbarSize={6}>
         <Stack gap="sm" p="sm">
           {services.map((service) => (
             <UnstyledButton

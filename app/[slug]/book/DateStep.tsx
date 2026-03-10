@@ -98,7 +98,7 @@ export function DateStep({
           </Stack>
         </Center>
       ) : (
-        <ScrollArea h={400} offsetScrollbars scrollbarSize={4}>
+        <ScrollArea offsetScrollbars scrollbarSize={4}>
           {days.length === 0 ? (
             <Alert
               variant="light"

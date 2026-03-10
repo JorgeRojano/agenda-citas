@@ -41,7 +41,7 @@ export function TimeStep({
         </Text>
       </Stack>
 
-      <ScrollArea h={400} offsetScrollbars scrollbarSize={4}>
+      <ScrollArea offsetScrollbars scrollbarSize={4}>
         <SimpleGrid cols={3} spacing="sm">
           {slots.map((slot) => {
             const time = new Date(slot).toLocaleTimeString("es-MX", {
