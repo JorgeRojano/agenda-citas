@@ -15,6 +15,7 @@ import {
   IconClock,
   IconLayoutDashboard,
   IconLogout,
+  IconSettings
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useDisclosure } from "@mantine/hooks";
@@ -79,6 +80,7 @@ export const AppShellAdmin = ({
   const dashboardPath = base;
   const bookingsPath = `${base}/bookings`;
   const availabilityPath = `${base}/availability`;
+  const settingsPath = `${base}/settings`;
 
   const [currentPath, setCurrentPath] = useState(pathname);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -151,6 +153,14 @@ export const AppShellAdmin = ({
               active={pathname === availabilityPath}
               component={Link}
               href={availabilityPath}
+            />
+
+            <NavLink
+              label="Configuración"
+              leftSection={<IconSettings size={18} />}
+              active={pathname === settingsPath}
+              component={Link}
+              href={settingsPath}
             />
           </Stack>
         </AppShell.Section>

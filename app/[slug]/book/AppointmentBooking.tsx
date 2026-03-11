@@ -11,6 +11,7 @@ import { ServiceStep } from "./ServiceStep";
 import { DetailsStep } from "./DetailsStep";
 import { createAppointment } from "./actions";
 import { BookingPending } from "./BookingPending";
+import { IconBrandFacebook, IconBrandInstagram, IconWorld } from "@tabler/icons-react";
 
 interface Service {
   id: string;
@@ -18,8 +19,23 @@ interface Service {
   duration: number;
   price: number;
 }
+interface Business {
+  name: string;
+  description: string | null;
+  primaryColor: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  whatsapp: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  website: string | null;
+}
 
-export default function AppointmentBooking() {
+interface Props {
+  business: Business;
+}
+
+export default function AppointmentBooking({ business }: Props) {
   const params = useParams();
   const slug = params.slug as string;
 
@@ -95,13 +111,12 @@ export default function AppointmentBooking() {
       }}
     >
       {/* ── BANNER ── */}
-      {/* ── BANNER ── */}
       <div style={{ flexShrink: 0, position: "relative", zIndex: 1 }}>
         {/* Este div contiene y recorta el blob */}
         <div
           style={{
             height: 160,
-            background: "#c8a882",
+            background: business.primaryColor ?? "#c8a882",
             position: "relative",
             overflow: "hidden", // 👈 vuelve a hidden para contener el blob
           }}
@@ -112,7 +127,7 @@ export default function AppointmentBooking() {
               position: "absolute",
               width: 280,
               height: 280,
-              background: "#b8936a",
+              background: business.primaryColor ?? "#c8a882",
               borderRadius: "60% 40% 70% 30% / 50% 60% 40% 50%",
               top: -80,
               right: -60,
@@ -140,7 +155,20 @@ export default function AppointmentBooking() {
             zIndex: 10,
           }}
         >
-          🌿
+          {business.logoUrl ? (
+            <img
+              src={business.logoUrl}
+              alt="logo"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: 16,
+              }}
+            />
+          ) : (
+            <span>🏢</span>
+          )}
         </div>
       </div>
 
@@ -159,10 +187,10 @@ export default function AppointmentBooking() {
             order={3}
             style={{ fontFamily: "Georgia, serif", color: "#2d1f14" }}
           >
-            Test 🚌 ness
+            {business.name}
           </Title>
           <Text size="sm" c="dimmed" mb="xs">
-            Es un test
+            {business.description}
           </Text>
           <Group gap={6} justify="center">
             {" "}
@@ -190,6 +218,86 @@ export default function AppointmentBooking() {
               📍 CDMX
             </span>
           </Group>
+          {/* Redes sociales */}
+          {(business.instagram || business.facebook || business.website) && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 16,
+                marginTop: 10,
+              }}
+            >
+              {business.facebook && (
+                <a href={business.facebook} target="_blank" rel="noreferrer">
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "#fce7f3",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <IconBrandFacebook size={20} color="#e1306c" />
+                  </div>
+                  <span
+                    style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}
+                  >
+                    Facebook
+                  </span>
+                </a>
+              )}
+
+              {business.instagram && (
+                <a href={business.instagram} target="_blank" rel="noreferrer">
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "#fce7f3",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <IconBrandInstagram size={20} color="#e1306c" />
+                  </div>
+                  <span
+                    style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}
+                  >
+                    Instagram
+                  </span>
+                </a>
+              )}
+
+              {business.website && (
+                <a href={business.website} target="_blank" rel="noreferrer">
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "#eff6ff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <IconWorld size={20} color="#2563eb" />
+                  </div>
+                  <span
+                    style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}
+                  >
+                    Sitio web
+                  </span>
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

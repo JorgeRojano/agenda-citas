@@ -51,6 +51,17 @@ model Business {
   name      String
   slug      String   @unique
   phone     String?
+  description String?
+
+  primaryColor String? @default("#2563eb")
+  logoUrl      String? // URL de Supabase Storage
+  bannerUrl    String? // URL de Supabase Storage
+
+  whatsapp  String?
+  facebook  String?
+  instagram String?
+  website   String?
+
   createdAt DateTime @default(now())
 
   services     Service[]

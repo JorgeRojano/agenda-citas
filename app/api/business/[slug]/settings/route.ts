@@ -1,0 +1,78 @@
+import { prisma } from "@/lib/prisma";
+import { validateBusinessAccess } from "@/lib/validateBusinessAccess";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const { slug } = await params;
+
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: {
+      name: true,
+      description: true,
+      primaryColor: true,
+      logoUrl: true,
+      bannerUrl: true,
+      whatsapp: true,
+      facebook: true,
+      instagram: true,
+      website: true,
+    },
+  });
+
+  if (!business)
+    return NextResponse.json({ error: "Business not found" }, { status: 404 });
+
+  return NextResponse.json(business);
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const { slug } = await params;
+
+  const business = await prisma.business.findUnique({ where: { slug } });
+  if (!business)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  try {
+    await validateBusinessAccess(business.id);
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await req.json();
+
+  const {
+    name,
+    description,
+    primaryColor,
+    logoUrl,
+    bannerUrl,
+    whatsapp,
+    facebook,
+    instagram,
+    website,
+  } = body;
+
+  const updatedBusiness = await prisma.business.update({
+    where: { slug },
+    data: {
+      ...(name && { name }),
+      ...(description !== undefined && { description }),
+      ...(primaryColor && { primaryColor }),
+      ...(logoUrl !== undefined && { logoUrl }),
+      ...(bannerUrl !== undefined && { bannerUrl }),
+      ...(whatsapp !== undefined && { whatsapp }),
+      ...(facebook !== undefined && { facebook }),
+      ...(instagram !== undefined && { instagram }),
+      ...(website !== undefined && { website }),
+    },
+  });
+
+  return NextResponse.json(updatedBusiness);
+}

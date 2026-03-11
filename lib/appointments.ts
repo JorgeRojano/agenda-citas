@@ -1,26 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createServerSupabaseClient } from "./supabaseServer";
 import { revalidatePath } from "next/cache";
-
-/**
- * Función interna para validar que el usuario pertenece al negocio que pide
- */
-async function validateBusinessAccess(businessId: string) {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("No autorizado");
-
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { businessId: true, role: true }
-  });
-
-  // Si no es SuperAdmin y el ID no coincide, bloqueamos el acceso
-  if (profile?.role !== "SUPER_ADMIN" && profile?.businessId !== businessId) {
-    throw new Error("Acceso no autorizado a este negocio");
-  }
-}
+import { validateBusinessAccess } from "./validateBusinessAccess";
 
 /**
  * Obtener citas por día para un negocio específico
