@@ -11,7 +11,11 @@ import { ServiceStep } from "./ServiceStep";
 import { DetailsStep } from "./DetailsStep";
 import { createAppointment } from "./actions";
 import { BookingPending } from "./BookingPending";
-import { IconBrandFacebook, IconBrandInstagram, IconWorld } from "@tabler/icons-react";
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconWorld,
+} from "@tabler/icons-react";
 
 interface Service {
   id: string;
@@ -80,24 +84,6 @@ export default function AppointmentBooking({ business }: Props) {
       console.error("Error al crear la cita:", error);
     }
   };
-
-  if (bookingCompleted) {
-    return (
-      <div style={{ maxWidth: 500, padding: rem(20) }}>
-        <BookingPending
-          serviceName={selectedService?.name || ""}
-          time={selectedTime}
-          onBookAnother={() => {
-            setBookingCompleted(false);
-            setSelectedService(null);
-            setSelectedDate(null);
-            setSelectedTime(null);
-            setActive(0);
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div
@@ -192,32 +178,7 @@ export default function AppointmentBooking({ business }: Props) {
           <Text size="sm" c="dimmed" mb="xs">
             {business.description}
           </Text>
-          <Group gap={6} justify="center">
-            {" "}
-            {/* 👈 centra los tags */}
-            <span
-              style={{
-                fontSize: 12,
-                background: "#f0e8dc",
-                color: "#7a5c3e",
-                padding: "3px 10px",
-                borderRadius: 99,
-              }}
-            >
-              ⏰ Lun–Vie 9am–6pm
-            </span>
-            <span
-              style={{
-                fontSize: 12,
-                background: "#f0e8dc",
-                color: "#7a5c3e",
-                padding: "3px 10px",
-                borderRadius: 99,
-              }}
-            >
-              📍 CDMX
-            </span>
-          </Group>
+
           {/* Redes sociales */}
           {(business.instagram || business.facebook || business.website) && (
             <div
@@ -326,61 +287,86 @@ export default function AppointmentBooking({ business }: Props) {
             overflow: "hidden",
           }}
         >
-          <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-            {active === 0 && (
-              <ServiceStep
-                slug={slug}
-                selectedService={selectedService}
-                onNext={handleServiceSelect}
+          {bookingCompleted ? (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <BookingPending
+                serviceName={selectedService?.name || ""}
+                time={selectedTime}
+                onBookAnother={() => {
+                  setBookingCompleted(false);
+                  setSelectedService(null);
+                  setSelectedDate(null);
+                  setSelectedTime(null);
+                  setActive(0);
+                }}
               />
-            )}
+            </div>
+          ) : (
+            <>
+              <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                {active === 0 && (
+                  <ServiceStep
+                    slug={slug}
+                    selectedService={selectedService}
+                    onNext={handleServiceSelect}
+                  />
+                )}
 
-            {active === 1 && (
-              <DateStep
-                selectedService={selectedService}
-                selectedDate={selectedDate}
-                onNext={handleDateSelect}
-              />
-            )}
+                {active === 1 && (
+                  <DateStep
+                    selectedService={selectedService}
+                    selectedDate={selectedDate}
+                    onNext={handleDateSelect}
+                  />
+                )}
 
-            {active === 2 && (
-              <TimeStep
-                slug={slug}
-                selectedService={selectedService}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                onNext={handleTimeSelect}
-              />
-            )}
+                {active === 2 && (
+                  <TimeStep
+                    slug={slug}
+                    selectedService={selectedService}
+                    selectedDate={selectedDate}
+                    selectedTime={selectedTime}
+                    onNext={handleTimeSelect}
+                  />
+                )}
 
-            {active === 3 && (
-              <DetailsStep
-                selectedService={selectedService}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                onSubmit={handleSubmit}
-              />
-            )}
-          </div>
+                {active === 3 && (
+                  <DetailsStep
+                    selectedService={selectedService}
+                    selectedDate={selectedDate}
+                    selectedTime={selectedTime}
+                    onSubmit={handleSubmit}
+                  />
+                )}
+              </div>
 
-          <Group justify="space-between" mt="md" style={{ flexShrink: 0 }}>
-            {active > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActive(active - 1)}
-              >
-                Regresar
-              </Button>
-            )}
+              <Group justify="space-between" mt="md" style={{ flexShrink: 0 }}>
+                {active > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActive(active - 1)}
+                  >
+                    Regresar
+                  </Button>
+                )}
 
-            {/* placeholder for future confirm button when on last step */}
-            {active === totalSteps - 1 && (
-              <Button type="submit" form="details-form" size="sm">
-                Confirmar reserva
-              </Button>
-            )}
-          </Group>
+                {/* placeholder for future confirm button when on last step */}
+                {active === totalSteps - 1 && (
+                  <Button type="submit" form="details-form" size="sm">
+                    Confirmar reserva
+                  </Button>
+                )}
+              </Group>
+            </>
+          )}
         </Card>
       </div>
     </div>

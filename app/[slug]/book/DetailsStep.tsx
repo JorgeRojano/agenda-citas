@@ -20,10 +20,10 @@ export function DetailsStep({
     validate: {
       name: (value) =>
         value.trim().length < 4 ? "Nombre debe tener al menos 4 caracteres" : null,
-      phone: (value) => {
+      /* phone: (value) => {
         const digits = value.replace(/\D/g, "");
         return digits.length === 10 ? null : "Número debe tener 10 dígitos";
-      },
+      }, */
       //email: (value) => (/^\S+@\S+$/.test(value) ? null : "Correo inválido"),
     },
   });
