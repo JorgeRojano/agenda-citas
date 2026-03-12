@@ -101,7 +101,7 @@ export default function AppointmentBooking({ business }: Props) {
         {/* Este div contiene y recorta el blob */}
         <div
           style={{
-            height: 160,
+            height: "5vh",
             background: business.primaryColor ?? "#c8a882",
             position: "relative",
             overflow: "hidden", // 👈 vuelve a hidden para contener el blob
@@ -171,7 +171,7 @@ export default function AppointmentBooking({ business }: Props) {
         >
           <Title
             order={3}
-            style={{ fontFamily: "Georgia, serif", color: "#2d1f14" }}
+            style={{ fontSize: "1.25rem", fontFamily: "Georgia, serif", color: "#2d1f14" }}
           >
             {business.name}
           </Title>
@@ -204,11 +204,6 @@ export default function AppointmentBooking({ business }: Props) {
                   >
                     <IconBrandFacebook size={20} color="#e1306c" />
                   </div>
-                  <span
-                    style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}
-                  >
-                    Facebook
-                  </span>
                 </a>
               )}
 
@@ -227,11 +222,6 @@ export default function AppointmentBooking({ business }: Props) {
                   >
                     <IconBrandInstagram size={20} color="#e1306c" />
                   </div>
-                  <span
-                    style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}
-                  >
-                    Instagram
-                  </span>
                 </a>
               )}
 
@@ -250,11 +240,6 @@ export default function AppointmentBooking({ business }: Props) {
                   >
                     <IconWorld size={20} color="#2563eb" />
                   </div>
-                  <span
-                    style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}
-                  >
-                    Sitio web
-                  </span>
                 </a>
               )}
             </div>

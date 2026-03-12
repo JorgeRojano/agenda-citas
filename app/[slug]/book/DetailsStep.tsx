@@ -1,6 +1,9 @@
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { formatDateTimeMexico } from "@/lib/utils";
 import { Card, Group, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useState } from "react";
 
 export function DetailsStep({
   selectedService,
@@ -8,6 +11,9 @@ export function DetailsStep({
   selectedTime,
   onSubmit,
 }: any) {
+  const [phone, setPhone] = useState<string>("+52");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
   // format the raw UTC slot into Mexico timezone and human-readable string
   const displayDateTime = formatDateTimeMexico(selectedTime);
 
@@ -15,18 +21,24 @@ export function DetailsStep({
     initialValues: {
       name: "",
       email: "",
-      phone: "",
     },
     validate: {
       name: (value) =>
-        value.trim().length < 4 ? "Nombre debe tener al menos 4 caracteres" : null,
-      /* phone: (value) => {
-        const digits = value.replace(/\D/g, "");
-        return digits.length === 10 ? null : "Número debe tener 10 dígitos";
-      }, */
+        value.trim().length < 4
+          ? "Nombre debe tener al menos 4 caracteres"
+          : null,
       //email: (value) => (/^\S+@\S+$/.test(value) ? null : "Correo inválido"),
     },
   });
+
+  const handleSubmit = (values: any) => {
+    if (!phone || !isValidPhoneNumber(phone)) {
+      setPhoneError("Número de teléfono inválido");
+      return;
+    }
+    setPhoneError(null);
+    onSubmit({ ...values, phone });
+  };
 
   return (
     <Stack gap="xs" mb="lg">
@@ -38,12 +50,7 @@ export function DetailsStep({
         </Text>
       </Stack>
 
-      <form
-        id="details-form"
-        onSubmit={form.onSubmit((values) => {
-          onSubmit(values);
-        })}
-      >
+      <form id="details-form" onSubmit={form.onSubmit(handleSubmit)}>
         <Stack gap="md" mt="sm">
           <TextInput
             required
@@ -52,12 +59,31 @@ export function DetailsStep({
             {...form.getInputProps("name")}
           />
 
-          <TextInput
-            required
-            label="Celular"
-            placeholder="(55) 1234-5678"
-            {...form.getInputProps("phone")}
-          />
+          <div>
+            <Text size="sm" fw={500} mb={4}>
+              Celular <span style={{ color: "red" }}>*</span>
+            </Text>
+            <PhoneInput
+              defaultCountry="MX"
+              international
+              withCountryCallingCode
+              value={phone}
+              onChange={(value) => {
+                setPhone(value ?? "");
+                setPhoneError(null);
+              }}
+              style={{
+                border: "1px solid #ced4da",
+                borderRadius: 8,
+                padding: "8px 12px",
+              }}
+            />
+            {phoneError && (
+              <Text size="xs" c="red" mt={4}>
+                {phoneError}
+              </Text>
+            )}
+          </div>
 
           <TextInput
             label="Correo Electrónico"
