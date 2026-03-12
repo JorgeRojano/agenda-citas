@@ -33,6 +33,7 @@ enum AppointmentStatus {
 model Profile {
   id   String   @id
   role UserRole @default(USER)
+  email String?
 
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)

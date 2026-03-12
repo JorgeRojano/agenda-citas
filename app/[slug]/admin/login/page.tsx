@@ -59,6 +59,11 @@ export default function AdminLoginPage() {
     if (data.user) {
       await supabase.auth.setSession(data.session!);
 
+      await supabase
+        .from("profiles")
+        .upsert({ id: data.user.id, email: data.user.email })
+        .eq("id", data.user.id);
+
       router.refresh();
 
       // ✅ Redirigir con slug dinámico
