@@ -19,6 +19,7 @@ export const sendPushNotification = async ({
       headings: { en: title },
       contents: { en: message },
       url,
+      collapse_id: `appointment-${Date.now()}`,
       web_buttons: [
         {
           id: "ver-cita",
