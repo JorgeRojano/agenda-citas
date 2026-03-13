@@ -1,12 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerSupabaseClient } from "./lib/supabaseServer";
+import { createClient } from "@supabase/supabase-js";
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabaseResponse = NextResponse.next({ request });
   const { pathname } = request.nextUrl;
 
   const isAdminRoute = /^\/[^\/]+\/admin/.test(pathname);
@@ -14,72 +11,52 @@ export async function middleware(request: NextRequest) {
 
   if (!isAdminRoute) return supabaseResponse;
 
-  const segments = pathname.split("/");
-  const slugInUrl = segments[1]; 
+  const slugInUrl = pathname.split("/")[1];
 
-  // 🛑 CASE 1: No hay usuario -> Login del negocio actual
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // CASE 1: No session → redirect to login
   if (!user && !isLoginRoute) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = `/${slugInUrl}/admin/login`;
     return NextResponse.redirect(loginUrl);
   }
 
-  // 🔐 CASE 2: Usuario logueado -> Validar permisos
-  if (user && !isLoginRoute) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, businessId")
-      .eq("id", user.id)
-      .maybeSingle();
+  if (!user) return supabaseResponse;
 
-    const isSuperAdmin = profile?.role === "SUPER_ADMIN";
+  // Fetch profile and business in parallel
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
 
-    // Si eres SuperAdmin, te dejamos pasar a cualquier slug
-    if (isSuperAdmin) return supabaseResponse;
+  const [{ data: profile }, { data: businessInUrl }] = await Promise.all([
+    supabaseAdmin.from("profiles").select("role, businessId").eq("id", user.id).maybeSingle(),
+    supabaseAdmin.from("Business").select("id").eq("slug", slugInUrl).maybeSingle(),
+  ]);
 
-    // Si eres Admin normal, verificamos el ID del negocio del SLUG actual
-    const { data: businessInUrl } = await supabase
-      .from("business")
-      .select("id")
-      .eq("slug", slugInUrl)
-      .maybeSingle();
+  const isSuperAdmin = profile?.role === "SUPER_ADMIN";
+  if (isSuperAdmin) return supabaseResponse;
 
-    const ownsThisBusiness = profile?.businessId === businessInUrl?.id;
+  const ownsThisBusiness = profile?.businessId === businessInUrl?.id;
 
-    if (!ownsThisBusiness) {
-      const redirectUrl = request.nextUrl.clone();
-
-      if (profile?.businessId) {
-        // Buscamos el slug real del negocio que sí posee el usuario
-        const { data: ownBusiness } = await supabase
-          .from("business")
-          .select("slug")
-          .eq("id", profile.businessId)
-          .maybeSingle();
-
-        // Validamos que ownBusiness y slug existan para evitar "undefined"
-        if (ownBusiness?.slug) {
-          const correctPath = `/${ownBusiness.slug}/admin/dashboard`;
-          
-          // 🛡️ CONTROL DE BUCLE: Solo redirigir si no estamos ya ahí
-          if (pathname !== correctPath) {
-            redirectUrl.pathname = correctPath;
-            return NextResponse.redirect(redirectUrl);
-          }
-        }
-      } else {
-        // Si el usuario no tiene negocio asignado y no es SuperAdmin
-        redirectUrl.pathname = "/";
-        return NextResponse.redirect(redirectUrl);
-      }
-    }
+  // CASE 2: Logged in, not login route → validate ownership
+  if (!isLoginRoute && !ownsThisBusiness) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = `/${slugInUrl}/admin/login`;
+    loginUrl.searchParams.set("error", "unauthorized");
+    return NextResponse.redirect(loginUrl);
   }
 
-  // 🔁 CASE 3: User logueado intentando entrar al login -> Dashboard
-  if (user && isLoginRoute) {
-    const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = `/${slugInUrl}/admin/dashboard`;
-    return NextResponse.redirect(dashUrl);
+  // CASE 3: Logged in, on login route → redirect to dashboard if owns business
+  if (isLoginRoute) {
+    if (ownsThisBusiness) {
+      const dashUrl = request.nextUrl.clone();
+      dashUrl.pathname = `/${slugInUrl}/admin/dashboard`;
+      return NextResponse.redirect(dashUrl);
+    }
+    return supabaseResponse;
   }
 
   return supabaseResponse;
