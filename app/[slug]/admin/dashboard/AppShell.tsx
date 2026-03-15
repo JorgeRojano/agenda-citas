@@ -4,7 +4,6 @@ import {
   AppShell,
   Burger,
   Button,
-  Container,
   Group,
   NavLink,
   ScrollArea,
@@ -192,9 +191,11 @@ export const AppShellAdmin = ({
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Container size="sm" pb={80}>
+        <div
+          style={{ padding: "var(--mantine-spacing-md)", paddingBottom: 80 }}
+        >
           {children}
-        </Container>
+        </div>
       </AppShell.Main>
     </AppShell>
   );
