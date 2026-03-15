@@ -327,67 +327,149 @@ export default function AdminAvailabilityPage() {
                           }}
                         >
                           {isExpanded(day.dayOfWeek, index) ? (
-                            // Modo edición
                             <div
                               style={{
-                                display: "flex",
-                                alignItems: "flex-end",
-                                gap: 8,
-                                background: "white",
+                                background: "#eff6ff",
                                 border: "1.5px solid #bfdbfe",
                                 borderRadius: 12,
-                                padding: "10px 14px",
+                                padding: 14,
+                                marginBottom: 6,
                                 width: "100%",
                               }}
                             >
-                              <TimeInput
-                                label="Abre"
-                                value={slot.start}
-                                onChange={(e) =>
-                                  updateSlot(
-                                    day.dayOfWeek,
-                                    index,
-                                    "start",
-                                    e.target.value,
-                                  )
+                              {/* Grid responsive: inline en desktop, stacked en mobile */}
+                              <style>{`
+                                .edit-slot-grid {
+                                  display: flex;
+                                  align-items: flex-end;
+                                  gap: 8px;
                                 }
-                                size="sm"
-                              />
-                              <Text c="dimmed" mb={6}>
-                                →
-                              </Text>
-                              <TimeInput
-                                label="Cierra"
-                                value={slot.end}
-                                onChange={(e) =>
-                                  updateSlot(
-                                    day.dayOfWeek,
-                                    index,
-                                    "end",
-                                    e.target.value,
-                                  )
+                                .edit-slot-arrow {
+                                  color: #94a3b8;
+                                  padding-bottom: 10px;
+                                  flex-shrink: 0;
                                 }
-                                size="sm"
-                              />
-                              <Button
-                                size="xs"
-                                variant="light"
-                                mb={2}
-                                onClick={() =>
-                                  toggleExpand(day.dayOfWeek, index)
+                                .edit-slot-actions {
+                                  display: flex;
+                                  gap: 8px;
+                                  justify-content: flex-end;
+                                  margin-top: 0;
                                 }
-                              >
-                                Listo
-                              </Button>
-                              <Button
-                                size="xs"
-                                variant="subtle"
-                                color="red"
-                                mb={2}
-                                onClick={() => removeSlot(day.dayOfWeek, index)}
-                              >
-                                <IconX size={14} />
-                              </Button>
+                                @media (max-width: 600px) {
+                                  .edit-slot-grid {
+                                    display: grid;
+                                    grid-template-columns: 1fr auto 1fr;
+                                    align-items: end;
+                                    gap: 8px;
+                                  }
+                                  .edit-slot-arrow {
+                                    padding-bottom: 10px;
+                                    text-align: center;
+                                  }
+                                  .edit-slot-actions {
+                                    margin-top: 10px;
+                                    justify-content: flex-end;
+                                  }
+                                }
+                              `}</style>
+
+                              <div className="edit-slot-grid">
+                                <div style={{ flex: 1 }}>
+                                  <Text size="xs" fw={600} c="dimmed" mb={4}>
+                                    Abre
+                                  </Text>
+                                  <TimeInput
+                                    value={slot.start}
+                                    onChange={(e) =>
+                                      updateSlot(
+                                        day.dayOfWeek,
+                                        index,
+                                        "start",
+                                        e.target.value,
+                                      )
+                                    }
+                                    size="sm"
+                                  />
+                                </div>
+                                <div className="edit-slot-arrow">→</div>
+                                <div style={{ flex: 1 }}>
+                                  <Text size="xs" fw={600} c="dimmed" mb={4}>
+                                    Cierra
+                                  </Text>
+                                  <TimeInput
+                                    value={slot.end}
+                                    onChange={(e) =>
+                                      updateSlot(
+                                        day.dayOfWeek,
+                                        index,
+                                        "end",
+                                        e.target.value,
+                                      )
+                                    }
+                                    size="sm"
+                                  />
+                                </div>
+                                {/* Botones inline solo en desktop */}
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  color="blue"
+                                  mb={2}
+                                  onClick={() =>
+                                    toggleExpand(day.dayOfWeek, index)
+                                  }
+                                  style={{ flexShrink: 0 }}
+                                  className="edit-slot-desktop-btn"
+                                >
+                                  Listo
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  color="red"
+                                  mb={2}
+                                  onClick={() =>
+                                    removeSlot(day.dayOfWeek, index)
+                                  }
+                                  style={{ flexShrink: 0 }}
+                                  className="edit-slot-desktop-btn"
+                                >
+                                  <IconX size={14} />
+                                </Button>
+                              </div>
+
+                              {/* Botones solo en mobile */}
+                              <style>{`
+                                .edit-slot-desktop-btn { display: flex; }
+                                .edit-slot-mobile-actions { display: none; }
+                                @media (max-width: 600px) {
+                                  .edit-slot-desktop-btn { display: none !important; }
+                                  .edit-slot-mobile-actions { display: flex !important; }
+                                }
+                              `}</style>
+                              <div className="edit-slot-mobile-actions edit-slot-actions">
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  color="blue"
+                                  flex={1}
+                                  onClick={() =>
+                                    toggleExpand(day.dayOfWeek, index)
+                                  }
+                                >
+                                  ✓ Listo
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  color="red"
+                                  onClick={() =>
+                                    removeSlot(day.dayOfWeek, index)
+                                  }
+                                >
+                                  🗑
+                                </Button>
+                              </div>
                             </div>
                           ) : (
                             // Modo pill
