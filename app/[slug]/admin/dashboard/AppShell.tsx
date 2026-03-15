@@ -12,6 +12,7 @@ import {
 import {
   IconCalendar,
   IconClock,
+  IconExternalLink,
   IconLayoutDashboard,
   IconLogout,
   IconSettings,
@@ -174,7 +175,13 @@ export const AppShellAdmin = ({
           </Stack>
         </AppShell.Section>
         <AppShell.Section p="md">
-          Navbar footer – always at the bottom
+          <NavLink
+            label="Ver página de citas"
+            leftSection={<IconExternalLink size={18} />}
+            component="a"
+            href={`/${slug}/book`}
+            target="_blank"
+          />
         </AppShell.Section>
         <AppShell.Section p="md">
           <Button
