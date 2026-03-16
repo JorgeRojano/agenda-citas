@@ -21,6 +21,7 @@ interface Service {
   name: string;
   duration: number;
   price: number;
+  businessId: string;
 }
 
 interface Business {
@@ -56,7 +57,7 @@ interface LeftPanelProps {
   darkColor: string;
   compact: boolean;
   selectedService: Service | null;
-  selectedDate: Date | null;
+  selectedDate: DateValue | null;
   selectedTime: string | null;
   active?: number;
 }
