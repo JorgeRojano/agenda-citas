@@ -1,14 +1,7 @@
-import {
-  Card,
-  Group,
-  ScrollArea,
-  Stack,
-  Text,
-  Title,
-  UnstyledButton,
-} from "@mantine/core";
-import { IconClock } from "@tabler/icons-react";
-import classes from "./ServiceStep.module.css"; // Ver abajo para el CSS
+"use client";
+
+import { Stack, Text, Title } from "@mantine/core";
+import { IconClock, IconCheck } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 
 interface Service {
@@ -19,57 +12,132 @@ interface Service {
   businessId: string;
 }
 
-export function ServiceStep({ slug, selectedService, onNext }: any) {
+interface Props {
+  slug: string;
+  selectedService: Service | null;
+  onNext: (service: Service) => void;
+  primaryColor?: string;
+}
+
+const serviceEmojis = ["💼", "🎨", "💻", "📱", "🚀", "⭐", "🔧", "📋"];
+
+export function ServiceStep({ slug, selectedService, onNext, primaryColor = "#2563eb" }: Props) {
   const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
     if (!slug) return;
-
     fetch(`/api/business/${slug}/services`)
       .then((res) => res.json())
       .then(setServices);
   }, [slug]);
 
   return (
-    <Stack gap="xs" mb="lg">
-      <Title order={4} mb="lg">
-        Selecciona un servicio
-      </Title>
+    <Stack gap="md">
+      <style>{`
+        .services-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .service-card {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 14px;
+          padding: 14px 16px;
+        }
+        .service-price {
+          margin-left: auto;
+          flex-shrink: 0;
+        }
+        @media (min-width: 768px) {
+          .services-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+          }
+          .service-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 18px 16px;
+            min-height: 160px;
+          }
+          .service-price {
+            margin-left: 0;
+            margin-top: auto;
+          }
+        }
+      `}</style>
 
-      <ScrollArea offsetScrollbars scrollbarSize={6}>
-        <Stack gap="sm" p="sm">
-          {services.map((service) => (
-            <UnstyledButton
+      <div>
+        <Title order={4}>¿Qué servicio necesitas?</Title>
+        <Text size="sm" c="dimmed" mt={4}>
+          Selecciona uno de los servicios disponibles
+        </Text>
+      </div>
+
+      <div className="services-grid">
+        {services.map((service, i) => {
+          const isSelected = selectedService?.id === service.id;
+          return (
+            <div
               key={service.id}
               onClick={() => onNext(service)}
-              className={classes.serviceItem}
-              data-selected={selectedService === service || undefined}
+              className="service-card"
+              style={{
+                background: "white",
+                borderRadius: 16,
+                cursor: "pointer",
+                border: `2px solid ${isSelected ? primaryColor : "transparent"}`,
+                boxShadow: isSelected
+                  ? `0 0 0 4px ${primaryColor}22`
+                  : "0 2px 8px rgba(0,0,0,0.06)",
+                transition: "all 0.15s ease",
+                position: "relative",
+              }}
             >
-              <Group justify="space-between" wrap="nowrap">
-                <div>
-                  <Text fw={600} size="md">
-                    {service.name}
-                  </Text>
-                  <Group gap={5} mt={4}>
-                    <IconClock size={14} style={{ opacity: 0.6 }} />
-                    <Text size="xs" c="dimmed">
-                      {service.duration} min
-                    </Text>
-                  </Group>
+              {isSelected && (
+                <div style={{
+                  position: "absolute", top: 10, right: 10,
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: primaryColor,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <IconCheck size={12} color="white" strokeWidth={3} />
                 </div>
-                <Text fw={700} size="lg">
-                  ${service.price.toFixed(2)}
+              )}
+
+              {/* Ícono */}
+              <div style={{
+                width: 48, height: 48, minWidth: 48, borderRadius: 14,
+                background: isSelected ? `${primaryColor}18` : "#f8fafc",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 22, flexShrink: 0,
+              }}>
+                {serviceEmojis[i % serviceEmojis.length]}
+              </div>
+
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Text fw={700} size="md" style={{
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
+                  {service.name}
                 </Text>
-              </Group>
-            </UnstyledButton>
-          ))}
-        </Stack>
-      </ScrollArea>
-      {/* {SERVICES.length > 4 && (
-        <Text size="xs" c="dimmed" ta="center" mt="sm">
-          Desliza para ver más servicios
-        </Text>
-      )} */}
+                <Text size="xs" c="dimmed" mt={3} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <IconClock size={12} />
+                  {service.duration} min
+                </Text>
+              </div>
+
+              {/* Precio */}
+              <Text fw={700} size="lg" className="service-price" style={{ color: primaryColor }}>
+                ${(service.price / 100).toFixed(2)}
+              </Text>
+            </div>
+          );
+        })}
+      </div>
     </Stack>
   );
 }

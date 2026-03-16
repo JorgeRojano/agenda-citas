@@ -112,20 +112,6 @@ export default function AdminLoginPage({ business }: Props) {
             className="login-left"
             style={{ background: `linear-gradient(145deg, ${primaryColor}, ${primaryColor}cc)` }}
           >
-            {/* Blobs decorativos */}
-            <div style={{
-              position: "absolute", width: 300, height: 300,
-              background: "rgba(255,255,255,0.07)",
-              borderRadius: "60% 40% 70% 30% / 50% 60% 40% 50%",
-              top: -80, right: -80, pointerEvents: "none",
-            }} />
-            <div style={{
-              position: "absolute", width: 200, height: 200,
-              background: "rgba(255,255,255,0.05)",
-              borderRadius: "40% 60% 30% 70% / 60% 40% 50% 50%",
-              bottom: -60, left: -40, pointerEvents: "none",
-            }} />
-
             {/* Logo */}
             <div style={{
               width: 80, height: 80, borderRadius: 22,

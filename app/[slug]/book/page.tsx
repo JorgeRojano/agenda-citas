@@ -26,7 +26,7 @@ export default async function BookPage({ params }: Props) {
   if (!business) return <div>Negocio no encontrado</div>;
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto" }}>
+    <div style={{ margin: "0 auto" }}>
       <AppointmentBooking  business={business}/>
     </div>
   );
