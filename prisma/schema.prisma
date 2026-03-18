@@ -110,6 +110,8 @@ model Service {
   duration Int // minutos
   price    Int // en centavos para evitar floats
 
+  showPrice Boolean @default(true)
+
   appointments Appointment[]
 
   createdAt DateTime @default(now())

@@ -1,16 +1,9 @@
 "use client";
 
+import { Service } from "@/types/Service";
 import { Stack, Text, Title } from "@mantine/core";
 import { IconClock, IconCheck } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-
-interface Service {
-  id: string;
-  name: string;
-  duration: number;
-  price: number;
-  businessId: string;
-}
 
 interface Props {
   slug: string;
@@ -21,7 +14,12 @@ interface Props {
 
 const serviceEmojis = ["💼", "🎨", "💻", "📱", "🚀", "⭐", "🔧", "📋"];
 
-export function ServiceStep({ slug, selectedService, onNext, primaryColor = "#2563eb" }: Props) {
+export function ServiceStep({
+  slug,
+  selectedService,
+  onNext,
+  primaryColor = "#2563eb",
+}: Props) {
   const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
@@ -97,43 +95,77 @@ export function ServiceStep({ slug, selectedService, onNext, primaryColor = "#25
               }}
             >
               {isSelected && (
-                <div style={{
-                  position: "absolute", top: 10, right: 10,
-                  width: 22, height: 22, borderRadius: "50%",
-                  background: primaryColor,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    background: primaryColor,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <IconCheck size={12} color="white" strokeWidth={3} />
                 </div>
               )}
 
               {/* Ícono */}
-              <div style={{
-                width: 48, height: 48, minWidth: 48, borderRadius: 14,
-                background: isSelected ? `${primaryColor}18` : "#f8fafc",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 22, flexShrink: 0,
-              }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  minWidth: 48,
+                  borderRadius: 14,
+                  background: isSelected ? `${primaryColor}18` : "#f8fafc",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 22,
+                  flexShrink: 0,
+                }}
+              >
                 {serviceEmojis[i % serviceEmojis.length]}
               </div>
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <Text fw={700} size="md" style={{
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
+                <Text
+                  fw={700}
+                  size="md"
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {service.name}
                 </Text>
-                <Text size="xs" c="dimmed" mt={3} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <Text
+                  size="xs"
+                  c="dimmed"
+                  mt={3}
+                  style={{ display: "flex", alignItems: "center", gap: 4 }}
+                >
                   <IconClock size={12} />
                   {service.duration} min
                 </Text>
               </div>
 
               {/* Precio */}
-              <Text fw={700} size="lg" className="service-price" style={{ color: primaryColor }}>
-                ${(service.price / 100).toFixed(2)}
-              </Text>
+              {service.showPrice && (
+                <Text
+                  fw={700}
+                  size="lg"
+                  className="service-price"
+                  style={{ color: primaryColor }}
+                >
+                  ${(service.price / 100).toFixed(2)}
+                </Text>
+              )}
             </div>
           );
         })}

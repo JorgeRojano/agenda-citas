@@ -17,13 +17,7 @@ import { DatePickerInput, DateValue } from "@mantine/dates";
 import { createAppointment } from "./actions";
 import dayjs from "dayjs";
 import { useParams } from "next/navigation";
-
-interface Service {
-  id: string;
-  name: string;
-  duration: number;
-  price: number;
-}
+import { Service } from "@/types/Service";
 
 export default function BookingForm() {
   const params = useParams();

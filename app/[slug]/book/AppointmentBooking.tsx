@@ -15,14 +15,7 @@ import { ServiceStep } from "./ServiceStep";
 import { DetailsStep } from "./DetailsStep";
 import { createAppointment } from "./actions";
 import { BookingPending } from "./BookingPending";
-
-interface Service {
-  id: string;
-  name: string;
-  duration: number;
-  price: number;
-  businessId: string;
-}
+import { Service } from "@/types/Service";
 
 interface Business {
   name: string;
@@ -665,6 +658,7 @@ export default function AppointmentBooking({ business }: Props) {
                 slug={slug}
                 primaryColor={primaryColor}
                 selectedService={selectedService}
+
                 onNext={handleServiceSelect}
               />
             )}

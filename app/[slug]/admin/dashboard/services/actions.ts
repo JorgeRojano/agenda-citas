@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 export async function createService(
   businessId: string,
-  data: { name: string; duration: number; price: number },
+  data: { name: string; duration: number; price: number; showPrice: boolean },
 ) {
   await validateBusinessAccess(businessId);
 
@@ -16,6 +16,7 @@ export async function createService(
       name: data.name,
       duration: data.duration,
       price: data.price * 100,
+      showPrice: data.showPrice,
     },
   });
 
@@ -25,7 +26,7 @@ export async function createService(
 export async function updateService(
   businessId: string,
   serviceId: string,
-  data: { name: string; duration: number; price: number },
+  data: { name: string; duration: number; price: number; showPrice: boolean },
 ) {
   await validateBusinessAccess(businessId);
 
@@ -35,6 +36,7 @@ export async function updateService(
       name: data.name,
       duration: data.duration,
       price: data.price * 100,
+      showPrice: data.showPrice,
     },
   });
 

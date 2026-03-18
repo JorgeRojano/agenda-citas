@@ -12,7 +12,7 @@ import {
   NumberInput,
   Stack,
   Title,
-  ActionIcon,
+  Switch,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
@@ -20,13 +20,7 @@ import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import { createService, updateService, deleteService } from "./actions";
 import { showNotification } from "@mantine/notifications";
-
-interface Service {
-  id: string;
-  name: string;
-  duration: number;
-  price: number;
-}
+import { Service } from "@/types/Service";
 
 interface Business {
   id: string;
@@ -47,7 +41,7 @@ export default function ServicesClient({ business, services: initialServices }: 
   const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
 
   const form = useForm({
-    initialValues: { name: "", duration: 60, price: 0 },
+    initialValues: { name: "", duration: 60, price: 0, showPrice: true },
     validate: {
       name: (v) => v.trim().length < 2 ? "Nombre requerido" : null,
       duration: (v) => v < 1 ? "Duración inválida" : null,
@@ -62,6 +56,7 @@ export default function ServicesClient({ business, services: initialServices }: 
         name: service.name,
         duration: service.duration,
         price: service.price / 100,
+        showPrice: service.showPrice,
       });
     } else {
       setEditingService(null);
@@ -85,7 +80,6 @@ export default function ServicesClient({ business, services: initialServices }: 
         showNotification({ title: "Guardado", message: "Servicio actualizado", color: "green" });
       } else {
         await createService(business.id, values);
-        // Refetch para obtener el nuevo id
         window.location.reload();
       }
       close();
@@ -127,26 +121,24 @@ export default function ServicesClient({ business, services: initialServices }: 
               <Text fw={700} size="md">{service.name}</Text>
               <Group gap="xs">
                 <Badge variant="light" color="blue">⏱ {service.duration} min</Badge>
-                <Badge variant="light" color="green">
-                  ${(service.price / 100).toFixed(2)}
-                </Badge>
+                {service.showPrice ? (
+                  <Badge variant="light" color="green">
+                    ${(service.price / 100).toFixed(2)}
+                  </Badge>
+                ) : (
+                  <Badge variant="light" color="gray">Precio oculto</Badge>
+                )}
               </Group>
               <Group gap="xs" mt="xs">
                 <Button
-                  variant="light"
-                  color="blue"
-                  size="xs"
-                  flex={1}
+                  variant="light" color="blue" size="xs" flex={1}
                   leftSection={<IconEdit size={14} />}
                   onClick={() => handleOpen(service)}
                 >
                   Editar
                 </Button>
                 <Button
-                  variant="light"
-                  color="red"
-                  size="xs"
-                  flex={1}
+                  variant="light" color="red" size="xs" flex={1}
                   leftSection={<IconTrash size={14} />}
                   onClick={() => { setDeleteId(service.id); openDelete(); }}
                 >
@@ -157,21 +149,13 @@ export default function ServicesClient({ business, services: initialServices }: 
           </Card>
         ))}
 
-        {/* Card vacía para agregar */}
         <Card
-          withBorder
-          radius="md"
-          padding="md"
-          shadow="sm"
+          withBorder radius="md" padding="md" shadow="sm"
           onClick={() => handleOpen()}
           style={{
-            border: "2px dashed #dee2e6",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: 130,
-            background: "transparent",
+            border: "2px dashed #dee2e6", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            minHeight: 130, background: "transparent",
           }}
         >
           <Stack align="center" gap="xs">
@@ -211,6 +195,13 @@ export default function ServicesClient({ business, services: initialServices }: 
               prefix="$"
               {...form.getInputProps("price")}
               required
+            />
+            {/* 👇 Switch para mostrar/ocultar precio */}
+            <Switch
+              label="Mostrar precio en la página de reservas"
+              description="Si está desactivado, el precio no será visible para los clientes"
+              checked={form.values.showPrice}
+              onChange={(e) => form.setFieldValue("showPrice", e.currentTarget.checked)}
             />
             <Button type="submit" loading={loading} fullWidth>
               {editingService ? "Guardar cambios" : "Crear servicio"}
