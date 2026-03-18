@@ -6,8 +6,9 @@ import { StatusButtons } from "./StatusButtons";
 import CancelAppointmentButton from "./CancelAppointmentButton";
 import UnblockButton from "./UnblockButton";
 import BlockTimeButton from "./BlockTimeButton";
-import RefreshButton from "./RefreshButton";
 import DayPicker from "./DayPicker";
+import CreateAppointmentButton from "./CreateAppointmentButton";
+import { Business } from "@/types/Business";
 
 type AppointmentItem = {
   type: "appointment";
@@ -31,7 +32,7 @@ type Item = AppointmentItem | BlockedItem;
 interface Props {
   items: Item[];
   slug: string;
-  businessName: string;
+  business: Business;
 }
 
 const statusConfig: Record<string, { color: string; label: string; border: string; bg: string }> = {
@@ -103,7 +104,7 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
   );
 }
 
-export default function BookingsClient({ items, slug, businessName }: Props) {
+export default function BookingsClient({ items, slug, business }: Props) {
   const appointments = items.filter((i) => i.type === "appointment") as AppointmentItem[];
   const blocked = items.filter((i) => i.type === "blocked") as BlockedItem[];
 
@@ -161,11 +162,11 @@ export default function BookingsClient({ items, slug, businessName }: Props) {
       <div className="bookings-header">
         <div>
           <Text fw={700} size="xl">Citas del día</Text>
-          <Text size="xs" c="dimmed">{businessName}</Text>
+          <Text size="xs" c="dimmed">{business.name}</Text>
         </div>
         <Group gap="xs">
+          <CreateAppointmentButton slug={slug} primaryColor={business.primaryColor} />
           <BlockTimeButton slug={slug} />
-          <RefreshButton />
         </Group>
       </div>
 

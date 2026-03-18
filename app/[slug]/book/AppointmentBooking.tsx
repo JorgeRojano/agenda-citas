@@ -16,18 +16,7 @@ import { DetailsStep } from "./DetailsStep";
 import { createAppointment } from "./actions";
 import { BookingPending } from "./BookingPending";
 import { Service } from "@/types/Service";
-
-interface Business {
-  name: string;
-  description: string | null;
-  primaryColor: string | null;
-  logoUrl: string | null;
-  bannerUrl: string | null;
-  whatsapp: string | null;
-  facebook: string | null;
-  instagram: string | null;
-  website: string | null;
-}
+import { Business } from "@/types/Business";
 
 interface Props {
   business: Business;

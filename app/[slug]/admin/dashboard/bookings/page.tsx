@@ -45,7 +45,7 @@ export default async function AdminBookingsPage({ params, searchParams }: Props)
     <BookingsClient
       items={items}
       slug={slug}
-      businessName={business.name}
+      business={business}
     />
   );
 }
