@@ -1,6 +1,7 @@
-import { browserSupabase } from "./supabaseBrowser";
+import { createBrowserSupabaseClient } from "./supabaseBrowser";
 
 export async function getBusinessSchedule(businessId: string) {
+  const browserSupabase = createBrowserSupabaseClient();
   const { data, error } = await browserSupabase
     .from("BusinessTimeSlot")
     .select("dayOfWeek")

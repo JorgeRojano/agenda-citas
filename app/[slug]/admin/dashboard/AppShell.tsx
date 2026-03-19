@@ -25,7 +25,7 @@ import { useRealtimeAppointments } from "@/lib/hooks/useRealTimeAppointments";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import { initOneSignal } from "@/lib/oneSignal";
-import { browserSupabase } from "@/lib/supabaseBrowser";
+import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
 
 const MessageNewAppointment = ({
   booking,
@@ -112,8 +112,27 @@ export const AppShellAdmin = ({
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await browserSupabase.auth.signOut();
-    router.push(`/${slug}/admin/login`);
+
+    // 1. Sign out global
+    const browserSupabase = createBrowserSupabaseClient();
+    await browserSupabase.auth.signOut({ scope: "global" });
+
+    // 2. Limpiar storage manualmente
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Limpiar cookies de Supabase
+      document.cookie.split(";").forEach((cookie) => {
+        const name = cookie.split("=")[0].trim();
+        if (name.includes("sb-") || name.includes("supabase")) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        }
+      });
+    }
+
+    // 3. Hard redirect para limpiar estado de React
+    window.location.href = `/${slug}/admin/login`;
   };
 
   return (

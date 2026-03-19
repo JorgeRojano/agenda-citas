@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { browserSupabase } from "../supabaseBrowser";
+import { createBrowserSupabaseClient } from "../supabaseBrowser";
 
 export function useRealtimeAppointments(
   businessId: string,
@@ -11,6 +11,7 @@ export function useRealtimeAppointments(
 
   useEffect(() => {
     if (!businessId) return;
+    const browserSupabase = createBrowserSupabaseClient();
     const channel = browserSupabase
       .channel(`Appointment:${businessId}`)
       .on(
