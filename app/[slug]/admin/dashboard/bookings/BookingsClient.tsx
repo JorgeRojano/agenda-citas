@@ -119,16 +119,14 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
       timeZone: "America/Mexico_City",
     });
 
-    const message = encodeURIComponent(
+    const message =
       `Hola ${item.clientName} 👋, te recordamos que tienes una cita confirmada:\n\n` +
-        `📋 *Servicio:* ${item.service}\n` +
-        `📅 *Fecha:* ${date}\n` +
-        `⏰ *Hora:* ${time}\n\n` +
-        `¡Te esperamos! 😊`,
-    );
+      `📋 *Servicio:* ${item.service}\n` +
+      `📅 *Fecha:* ${date}\n` +
+      `⏰ *Hora:* ${time}\n\n` +
+      `¡Te esperamos! 😊`;
 
     const whatsappUrl = getWhatsAppLink(item.phone, message);
-
     window.open(whatsappUrl, "_blank");
   };
 
