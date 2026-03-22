@@ -38,6 +38,7 @@ export default function CreateAppointmentButton({
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [staff, setStaff] = useState<{ id: string; name: string }[]>([]);
 
   const searchParams = useSearchParams();
   const dateString =
@@ -53,7 +54,7 @@ export default function CreateAppointmentButton({
   );
 
   const form = useForm({
-    initialValues: { name: "", serviceId: "" },
+    initialValues: { name: "", serviceId: "", assignedToId: "" },
     validate: {
       name: (v) => (v.trim().length < 2 ? "Nombre requerido" : null),
       serviceId: (v) => (!v ? "Selecciona un servicio" : null),
@@ -78,10 +79,13 @@ export default function CreateAppointmentButton({
     setLoadingSlots(true);
     setSelectedSlot(null);
 
-    const dateForApi = new Date(dateString + "T12:00:00").toString(); // 👈
+    const dateForApi = new Date(dateString + "T12:00:00").toString();
+    const staffParam = form.values.assignedToId
+      ? `&staffId=${form.values.assignedToId}`
+      : "";
 
     fetch(
-      `/api/business/${slug}/availability?date=${encodeURIComponent(dateForApi)}&serviceId=${serviceId}`,
+      `/api/business/${slug}/availability?date=${encodeURIComponent(dateForApi)}&serviceId=${serviceId}${staffParam}`,
     )
       .then((r) => r.json())
       .then((data) => {
@@ -89,7 +93,18 @@ export default function CreateAppointmentButton({
         setLoadingSlots(false);
       })
       .catch(() => setLoadingSlots(false));
-  }, [form.values.serviceId, dateString]);
+  }, [form.values.serviceId, form.values.assignedToId, dateString]);
+
+  // Fetch staff junto con servicios
+  useEffect(() => {
+    fetch(`/api/business/${slug}/services`)
+      .then((r) => r.json())
+      .then(setServices);
+
+    fetch(`/api/business/${slug}/staff`)
+      .then((r) => r.json())
+      .then(setStaff);
+  }, [slug]);
 
   const formatTime = (slot: string) =>
     new Date(slot).toLocaleTimeString("es-MX", {
@@ -120,6 +135,7 @@ export default function CreateAppointmentButton({
         phone,
         serviceId: values.serviceId,
         slot: selectedSlot,
+        assignedToId: values.assignedToId || null,
       });
       showNotification({
         title: "Cita creada",
@@ -299,6 +315,16 @@ export default function CreateAppointmentButton({
                 {...form.getInputProps("serviceId")}
               />
             </div>
+
+            {staff.length > 0 && (
+              <Select
+                label="Asignar a (opcional)"
+                placeholder="Sin asignar"
+                clearable
+                data={staff.map((s) => ({ value: s.id, label: s.name }))}
+                {...form.getInputProps("assignedToId")}
+              />
+            )}
 
             {/* Horarios */}
             {form.values.serviceId && (

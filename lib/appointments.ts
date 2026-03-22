@@ -10,7 +10,7 @@ import { validateBusinessAccess } from "./validateBusinessAccess";
 export async function getAppointmentsByDay(
   businessId: string,
   start: Date,
-  end: Date
+  end: Date,
 ) {
   await validateBusinessAccess(businessId);
   return prisma.appointment.findMany({
@@ -26,6 +26,13 @@ export async function getAppointmentsByDay(
     },
     include: {
       service: true,
+      assignedTo: {
+        select: {
+          id: true,
+          name: true,
+          specialty: true,
+        },
+      },
     },
     orderBy: {
       startTime: "asc",
@@ -39,7 +46,7 @@ export async function getAppointmentsByDay(
 export async function getBlockedTimeByDay(
   businessId: string,
   start: Date,
-  end: Date
+  end: Date,
 ) {
   return prisma.blockedTime.findMany({
     where: {
@@ -60,12 +67,11 @@ export async function getBlockedTimeByDay(
 export async function updateAppointmentStatus(
   appointmentId: string,
   slug: string,
-  newStatus: string
+  newStatus: string,
 ) {
-
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    include: { business: true }
+    include: { business: true },
   });
 
   if (!appointment) throw new Error("Cita no encontrada");

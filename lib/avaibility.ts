@@ -49,12 +49,10 @@ function generateSlotsFromTimeRanges(
 export async function getAvailableSlots(
   businessId: string,
   date: string,
-  serviceDuration: number
+  serviceDuration: number,
+  staffId?: string | null  // 👈 nuevo parámetro opcional
 ) {
-  // 🔥 convertir UTC → México
   const mexicoDate = toZonedTime(new Date(date), TIME_ZONE);
-  console.log("Calculando disponibilidad para fecha (México):", mexicoDate);
-
   const dayOfWeek = mexicoDate.getDay();
 
   const startOfDayMexico = new Date(mexicoDate);
@@ -63,25 +61,23 @@ export async function getAvailableSlots(
   const endOfDayMexico = new Date(mexicoDate);
   endOfDayMexico.setHours(23, 59, 59, 999);
 
-  // 🔥 convertir México → UTC
   const dayStartUTC = fromZonedTime(startOfDayMexico, TIME_ZONE);
   const dayEndUTC = fromZonedTime(endOfDayMexico, TIME_ZONE);
 
   const timeRanges = await prisma.businessTimeSlot.findMany({
-    where: {
-      businessId,
-      dayOfWeek,
-    },
+    where: { businessId, dayOfWeek },
   });
 
   if (!timeRanges.length) return [];
 
+  // 👇 Si hay staffId, filtra solo sus citas. Si no, filtra todas las del negocio
   const appointments = await prisma.appointment.findMany({
     where: {
       businessId,
       status: { in: ["PENDING", "CONFIRMED"] },
       startTime: { lt: dayEndUTC },
       endTime: { gt: dayStartUTC },
+      ...(staffId ? { assignedToId: staffId } : {}),
     },
   });
 
@@ -93,23 +89,16 @@ export async function getAvailableSlots(
     },
   });
 
-  const slots = generateSlotsFromTimeRanges(
-    mexicoDate,
-    timeRanges,
-    serviceDuration
-  );
+  const slots = generateSlotsFromTimeRanges(mexicoDate, timeRanges, serviceDuration);
 
   return slots.filter((slotUTC) => {
     const slotEndUTC = addMinutes(slotUTC, serviceDuration);
-
     const overlapsAppointment = appointments.some((a) =>
       isOverlapping(slotUTC, slotEndUTC, a.startTime, a.endTime)
     );
-
     const overlapsBlocked = blocked.some((b) =>
       isOverlapping(slotUTC, slotEndUTC, b.start, b.end)
     );
-
     return !overlapsAppointment && !overlapsBlocked;
   });
 }

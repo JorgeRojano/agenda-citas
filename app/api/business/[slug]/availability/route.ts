@@ -16,6 +16,7 @@ export async function GET(req: Request, context: { params: Promise<Params> }) {
   const { searchParams } = new URL(req.url);
   const dateParam = searchParams.get("date");
   const serviceId = searchParams.get("serviceId");
+  const staffId = searchParams.get("staffId");
 
   if (!dateParam || !serviceId) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
@@ -47,7 +48,8 @@ export async function GET(req: Request, context: { params: Promise<Params> }) {
   const slots = await getAvailableSlots(
     business.id,
     date,
-    service.duration
+    service.duration,
+    staffId ?? null,
   );
 
   return NextResponse.json(slots);

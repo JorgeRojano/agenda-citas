@@ -14,7 +14,8 @@ export async function createAppointmentByAdmin(
     phone: string;
     serviceId: string;
     slot: string;
-  }
+    assignedToId?: string | null;
+  },
 ) {
   const business = await prisma.business.findUnique({ where: { slug } });
   if (!business) throw new Error("Negocio no encontrado");
@@ -35,6 +36,7 @@ export async function createAppointmentByAdmin(
       status: { in: ["PENDING", "CONFIRMED"] },
       startTime: { lt: endTime },
       endTime: { gt: startTime },
+      ...(data.assignedToId ? { assignedToId: data.assignedToId } : {}),
     },
   });
 
@@ -48,7 +50,8 @@ export async function createAppointmentByAdmin(
       phone: data.phone,
       startTime,
       endTime,
-      status: "CONFIRMED", // 👈 directo a confirmada
+      status: "CONFIRMED",
+      assignedToId: data.assignedToId ?? null,
     },
   });
 

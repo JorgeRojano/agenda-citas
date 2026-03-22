@@ -33,6 +33,7 @@ export default async function AdminBookingsPage({ params, searchParams }: Props)
       service: a.service.name,
       status: a.status,
       phone: a.phone,
+      assignedTo: a.assignedTo?.name ?? null,
     })),
     ...blockedTimes.map((b) => ({
       type: "blocked" as const,

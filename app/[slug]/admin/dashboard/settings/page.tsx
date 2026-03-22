@@ -11,6 +11,7 @@ import {
   ColorInput,
   Text,
   Paper,
+  Switch,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -47,51 +48,77 @@ export default function SettingsPage() {
   const [savedSettings, setSavedSettings] = useState<BusinessSettings>(defaultSettings);
   const [loading, setLoading] = useState(false);
 
+  const [isResource, setIsResource] = useState(false);
+  const [savedIsResource, setSavedIsResource] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+
   const hasChanges =
-    JSON.stringify(settings) !== JSON.stringify(savedSettings);
+    JSON.stringify(settings) !== JSON.stringify(savedSettings) ||
+    isResource !== savedIsResource;
 
   useEffect(() => {
-    const fetch_ = async () => {
+    const fetchAll = async () => {
+      // Fetch business settings
       const res = await fetch(`/api/business/${slug}/settings`);
-      if (!res.ok) return;
-      const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        const loaded = {
+          name: data.name ?? "",
+          description: data.description ?? "",
+          primaryColor: data.primaryColor ?? "#2563eb",
+          logoUrl: data.logoUrl ?? "",
+          bannerUrl: data.bannerUrl ?? "",
+          whatsapp: data.whatsapp ?? "",
+          instagram: data.instagram ?? "",
+          facebook: data.facebook ?? "",
+          website: data.website ?? "",
+        };
+        setSettings(loaded);
+        setSavedSettings(loaded);
+      }
 
-      const loaded = {
-        name: data.name ?? "",
-        description: data.description ?? "",
-        primaryColor: data.primaryColor ?? "#2563eb",
-        logoUrl: data.logoUrl ?? "",
-        bannerUrl: data.bannerUrl ?? "",
-        whatsapp: data.whatsapp ?? "",
-        instagram: data.instagram ?? "",
-        facebook: data.facebook ?? "",
-        website: data.website ?? "",
-      };
-
-      setSettings(loaded);
-      setSavedSettings(loaded);
+      // Fetch profile
+      const profileRes = await fetch(`/api/business/${slug}/profile/me`);
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        setIsResource(profileData.isResource ?? false);
+        setSavedIsResource(profileData.isResource ?? false);
+        setProfileId(profileData.id);
+      }
     };
 
-    fetch_();
+    fetchAll();
   }, [slug]);
 
   const handleSave = async () => {
     setLoading(true);
 
+    // Guardar business settings
     const res = await fetch(`/api/business/${slug}/settings`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
     });
 
-    setLoading(false);
-
     if (!res.ok) {
+      setLoading(false);
       showNotification({ title: "Error", message: "No se pudo guardar", color: "red" });
       return;
     }
 
     setSavedSettings(settings);
+
+    // Guardar perfil si cambió
+    if (profileId && isResource !== savedIsResource) {
+      await fetch(`/api/business/${slug}/profile/me`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isResource }),
+      });
+      setSavedIsResource(isResource);
+    }
+
+    setLoading(false);
     showNotification({ title: "Guardado", message: "Configuración guardada", color: "green" });
   };
 
@@ -182,6 +209,18 @@ export default function SettingsPage() {
             placeholder="https://tunegocio.com"
             value={settings.website}
             onChange={(e) => update("website", e.target.value)}
+          />
+        </Stack>
+      </Paper>
+
+      <Paper withBorder radius="md" p="md">
+        <Stack gap="sm">
+          <Text fw={600}>Mi perfil</Text>
+          <Switch
+            label="Aparecer como recurso disponible"
+            description="Al activar esto, podrás ser asignado como recurso en las citas"
+            checked={isResource}
+            onChange={(e) => setIsResource(e.currentTarget.checked)}
           />
         </Stack>
       </Paper>

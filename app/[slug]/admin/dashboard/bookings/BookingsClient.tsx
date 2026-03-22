@@ -10,17 +10,7 @@ import DayPicker from "./DayPicker";
 import CreateAppointmentButton from "./CreateAppointmentButton";
 import { Business } from "@/types/Business";
 import { getWhatsAppLink } from "@/lib/utils";
-
-type AppointmentItem = {
-  type: "appointment";
-  id: string;
-  start: Date;
-  end: Date;
-  clientName: string;
-  service: string;
-  status: string;
-  phone: string;
-};
+import { AppointmentItem } from "@/types/Appointment";
 
 type BlockedItem = {
   type: "blocked";
@@ -104,8 +94,6 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
 
   const handleWhatsApp = () => {
     if (item.type !== "appointment") return;
-
-    const cleanPhone = item.phone.replace(/\D/g, "");
     const date = new Date(item.start).toLocaleDateString("es-MX", {
       weekday: "long",
       day: "numeric",
@@ -118,17 +106,24 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
       hour12: true,
       timeZone: "America/Mexico_City",
     });
-
     const message =
       `Hola ${item.clientName} 👋, te recordamos que tienes una cita confirmada:\n\n` +
       `📋 *Servicio:* ${item.service}\n` +
       `📅 *Fecha:* ${date}\n` +
       `⏰ *Hora:* ${time}\n\n` +
       `¡Te esperamos! 😊`;
-
-    const whatsappUrl = getWhatsAppLink(item.phone, message);
-    window.open(whatsappUrl, "_blank");
+    window.open(getWhatsAppLink(item.phone, message), "_blank");
   };
+
+  // Iniciales del recurso asignado
+  const resourceInitials = item.assignedTo
+    ? item.assignedTo
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : null;
 
   return (
     <div
@@ -136,33 +131,99 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
         background: config.bg,
         borderLeft: `4px solid ${config.border}`,
         borderRadius: 12,
-        padding: "14px 16px",
-        position: "relative",
         border: `1px solid ${config.border}40`,
         borderLeftWidth: 4,
         opacity: item.status === "CANCELLED" ? 0.6 : 1,
+        overflow: "hidden",
       }}
     >
-      <div style={{ position: "absolute", top: 10, right: 10 }}>
+      {/* Top — hora + badge */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "10px 14px 8px",
+        }}
+      >
+        <Text size="xs" fw={700} c="dimmed" tt="uppercase">
+          {formatTime(item.start)} – {formatTime(item.end)}
+        </Text>
         <Badge color={config.color} variant="filled" radius="xs" size="sm">
           {config.label}
         </Badge>
       </div>
-      <Text size="xs" fw={700} c="dimmed" tt="uppercase">
-        {formatTime(item.start)} – {formatTime(item.end)}
-      </Text>
-      <Text fw={700} size="md" mt={4}>
-        {item.clientName}
-      </Text>
-      <Text size="xs" c="dimmed" mt={2} mb={10}>
-        Servicio: {item.service}
-      </Text>
-      <Group justify="flex-end">
+
+      {/* Body — nombre + servicio + recurso */}
+      <div style={{ padding: "0 14px 10px" }}>
+        <Text fw={700} size="md" mb={4}>
+          {item.clientName}
+        </Text>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            marginBottom: item.assignedTo ? 8 : 0,
+          }}
+        >
+          <Text size="xs">🏷️</Text>
+          <Text size="xs" c="dimmed">
+            {item.service}
+          </Text>
+        </div>
+
+        {/* Resource pill */}
+        {item.assignedTo && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              background: "#f3f0ff",
+              borderRadius: 99,
+              padding: "3px 10px",
+              marginTop: 4,
+            }}
+          >
+            <div
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: "50%",
+                background: "#7c3aed",
+                color: "white",
+                fontSize: 8,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {resourceInitials}
+            </div>
+            <Text size="xs" fw={600} style={{ color: "#7c3aed" }}>
+              {item.assignedTo}
+            </Text>
+          </div>
+        )}
+      </div>
+
+      {/* Footer — acciones */}
+      <div
+        style={{
+          padding: "8px 14px 12px",
+          borderTop: `1px solid ${config.border}20`,
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
         {item.status === "PENDING" && (
           <StatusButtons appointmentId={item.id} slug={slug} />
         )}
         {item.status === "CONFIRMED" && (
-          <Group gap="xs" justify="flex-end">
+          <Group gap="xs">
             <Button
               size="compact-xs"
               variant="light"
@@ -175,7 +236,7 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
             <CancelAppointmentButton appointmentId={item.id} slug={slug} />
           </Group>
         )}
-      </Group>
+      </div>
     </div>
   );
 }

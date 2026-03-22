@@ -17,6 +17,7 @@ import {
   IconLogout,
   IconSettings,
   IconTag,
+  IconUsers,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useDisclosure } from "@mantine/hooks";
@@ -83,6 +84,7 @@ export const AppShellAdmin = ({
   const availabilityPath = `${base}/availability`;
   const settingsPath = `${base}/settings`;
   const servicesPath = `${base}/services`;
+  const resourcesPath = `${base}/resources`;
 
   const [currentPath, setCurrentPath] = useState(pathname);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -193,6 +195,14 @@ export const AppShellAdmin = ({
               active={pathname === servicesPath}
               component={Link}
               href={servicesPath}
+            />
+
+            <NavLink
+              label="Recursos"
+              leftSection={<IconUsers size={18} />}
+              active={pathname === resourcesPath}
+              component={Link}
+              href={resourcesPath}
             />
           </Stack>
         </AppShell.Section>

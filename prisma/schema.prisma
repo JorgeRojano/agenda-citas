@@ -31,12 +31,17 @@ enum AppointmentStatus {
 //////////////////////
 
 model Profile {
-  id   String   @id
-  role UserRole @default(USER)
+  id    String   @id
+  role  UserRole @default(USER)
   email String?
+  name      String?
+  specialty String?
+  isResource Boolean @default(false)
 
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  appointments Appointment[]
 
   createdAt DateTime @default(now())
 
@@ -131,6 +136,9 @@ model Appointment {
 
   serviceId String
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  assignedToId String?
+  assignedTo   Profile? @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
 
   clientName String
   phone      String
