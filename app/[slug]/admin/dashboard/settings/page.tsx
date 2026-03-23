@@ -45,16 +45,23 @@ const defaultSettings: BusinessSettings = {
 export default function SettingsPage() {
   const { slug } = useParams();
   const [settings, setSettings] = useState<BusinessSettings>(defaultSettings);
-  const [savedSettings, setSavedSettings] = useState<BusinessSettings>(defaultSettings);
+  const [savedSettings, setSavedSettings] =
+    useState<BusinessSettings>(defaultSettings);
   const [loading, setLoading] = useState(false);
 
   const [isResource, setIsResource] = useState(false);
   const [savedIsResource, setSavedIsResource] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [savedProfileName, setSavedProfileName] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [savedSpecialty, setSavedSpecialty] = useState("");
 
   const hasChanges =
     JSON.stringify(settings) !== JSON.stringify(savedSettings) ||
-    isResource !== savedIsResource;
+    isResource !== savedIsResource ||
+    profileName !== savedProfileName ||
+    specialty !== savedSpecialty;
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -84,6 +91,10 @@ export default function SettingsPage() {
         setIsResource(profileData.isResource ?? false);
         setSavedIsResource(profileData.isResource ?? false);
         setProfileId(profileData.id);
+        setProfileName(profileData.name ?? "");
+        setSavedProfileName(profileData.name ?? "");
+        setSpecialty(profileData.specialty ?? "");
+        setSavedSpecialty(profileData.specialty ?? "");
       }
     };
 
@@ -102,24 +113,39 @@ export default function SettingsPage() {
 
     if (!res.ok) {
       setLoading(false);
-      showNotification({ title: "Error", message: "No se pudo guardar", color: "red" });
+      showNotification({
+        title: "Error",
+        message: "No se pudo guardar",
+        color: "red",
+      });
       return;
     }
 
     setSavedSettings(settings);
 
     // Guardar perfil si cambió
-    if (profileId && isResource !== savedIsResource) {
+    if (
+      profileId &&
+      (isResource !== savedIsResource ||
+        profileName !== savedProfileName ||
+        specialty !== savedSpecialty)
+    ) {
       await fetch(`/api/business/${slug}/profile/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isResource }),
+        body: JSON.stringify({ isResource, name: profileName, specialty }),
       });
       setSavedIsResource(isResource);
+      setSavedProfileName(profileName);
+      setSavedSpecialty(specialty);
     }
 
     setLoading(false);
-    showNotification({ title: "Guardado", message: "Configuración guardada", color: "green" });
+    showNotification({
+      title: "Guardado",
+      message: "Configuración guardada",
+      color: "green",
+    });
   };
 
   const update = (field: keyof BusinessSettings, value: string) =>
@@ -216,12 +242,26 @@ export default function SettingsPage() {
       <Paper withBorder radius="md" p="md">
         <Stack gap="sm">
           <Text fw={600}>Mi perfil</Text>
+          <TextInput
+            label="Nombre"
+            placeholder="Tu nombre completo"
+            value={profileName}
+            onChange={(e) => setProfileName(e.target.value)}
+          />
           <Switch
             label="Aparecer como recurso disponible"
             description="Al activar esto, podrás ser asignado como recurso en las citas"
             checked={isResource}
             onChange={(e) => setIsResource(e.currentTarget.checked)}
           />
+          {isResource && (
+            <TextInput
+              label="Especialidad"
+              placeholder="Ej: Terapeuta de lenguaje"
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+            />
+          )}
         </Stack>
       </Paper>
     </Stack>
