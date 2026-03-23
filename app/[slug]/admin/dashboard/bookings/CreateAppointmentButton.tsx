@@ -43,6 +43,8 @@ export default function CreateAppointmentButton({
   const searchParams = useSearchParams();
   const dateString =
     searchParams.get("date") ?? new Date().toLocaleDateString("en-CA");
+  const today = new Date().toLocaleDateString("en-CA");
+  const isPastDate = dateString < today;
 
   const displayDate = new Date(dateString + "T12:00:00").toLocaleDateString(
     "es-MX",
@@ -209,6 +211,10 @@ export default function CreateAppointmentButton({
         onClick={open}
         color={primaryColor ?? "blue"}
         size="xs"
+        disabled={isPastDate}
+        title={
+          isPastDate ? "No puedes crear citas en fechas pasadas" : undefined
+        }
       >
         Nueva cita
       </Button>

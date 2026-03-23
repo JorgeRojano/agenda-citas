@@ -54,6 +54,8 @@ export default function SettingsPage() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
   const [savedProfileName, setSavedProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [savedProfileEmail, setSavedProfileEmail] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [savedSpecialty, setSavedSpecialty] = useState("");
 
@@ -61,6 +63,7 @@ export default function SettingsPage() {
     JSON.stringify(settings) !== JSON.stringify(savedSettings) ||
     isResource !== savedIsResource ||
     profileName !== savedProfileName ||
+    profileEmail !== savedProfileEmail ||
     specialty !== savedSpecialty;
 
   useEffect(() => {
@@ -93,6 +96,8 @@ export default function SettingsPage() {
         setProfileId(profileData.id);
         setProfileName(profileData.name ?? "");
         setSavedProfileName(profileData.name ?? "");
+        setProfileEmail(profileData.email ?? "");
+        setSavedProfileEmail(profileData.email ?? "");
         setSpecialty(profileData.specialty ?? "");
         setSavedSpecialty(profileData.specialty ?? "");
       }
@@ -128,15 +133,17 @@ export default function SettingsPage() {
       profileId &&
       (isResource !== savedIsResource ||
         profileName !== savedProfileName ||
+        profileEmail !== savedProfileEmail ||
         specialty !== savedSpecialty)
     ) {
       await fetch(`/api/business/${slug}/profile/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isResource, name: profileName, specialty }),
+        body: JSON.stringify({ isResource, name: profileName, email: profileEmail, specialty }),
       });
       setSavedIsResource(isResource);
       setSavedProfileName(profileName);
+      setSavedProfileEmail(profileEmail);
       setSavedSpecialty(specialty);
     }
 
@@ -247,6 +254,12 @@ export default function SettingsPage() {
             placeholder="Tu nombre completo"
             value={profileName}
             onChange={(e) => setProfileName(e.target.value)}
+          />
+          <TextInput
+            label="Email"
+            placeholder="tu@email.com"
+            value={profileEmail}
+            onChange={(e) => setProfileEmail(e.target.value)}
           />
           <Switch
             label="Aparecer como recurso disponible"
