@@ -106,9 +106,9 @@ export const AppShellAdmin = ({
         color: "green",
         autoClose: 10000,
       });
-      /* setTimeout(() => {
+      setTimeout(() => {
         router.refresh();
-      }, 500); */
+      }, 500);
     },
   );
 
