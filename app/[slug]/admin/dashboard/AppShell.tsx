@@ -75,6 +75,7 @@ export const AppShellAdmin = ({
 }) => {
   const pathname = usePathname();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [opened, { toggle, close }] = useDisclosure();
   const { slug } = useParams();
 
@@ -88,6 +89,10 @@ export const AppShellAdmin = ({
 
   const [currentPath, setCurrentPath] = useState(pathname);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { newAppointmentAlert } = useRealtimeAppointments(
     business?.id,
@@ -108,7 +113,7 @@ export const AppShellAdmin = ({
   );
 
   useEffect(() => {
-    close();
+    if (opened) close();
   }, [pathname]);
 
   useEffect(() => {
@@ -118,27 +123,35 @@ export const AppShellAdmin = ({
   const handleLogout = async () => {
     setLoggingOut(true);
 
-    // 1. Sign out global
-    const browserSupabase = createBrowserSupabaseClient();
-    await browserSupabase.auth.signOut({ scope: "global" });
+    try {
+      // 1. Sign out global
+      const browserSupabase = createBrowserSupabaseClient();
+      await browserSupabase.auth.signOut({ scope: "global" });
 
-    // 2. Limpiar storage manualmente
-    if (typeof window !== "undefined") {
-      localStorage.clear();
-      sessionStorage.clear();
+      // 2. Limpiar storage manualmente
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
 
-      // Limpiar cookies de Supabase
-      document.cookie.split(";").forEach((cookie) => {
-        const name = cookie.split("=")[0].trim();
-        if (name.includes("sb-") || name.includes("supabase")) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-        }
-      });
+        // Limpiar cookies de Supabase
+        document.cookie.split(";").forEach((cookie) => {
+          const name = cookie.split("=")[0].trim();
+          if (name.includes("sb-") || name.includes("supabase")) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+          }
+        });
+      }
+
+      // 3. Hard redirect para limpiar estado de React
+      window.location.href = `/${slug}/admin/login`;
+    } catch (error) {
+      setLoggingOut(false);
     }
-
-    // 3. Hard redirect para limpiar estado de React
-    window.location.href = `/${slug}/admin/login`;
   };
+
+  if (!mounted) {
+    return <div style={{ background: "white", height: "100vh" }} />;
+  }
 
   return (
     <AppShell
@@ -148,7 +161,15 @@ export const AppShellAdmin = ({
     >
       <AppShell.Header>
         <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+          <Burger
+            opened={opened}
+            onClick={(e) => {
+              e.stopPropagation(); // Evita que otros elementos capturen el toque
+              toggle();
+            }}
+            hiddenFrom="sm"
+            size="sm"
+          />
           Header
         </Group>
       </AppShell.Header>
