@@ -5,40 +5,75 @@ import { DatePickerInput } from "@mantine/dates";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface DayPickerProps {
-  onBlockTimeClick?: () => void;
+interface BlockedTime {
+  start: string;
+  end: string;
 }
 
-export default function DayPicker({ onBlockTimeClick }: DayPickerProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = useParams();
+interface DayPickerProps {
+  onBlockedChange?: (isBlocked: boolean) => void;
+}
 
-  const slug = params.slug as string;
+export default function DayPicker({ onBlockedChange }: DayPickerProps) {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const params       = useParams();
+  const slug         = params.slug as string;
 
   const initialDateString =
     searchParams.get("date") ?? new Date().toLocaleDateString("en-CA");
 
   const [dateString, setDateString] = useState(initialDateString);
   const [closedDays, setClosedDays] = useState<number[]>([]);
+  const [blockedRanges, setBlockedRanges] = useState<BlockedTime[]>([]);
 
   useEffect(() => {
     setDateString(initialDateString);
   }, [initialDateString]);
 
-  // 👇 Fetch de días disponibles
+  // Fetch horario del negocio
   useEffect(() => {
     fetch(`/api/business/${slug}/schedule`)
       .then((r) => r.json())
       .then((slots) => {
         if (!Array.isArray(slots)) return;
-        // Días que SÍ tienen slots
         const openDays = new Set(slots.map((s: any) => s.dayOfWeek));
-        // Días cerrados = los que NO están en openDays (0-6)
-        const closed = [0, 1, 2, 3, 4, 5, 6].filter((d) => !openDays.has(d));
-        setClosedDays(closed);
+        setClosedDays([0, 1, 2, 3, 4, 5, 6].filter((d) => !openDays.has(d)));
       });
   }, [slug]);
+
+  // Fetch festivos del negocio
+  useEffect(() => {
+    fetch(`/api/business/${slug}/blocked-times`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        setBlockedRanges(data);
+      });
+  }, [slug]);
+
+  const toDateStr = (d: Date | string) => {
+    const dt = new Date(d);
+    const y  = dt.getUTCFullYear();
+    const m  = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(dt.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  // Notificar al padre si la fecha seleccionada está bloqueada
+  useEffect(() => {
+    if (!onBlockedChange) return;
+    const selected = dateString; // ya es "YYYY-MM-DD"
+    const isBlocked = blockedRanges.some((b) => {
+      return selected >= toDateStr(b.start) && selected <= toDateStr(b.end);
+    });
+    onBlockedChange(isBlocked);
+  }, [dateString, blockedRanges, onBlockedChange]);
+
+  const isDateBlocked = (date: Date) => {
+    const d = toDateStr(date);
+    return blockedRanges.some((b) => d >= toDateStr(b.start) && d <= toDateStr(b.end));
+  };
 
   function updateDate(value: string | null) {
     if (!value) return;
@@ -53,14 +88,11 @@ export default function DayPicker({ onBlockTimeClick }: DayPickerProps) {
         value={new Date(dateString + "T12:00:00")}
         onChange={updateDate}
         style={{ flex: 1 }}
-        // 👇 Deshabilita los días cerrados
         excludeDate={(date) => {
           const d = new Date(date);
-          // Usar UTC para evitar el offset de timezone
-          return closedDays.includes(d.getUTCDay());
+          return closedDays.includes(d.getUTCDay()) || isDateBlocked(d);
         }}
       />
-
       <Button
         style={{ alignSelf: "flex-end" }}
         onClick={() => updateDate(new Date().toLocaleDateString("en-CA"))}

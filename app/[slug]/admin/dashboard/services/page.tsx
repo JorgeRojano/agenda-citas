@@ -11,7 +11,20 @@ export default async function ServicesPage({ params }: Props) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    include: { services: { orderBy: { createdAt: "asc" } } },
+    include: {
+      services: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          resources: {
+            include: {
+              profile: {
+                select: { id: true, name: true },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!business) notFound();

@@ -15,7 +15,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { IconPlus, IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconPlus, IconEdit, IconTrash, IconClock } from "@tabler/icons-react";
 import { useState } from "react";
 import { showNotification } from "@mantine/notifications";
 import {
@@ -23,6 +23,9 @@ import {
   updateStaffMember,
   deleteStaffMember,
 } from "./actions";
+import { ResourceAvailabilityModal } from "./ResourceAvailabilityModal";
+
+const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 interface StaffMember {
   id: string;
@@ -30,6 +33,7 @@ interface StaffMember {
   email: string;
   specialty: string;
   role: string;
+  activeDays?: number[];
 }
 
 interface Props {
@@ -64,7 +68,24 @@ export default function ResourcesClient({
   const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [loading, setLoading] = useState(false);
 
-  // Create
+  // ── Availability modal state ──
+  const [availTarget, setAvailTarget] = useState<StaffMember | null>(null);
+  const [availOpened, { open: openAvail, close: closeAvail }] =
+    useDisclosure(false);
+
+  const handleOpenAvail = (member: StaffMember) => {
+    setAvailTarget(member);
+    openAvail();
+  };
+
+  const handleAvailSaved = (activeDays: number[]) => {
+    if (!availTarget) return;
+    setStaff((prev) =>
+      prev.map((s) => (s.id === availTarget.id ? { ...s, activeDays } : s)),
+    );
+  };
+
+  // ── Create ──
   const [opened, { open, close }] = useDisclosure(false);
   const form = useForm({
     initialValues: { name: "", email: "", password: "", specialty: "" },
@@ -75,7 +96,7 @@ export default function ResourcesClient({
     },
   });
 
-  // Edit
+  // ── Edit ──
   const [editingMember, setEditingMember] = useState<StaffMember | null>(null);
   const [editOpened, { open: openEdit, close: closeEdit }] =
     useDisclosure(false);
@@ -87,7 +108,7 @@ export default function ResourcesClient({
     },
   });
 
-  // Delete
+  // ── Delete ──
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteOpened, { open: openDelete, close: closeDelete }] =
     useDisclosure(false);
@@ -185,75 +206,155 @@ export default function ResourcesClient({
       </Group>
 
       <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-        {staff.map((member) => (
-          <Card key={member.id} withBorder radius="md" padding="md" shadow="sm">
-            <Stack align="center" gap="xs" mb="md">
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: getAvatarColor(member.name),
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: "white",
-                }}
+        {staff.map((member) => {
+          const activeDays = member.activeDays ?? [];
+          return (
+            <Card
+              key={member.id}
+              withBorder
+              radius="md"
+              padding={0}
+              shadow="sm"
+              style={{ overflow: "hidden" }}
+            >
+              {/* Body */}
+              <Stack
+                align="center"
+                gap="xs"
+                p="md"
+                pb="sm"
+                style={{ borderBottom: "1px solid #f8fafc" }}
               >
-                {getInitials(member.name)}
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <Text fw={700} size="md">
-                  {member.name}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  {member.email}
-                </Text>
-              </div>
-              {member.role === "ADMIN" && (
-                <Badge variant="light" color="violet" size="sm">
-                  Admin
-                </Badge>
-              )}
-              {member.specialty && (
-                <Badge variant="light" color="blue" size="sm">
-                  {member.specialty}
-                </Badge>
-              )}
-            </Stack>
-
-            {member.role !== "ADMIN" && (
-              <Group gap="xs">
-                <Button
-                  variant="light"
-                  color="blue"
-                  size="xs"
-                  flex={1}
-                  leftSection={<IconEdit size={14} />}
-                  onClick={() => handleOpenEdit(member)}
-                >
-                  Editar
-                </Button>
-                <Button
-                  variant="light"
-                  color="red"
-                  size="xs"
-                  flex={1}
-                  leftSection={<IconTrash size={14} />}
-                  onClick={() => {
-                    setDeleteId(member.id);
-                    openDelete();
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: "50%",
+                    background: getAvatarColor(member.name),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: "white",
                   }}
                 >
-                  Eliminar
-                </Button>
-              </Group>
-            )}
-          </Card>
-        ))}
+                  {getInitials(member.name)}
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <Text fw={700} size="sm">
+                    {member.name}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    {member.email}
+                  </Text>
+                </div>
+                <Group gap={6}>
+                  {member.role === "ADMIN" && (
+                    <Badge variant="light" color="violet" size="sm">
+                      Admin
+                    </Badge>
+                  )}
+                  {member.specialty && (
+                    <Badge variant="light" color="blue" size="sm">
+                      {member.specialty}
+                    </Badge>
+                  )}
+                </Group>
+              </Stack>
 
+              {/* Availability preview */}
+              <Stack
+                gap={4}
+                px="md"
+                py="xs"
+                style={{ borderBottom: "1px solid #f8fafc" }}
+              >
+                <Text
+                  size="xs"
+                  fw={700}
+                  c="dimmed"
+                  style={{
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  Disponibilidad
+                </Text>
+                {activeDays.length === 0 ? (
+                  <Text size="xs" c="red.3" fs="italic">
+                    Sin horario configurado
+                  </Text>
+                ) : (
+                  <Group gap={4}>
+                    {DAY_LABELS.map((label, dow) => (
+                      <div
+                        key={dow}
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "2px 6px",
+                          borderRadius: 6,
+                          background: activeDays.includes(dow)
+                            ? "#dcfce7"
+                            : "#f1f5f9",
+                          color: activeDays.includes(dow)
+                            ? "#16a34a"
+                            : "#cbd5e1",
+                        }}
+                      >
+                        {label}
+                      </div>
+                    ))}
+                  </Group>
+                )}
+              </Stack>
+
+              {/* Footer buttons */}
+              <Stack gap={6} p="sm">
+                <Button
+                  variant="light"
+                  color="green"
+                  size="xs"
+                  fullWidth
+                  leftSection={<IconClock size={13} />}
+                  onClick={() => handleOpenAvail(member)}
+                >
+                  Disponibilidad
+                </Button>
+                {member.role !== "ADMIN" && (
+                  <Group gap="xs">
+                    <Button
+                      variant="light"
+                      color="blue"
+                      size="xs"
+                      flex={1}
+                      leftSection={<IconEdit size={13} />}
+                      onClick={() => handleOpenEdit(member)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="light"
+                      color="red"
+                      size="xs"
+                      flex={1}
+                      leftSection={<IconTrash size={13} />}
+                      onClick={() => {
+                        setDeleteId(member.id);
+                        openDelete();
+                      }}
+                    >
+                      Eliminar
+                    </Button>
+                  </Group>
+                )}
+              </Stack>
+            </Card>
+          );
+        })}
+
+        {/* Add card */}
         <Card
           withBorder
           radius="md"
@@ -278,6 +379,19 @@ export default function ResourcesClient({
           </Stack>
         </Card>
       </SimpleGrid>
+
+      {/* Availability modal */}
+      {availTarget && (
+        <ResourceAvailabilityModal
+          opened={availOpened}
+          onClose={closeAvail}
+          profileId={availTarget.id}
+          profileName={availTarget.name}
+          avatarColor={getAvatarColor(availTarget.name)}
+          initials={getInitials(availTarget.name)}
+          onSaved={handleAvailSaved}
+        />
+      )}
 
       {/* Modal crear */}
       <Modal opened={opened} onClose={close} title="Nuevo recurso" centered>

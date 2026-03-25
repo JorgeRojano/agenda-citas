@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
+
+const TIME_ZONE = "America/Mexico_City";
 
 export async function GET(
   req: NextRequest,
@@ -8,15 +11,54 @@ export async function GET(
   const { slug } = await params;
 
   const business = await prisma.business.findUnique({ where: { slug } });
-  if (!business) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!business)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const { searchParams } = new URL(req.url);
+  const dateParam  = searchParams.get("date");   // opcional
+  const serviceId  = searchParams.get("serviceId"); // opcional
+
+  // Calcular dayOfWeek en zona México si viene date
+  let dayOfWeek: number | null = null;
+  if (dateParam) {
+    const mexicoDate = toZonedTime(new Date(dateParam), TIME_ZONE);
+    dayOfWeek = mexicoDate.getDay(); // 0–6, nunca undefined
+  }
+
+  // Calcular rango del día para verificar vacaciones
+  let dayStartUTC: Date | undefined;
+  let dayEndUTC: Date | undefined;
+  if (dateParam) {
+    const mexicoDate = toZonedTime(new Date(dateParam), TIME_ZONE);
+    const startOfDay = new Date(mexicoDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(mexicoDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    dayStartUTC = fromZonedTime(startOfDay, TIME_ZONE);
+    dayEndUTC   = fromZonedTime(endOfDay, TIME_ZONE);
+  }
 
   const staff = await prisma.profile.findMany({
     where: {
       businessId: business.id,
-      OR: [
-        { role: "STAFF" },
-        { role: "ADMIN", isResource: true },
-      ],
+      OR: [{ role: "STAFF" }, { role: "ADMIN", isResource: true }],
+      ...(serviceId
+        ? { services: { some: { serviceId } } }
+        : {}),
+      ...(dayOfWeek !== null
+        ? { resourceTimeSlots: { some: { dayOfWeek } } }
+        : {}),
+      // Excluir recursos con vacaciones activas ese día
+      ...(dayStartUTC && dayEndUTC
+        ? {
+            resourceVacations: {
+              none: {
+                start: { lte: dayEndUTC },
+                end:   { gte: dayStartUTC },
+              },
+            },
+          }
+        : {}),
     },
     select: { id: true, name: true, specialty: true },
   });

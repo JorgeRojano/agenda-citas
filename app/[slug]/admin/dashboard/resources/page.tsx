@@ -19,6 +19,11 @@ export default async function ResourcesPage({ params }: Props) {
             { role: "ADMIN", isResource: true },
           ],
         },
+        include: {
+          resourceTimeSlots: {
+            select: { dayOfWeek: true },
+          },
+        },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -35,6 +40,7 @@ export default async function ResourcesPage({ params }: Props) {
         email: u.email ?? "",
         specialty: u.specialty ?? "",
         role: u.role,
+        activeDays: [...new Set(u.resourceTimeSlots.map((t) => t.dayOfWeek))],
       }))}
     />
   );

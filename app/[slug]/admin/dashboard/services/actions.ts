@@ -52,3 +52,22 @@ export async function deleteService(businessId: string, serviceId: string) {
 
   revalidatePath(`/[slug]/admin/dashboard/services`);
 }
+
+export async function assignResourcesToService(
+  businessId: string,
+  serviceId: string,
+  profileIds: string[]
+) {
+  await validateBusinessAccess(businessId);
+
+  await prisma.$transaction([
+    prisma.serviceResource.deleteMany({ where: { serviceId } }),
+    ...(profileIds.length > 0
+      ? [prisma.serviceResource.createMany({
+          data: profileIds.map((profileId) => ({ serviceId, profileId })),
+        })]
+      : []),
+  ]);
+
+  revalidatePath(`/[slug]/admin/dashboard/services`);
+}

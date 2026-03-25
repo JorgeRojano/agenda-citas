@@ -1,109 +1,42 @@
 "use client";
 
 import { Badge, Button, Group, Text, Stack, Tabs } from "@mantine/core";
-import { IconBrandWhatsapp, IconLock, IconRefresh } from "@tabler/icons-react";
+import { useState } from "react";
+import { IconBrandWhatsapp } from "@tabler/icons-react";
 import { StatusButtons } from "./StatusButtons";
 import CancelAppointmentButton from "./CancelAppointmentButton";
-import UnblockButton from "./UnblockButton";
-import BlockTimeButton from "./BlockTimeButton";
 import DayPicker from "./DayPicker";
 import CreateAppointmentButton from "./CreateAppointmentButton";
-import { Business } from "@/types/Business";
 import { getWhatsAppLink } from "@/lib/utils";
 import { AppointmentItem } from "@/types/Appointment";
 
-type BlockedItem = {
-  type: "blocked";
-  id: string;
-  start: Date;
-  end: Date;
-};
-
-type Item = AppointmentItem | BlockedItem;
-
 interface Props {
-  items: Item[];
+  items: AppointmentItem[];
   slug: string;
-  business: Business;
+  business: any;
 }
 
-const statusConfig: Record<
-  string,
-  { color: string; label: string; border: string; bg: string }
-> = {
-  PENDING: {
-    color: "yellow",
-    label: "Pendiente",
-    border: "#f59e0b",
-    bg: "#fffbeb",
-  },
-  CONFIRMED: {
-    color: "green",
-    label: "Confirmada",
-    border: "#22c55e",
-    bg: "#f0fdf4",
-  },
-  CANCELLED: {
-    color: "gray",
-    label: "Cancelada",
-    border: "#cbd5e1",
-    bg: "#f8fafc",
-  },
+const statusConfig: Record<string, { color: string; label: string; border: string; bg: string }> = {
+  PENDING:   { color: "yellow", label: "Pendiente",  border: "#f59e0b", bg: "#fffbeb" },
+  CONFIRMED: { color: "green",  label: "Confirmada", border: "#22c55e", bg: "#f0fdf4" },
+  CANCELLED: { color: "gray",   label: "Cancelada",  border: "#cbd5e1", bg: "#f8fafc" },
 };
 
 const formatTime = (date: Date) =>
   new Date(date).toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
+    hour: "2-digit", minute: "2-digit", hour12: true,
   });
 
-function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
-  if (item.type === "blocked") {
-    return (
-      <div
-        style={{
-          background: "#fff1f2",
-          borderLeft: "4px solid #f43f5e",
-          borderRadius: 12,
-          padding: "14px 16px",
-          position: "relative",
-          border: "1px solid #fecdd3",
-          borderLeftWidth: 4,
-        }}
-      >
-        <div style={{ position: "absolute", top: 10, right: 10 }}>
-          <Badge color="red" variant="filled" radius="xs" size="sm">
-            Bloqueado
-          </Badge>
-        </div>
-        <Text size="xs" fw={700} c="dimmed" tt="uppercase">
-          {formatTime(item.start)} – {formatTime(item.end)}
-        </Text>
-        <Text fw={700} c="red.7" mt={4} mb={10}>
-          Tiempo bloqueado
-        </Text>
-        <Group justify="flex-end">
-          <UnblockButton blockId={item.id} slug={slug} />
-        </Group>
-      </div>
-    );
-  }
-
+function AppointmentCard({ item, slug }: { item: AppointmentItem; slug: string }) {
   const config = statusConfig[item.status] ?? statusConfig.CONFIRMED;
 
   const handleWhatsApp = () => {
-    if (item.type !== "appointment") return;
     const date = new Date(item.start).toLocaleDateString("es-MX", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
+      weekday: "long", day: "numeric", month: "long",
       timeZone: "America/Mexico_City",
     });
     const time = new Date(item.start).toLocaleTimeString("es-MX", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
+      hour: "numeric", minute: "2-digit", hour12: true,
       timeZone: "America/Mexico_City",
     });
     const message =
@@ -115,37 +48,22 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
     window.open(getWhatsAppLink(item.phone, message), "_blank");
   };
 
-  // Iniciales del recurso asignado
   const resourceInitials = item.assignedTo
-    ? item.assignedTo
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+    ? item.assignedTo.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : null;
 
   return (
-    <div
-      style={{
-        background: config.bg,
-        borderLeft: `4px solid ${config.border}`,
-        borderRadius: 12,
-        border: `1px solid ${config.border}40`,
-        borderLeftWidth: 4,
-        opacity: item.status === "CANCELLED" ? 0.6 : 1,
-        overflow: "hidden",
-      }}
-    >
-      {/* Top — hora + badge */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 14px 8px",
-        }}
-      >
+    <div style={{
+      background: config.bg,
+      borderLeft: `4px solid ${config.border}`,
+      borderRadius: 12,
+      border: `1px solid ${config.border}40`,
+      borderLeftWidth: 4,
+      opacity: item.status === "CANCELLED" ? 0.6 : 1,
+      overflow: "hidden",
+    }}>
+      {/* Top */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px 8px" }}>
         <Text size="xs" fw={700} c="dimmed" tt="uppercase">
           {formatTime(item.start)} – {formatTime(item.end)}
         </Text>
@@ -154,83 +72,31 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
         </Badge>
       </div>
 
-      {/* Body — nombre + servicio + recurso */}
+      {/* Body */}
       <div style={{ padding: "0 14px 10px" }}>
-        <Text fw={700} size="md" mb={4}>
-          {item.clientName}
-        </Text>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            marginBottom: item.assignedTo ? 8 : 0,
-          }}
-        >
+        <Text fw={700} size="md" mb={4}>{item.clientName}</Text>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: item.assignedTo ? 8 : 0 }}>
           <Text size="xs">🏷️</Text>
-          <Text size="xs" c="dimmed">
-            {item.service}
-          </Text>
+          <Text size="xs" c="dimmed">{item.service}</Text>
         </div>
-
-        {/* Resource pill */}
         {item.assignedTo && (
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              background: "#f3f0ff",
-              borderRadius: 99,
-              padding: "3px 10px",
-              marginTop: 4,
-            }}
-          >
-            <div
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: "50%",
-                background: "#7c3aed",
-                color: "white",
-                fontSize: 8,
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#f3f0ff", borderRadius: 99, padding: "3px 10px", marginTop: 4 }}>
+            <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#7c3aed", color: "white", fontSize: 8, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {resourceInitials}
             </div>
-            <Text size="xs" fw={600} style={{ color: "#7c3aed" }}>
-              {item.assignedTo}
-            </Text>
+            <Text size="xs" fw={600} style={{ color: "#7c3aed" }}>{item.assignedTo}</Text>
           </div>
         )}
       </div>
 
-      {/* Footer — acciones */}
-      <div
-        style={{
-          padding: "8px 14px 12px",
-          borderTop: `1px solid ${config.border}20`,
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
+      {/* Footer */}
+      <div style={{ padding: "8px 14px 12px", borderTop: `1px solid ${config.border}20`, display: "flex", justifyContent: "flex-end" }}>
         {item.status === "PENDING" && (
           <StatusButtons appointmentId={item.id} slug={slug} />
         )}
         {item.status === "CONFIRMED" && (
           <Group gap="xs">
-            <Button
-              size="compact-xs"
-              variant="light"
-              color="green"
-              leftSection={<IconBrandWhatsapp size={14} />}
-              onClick={handleWhatsApp}
-            >
+            <Button size="compact-xs" variant="light" color="green" leftSection={<IconBrandWhatsapp size={14} />} onClick={handleWhatsApp}>
               Recordatorio
             </Button>
             <CancelAppointmentButton appointmentId={item.id} slug={slug} />
@@ -242,71 +108,25 @@ function AppointmentCard({ item, slug }: { item: Item; slug: string }) {
 }
 
 export default function BookingsClient({ items, slug, business }: Props) {
-  const appointments = items.filter(
-    (i) => i.type === "appointment",
-  ) as AppointmentItem[];
-  const blocked = items.filter((i) => i.type === "blocked") as BlockedItem[];
+  const [isDayBlocked, setIsDayBlocked] = useState(false);
 
-  const pending = appointments.filter((a) => a.status === "PENDING");
-  const confirmed = appointments.filter((a) => a.status === "CONFIRMED");
-  const cancelled = appointments.filter((a) => a.status === "CANCELLED");
+  const pending   = items.filter((a) => a.status === "PENDING");
+  const confirmed = items.filter((a) => a.status === "CONFIRMED");
+  const cancelled = items.filter((a) => a.status === "CANCELLED");
 
-  const KanbanColumn = ({
-    title,
-    count,
-    color,
-    items: colItems,
-  }: {
-    title: string;
-    count: number;
-    color: string;
-    items: Item[];
+  const KanbanColumn = ({ title, count, color, items: colItems }: {
+    title: string; count: number; color: string; items: AppointmentItem[];
   }) => (
-    <div
-      style={{
-        background: "white",
-        borderRadius: 14,
-        border: "1px solid #f1f5f9",
-        display: "flex",
-        flexDirection: "column",
-        flex: 1,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          padding: "14px 16px",
-          borderBottom: "1px solid #f1f5f9",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text fw={700} size="sm">
-          {title}
-        </Text>
-        <Badge color={color} variant="light" size="sm" circle>
-          {count}
-        </Badge>
+    <div style={{ background: "white", borderRadius: 14, border: "1px solid #f1f5f9", display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Text fw={700} size="sm">{title}</Text>
+        <Badge color={color} variant="light" size="sm" circle>{count}</Badge>
       </div>
-      <div
-        style={{
-          padding: 12,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          overflowY: "auto",
-          flex: 1,
-        }}
-      >
+      <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", flex: 1 }}>
         {colItems.length === 0 ? (
-          <Text size="sm" c="dimmed" ta="center" mt="md">
-            Sin citas
-          </Text>
+          <Text size="sm" c="dimmed" ta="center" mt="md">Sin citas</Text>
         ) : (
-          colItems.map((item) => (
-            <AppointmentCard key={item.id} item={item} slug={slug} />
-          ))
+          colItems.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)
         )}
       </div>
     </div>
@@ -315,15 +135,9 @@ export default function BookingsClient({ items, slug, business }: Props) {
   return (
     <>
       <style>{`
-        .bookings-header {
-          display: flex; align-items: flex-start;
-          justify-content: space-between; margin-bottom: 16px; gap: 12px;
-        }
-        .bookings-kanban {
-          display: flex; gap: 16px; height: 600px;
-        }
+        .bookings-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
+        .bookings-kanban { display: flex; gap: 16px; height: 600px; }
         .bookings-list { display: none; }
-
         @media (max-width: 768px) {
           .bookings-kanban { display: none; }
           .bookings-list { display: block; }
@@ -331,112 +145,63 @@ export default function BookingsClient({ items, slug, business }: Props) {
         }
       `}</style>
 
-      {/* Header */}
       <div className="bookings-header">
         <div>
-          <Text fw={700} size="xl">
-            Citas del día
-          </Text>
-          <Text size="xs" c="dimmed">
-            {business.name}
-          </Text>
+          <Text fw={700} size="xl">Citas del día</Text>
+          <Text size="xs" c="dimmed">{business.name}</Text>
         </div>
-        <Group gap="xs">
-          <CreateAppointmentButton
-            slug={slug}
-            primaryColor={business.primaryColor}
-          />
-          <BlockTimeButton slug={slug} />
-        </Group>
+        <CreateAppointmentButton slug={slug} primaryColor={business.primaryColor} services={business.services} disabled={isDayBlocked} />
       </div>
 
-      {/* Date picker */}
-      <DayPicker />
+      <DayPicker onBlockedChange={setIsDayBlocked} />
 
-      {/* ── DESKTOP: Kanban ── */}
+      {isDayBlocked && (
+        <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, padding: "10px 16px", marginBottom: 12 }}>
+          <Text size="sm" c="orange.7" fw={600}>🚫 Este día está marcado como festivo o cierre especial</Text>
+        </div>
+      )}
+
+      {/* Desktop Kanban */}
       <div className="bookings-kanban">
-        <KanbanColumn
-          title="Pendientes"
-          count={pending.length}
-          color="yellow"
-          items={pending}
-        />
-        <KanbanColumn
-          title="Confirmadas"
-          count={confirmed.length}
-          color="green"
-          items={[...confirmed, ...blocked]}
-        />
-        <KanbanColumn
-          title="Canceladas"
-          count={cancelled.length}
-          color="gray"
-          items={cancelled}
-        />
+        <KanbanColumn title="Pendientes" count={pending.length}   color="yellow" items={pending} />
+        <KanbanColumn title="Confirmadas" count={confirmed.length} color="green"  items={confirmed} />
+        <KanbanColumn title="Canceladas"  count={cancelled.length} color="gray"   items={cancelled} />
       </div>
 
-      {/* ── MOBILE: Lista con tabs ── */}
+      {/* Mobile Tabs */}
       <div className="bookings-list">
         <Tabs defaultValue="pending">
           <Tabs.List mb="md">
             <Tabs.Tab value="pending">
-              Pendientes{" "}
-              {pending.length > 0 && (
-                <Badge color="yellow" variant="light" size="xs" ml={4}>
-                  {pending.length}
-                </Badge>
-              )}
+              Pendientes{pending.length > 0 && <Badge color="yellow" variant="light" size="xs" ml={4}>{pending.length}</Badge>}
             </Tabs.Tab>
             <Tabs.Tab value="confirmed">
-              Confirmadas{" "}
-              {confirmed.length > 0 && (
-                <Badge color="green" variant="light" size="xs" ml={4}>
-                  {confirmed.length}
-                </Badge>
-              )}
+              Confirmadas{confirmed.length > 0 && <Badge color="green" variant="light" size="xs" ml={4}>{confirmed.length}</Badge>}
             </Tabs.Tab>
             <Tabs.Tab value="cancelled">Canceladas</Tabs.Tab>
           </Tabs.List>
 
           <Tabs.Panel value="pending">
             <Stack gap="sm">
-              {pending.length === 0 ? (
-                <Text size="sm" c="dimmed">
-                  Sin citas pendientes
-                </Text>
-              ) : (
-                pending.map((item) => (
-                  <AppointmentCard key={item.id} item={item} slug={slug} />
-                ))
-              )}
+              {pending.length === 0
+                ? <Text size="sm" c="dimmed">Sin citas pendientes</Text>
+                : pending.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)}
             </Stack>
           </Tabs.Panel>
 
           <Tabs.Panel value="confirmed">
             <Stack gap="sm">
-              {[...confirmed, ...blocked].length === 0 ? (
-                <Text size="sm" c="dimmed">
-                  Sin citas confirmadas
-                </Text>
-              ) : (
-                [...confirmed, ...blocked].map((item) => (
-                  <AppointmentCard key={item.id} item={item} slug={slug} />
-                ))
-              )}
+              {confirmed.length === 0
+                ? <Text size="sm" c="dimmed">Sin citas confirmadas</Text>
+                : confirmed.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)}
             </Stack>
           </Tabs.Panel>
 
           <Tabs.Panel value="cancelled">
             <Stack gap="sm">
-              {cancelled.length === 0 ? (
-                <Text size="sm" c="dimmed">
-                  Sin citas canceladas
-                </Text>
-              ) : (
-                cancelled.map((item) => (
-                  <AppointmentCard key={item.id} item={item} slug={slug} />
-                ))
-              )}
+              {cancelled.length === 0
+                ? <Text size="sm" c="dimmed">Sin citas canceladas</Text>
+                : cancelled.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)}
             </Stack>
           </Tabs.Panel>
         </Tabs>
