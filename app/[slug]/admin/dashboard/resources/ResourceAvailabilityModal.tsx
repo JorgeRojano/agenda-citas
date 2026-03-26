@@ -31,8 +31,8 @@ type Vacation = {
 
 type NewVacation = {
   name: string;
-  start: Date | null;
-  end: Date | null;
+  start: Date | string | null;
+  end: Date | string | null;
 };
 
 const emptyDays = (): DaySchedule[] =>
