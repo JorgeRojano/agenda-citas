@@ -9,6 +9,7 @@ interface Props {
   selectedDate: any;
   slug: string;
   selectedTime: string | null;
+  staffId?: string | null;
   onNext: (slot: string) => void;
   primaryColor?: string;
 }
@@ -18,6 +19,7 @@ export function TimeStep({
   selectedDate,
   slug,
   selectedTime,
+  staffId,
   onNext,
   primaryColor = "#2563eb",
 }: Props) {
@@ -30,8 +32,9 @@ export function TimeStep({
       return;
     }
     setLoading(true);
+    const staffParam = staffId ? `&staffId=${staffId}` : "";
     fetch(
-      `/api/business/${slug}/availability?date=${selectedDate}&serviceId=${selectedService?.id}`,
+      `/api/business/${slug}/availability?date=${selectedDate}&serviceId=${selectedService?.id}${staffParam}`,
     )
       .then((res) => res.json())
       .then((data) => {

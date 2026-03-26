@@ -6,6 +6,7 @@ import { useState } from "react";
 
 interface Props {
   selectedService: any;
+  selectedResource?: { id: string; name: string; specialty?: string | null } | null;
   selectedDate: any;
   selectedTime: any;
   onSubmit: (values: any) => void;
@@ -14,6 +15,7 @@ interface Props {
 
 export function DetailsStep({
   selectedService,
+  selectedResource,
   selectedDate,
   selectedTime,
   onSubmit,
@@ -54,38 +56,45 @@ export function DetailsStep({
     });
   };
 
+  const rowStyle = {
+    display: "flex", alignItems: "center", gap: 12,
+    padding: "12px 16px", borderBottom: "1px solid #f8fafc",
+  };
+
+  const iconBox = (bg: string, emoji: string) => (
+    <div style={{
+      width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+      background: bg, display: "flex", alignItems: "center",
+      justifyContent: "center", fontSize: 16,
+    }}>{emoji}</div>
+  );
+
   return (
     <Stack gap="md">
       <style>{`
         .details-form-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 16px;
+          display: grid; grid-template-columns: 1fr; gap: 16px;
         }
         @media (min-width: 768px) {
-          .details-form-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-          }
-          .details-form-full {
-            grid-column: 1 / -1;
-          }
+          .details-form-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+          .details-form-full { grid-column: 1 / -1; }
         }
         .PhoneInputInput {
-          border: none !important;
-          outline: none !important;
-          font-size: 14px;
-          font-family: 'DM Sans', sans-serif;
-          background: transparent;
-          width: 100%;
+          border: none !important; outline: none !important;
+          font-size: 14px; font-family: 'DM Sans', sans-serif;
+          background: transparent; width: 100%;
+        }
+        .summary-date-mobile { display: flex; }
+        .summary-date-desktop { display: none; }
+        @media (min-width: 768px) {
+          .summary-date-mobile { display: none; }
+          .summary-date-desktop { display: flex; }
         }
       `}</style>
 
       <div>
         <Title order={4}>Tu información</Title>
-        <Text size="sm" c="dimmed" mt={4}>
-          Estás a un paso de confirmar tu cita
-        </Text>
+        <Text size="sm" c="dimmed" mt={4}>Estás a un paso de confirmar tu cita</Text>
       </div>
 
       {/* Summary card */}
@@ -95,17 +104,11 @@ export function DetailsStep({
         boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
         overflow: "hidden",
       }}>
+
+        {/* Servicio */}
         {selectedService && (
-          <div style={{
-            display: "flex", alignItems: "center", gap: 12,
-            padding: "12px 16px", borderBottom: "1px solid #f8fafc",
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-              background: `${primaryColor}15`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 16,
-            }}>💼</div>
+          <div style={rowStyle}>
+            {iconBox(`${primaryColor}15`, "💼")}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>Servicio</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{selectedService.name}</div>
@@ -116,28 +119,24 @@ export function DetailsStep({
           </div>
         )}
 
-        {/* Mobile: fecha y hora juntas */}
-        <style>{`
-          .summary-date-mobile { display: flex; }
-          .summary-date-desktop { display: none; }
-          @media (min-width: 768px) {
-            .summary-date-mobile { display: none; }
-            .summary-date-desktop { display: flex; }
-          }
-        `}</style>
+        {/* Recurso */}
+        {selectedResource && (
+          <div style={rowStyle}>
+            {iconBox("#f3f0ff", "👤")}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>Recurso</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{selectedResource.name}</div>
+              {selectedResource.specialty && (
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>{selectedResource.specialty}</div>
+              )}
+            </div>
+          </div>
+        )}
 
-        {/* Mobile — fecha y hora en una fila */}
+        {/* Mobile — fecha y hora juntas */}
         {selectedDate && (
-          <div className="summary-date-mobile" style={{
-            alignItems: "center", gap: 12,
-            padding: "12px 16px",
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-              background: "#eff6ff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 16,
-            }}>📅</div>
+          <div className="summary-date-mobile" style={{ alignItems: "center", gap: 12, padding: "12px 16px" }}>
+            {iconBox("#eff6ff", "📅")}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>Fecha y hora</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
@@ -147,18 +146,10 @@ export function DetailsStep({
           </div>
         )}
 
-        {/* Desktop — fecha y hora separadas */}
+        {/* Desktop — fecha */}
         {selectedDate && (
-          <div className="summary-date-desktop" style={{
-            alignItems: "center", gap: 12,
-            padding: "12px 16px", borderBottom: "1px solid #f8fafc",
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-              background: "#eff6ff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 16,
-            }}>📅</div>
+          <div className="summary-date-desktop" style={{ alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid #f8fafc" }}>
+            {iconBox("#eff6ff", "📅")}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>Fecha</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{formatDate(selectedDate)}</div>
@@ -166,17 +157,10 @@ export function DetailsStep({
           </div>
         )}
 
+        {/* Desktop — hora */}
         {selectedTime && (
-          <div className="summary-date-desktop" style={{
-            alignItems: "center", gap: 12,
-            padding: "12px 16px",
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-              background: "#f0fdf4",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 16,
-            }}>🕛</div>
+          <div className="summary-date-desktop" style={{ alignItems: "center", gap: 12, padding: "12px 16px" }}>
+            {iconBox("#f0fdf4", "🕛")}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>Hora</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{formatTime(selectedTime)}</div>
@@ -189,49 +173,23 @@ export function DetailsStep({
       <form id="details-form" onSubmit={form.onSubmit(handleSubmit)}>
         <div className="details-form-grid">
           <div>
-            <TextInput
-              required
-              label="Nombre"
-              placeholder="Tu nombre completo"
-              {...form.getInputProps("name")}
-            />
+            <TextInput required label="Nombre" placeholder="Tu nombre completo" {...form.getInputProps("name")} />
           </div>
-
           <div>
-            <Text size="sm" fw={500} mb={4}>
-              Celular <span style={{ color: "red" }}>*</span>
-            </Text>
+            <Text size="sm" fw={500} mb={4}>Celular <span style={{ color: "red" }}>*</span></Text>
             <PhoneInput
-              defaultCountry="MX"
-              international
-              withCountryCallingCode
+              defaultCountry="MX" international withCountryCallingCode
               value={phone}
-              onChange={(value) => {
-                setPhone(value ?? "");
-                setPhoneError(null);
-              }}
-              style={{
-                border: "1.5px solid #e2e8f0",
-                borderRadius: 10,
-                padding: "9px 12px",
-                background: "white",
-              }}
+              onChange={(value) => { setPhone(value ?? ""); setPhoneError(null); }}
+              style={{ border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "9px 12px", background: "white" }}
             />
-            {phoneError && (
-              <Text size="xs" c="red" mt={4}>{phoneError}</Text>
-            )}
+            {phoneError && <Text size="xs" c="red" mt={4}>{phoneError}</Text>}
           </div>
-
           <div className="details-form-full">
-            <TextInput
-              label="Correo Electrónico"
-              placeholder="tu.correo@ejemplo.com"
-              {...form.getInputProps("email")}
-            />
+            <TextInput label="Correo Electrónico" placeholder="tu.correo@ejemplo.com" {...form.getInputProps("email")} />
           </div>
         </div>
 
-        {/* Trust badge */}
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
           background: "#f0fdf4", border: "1px solid #bbf7d0",

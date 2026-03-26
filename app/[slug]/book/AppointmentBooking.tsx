@@ -12,11 +12,18 @@ import {
 import { DateStep } from "./DateStep";
 import { TimeStep } from "./TimeStep";
 import { ServiceStep } from "./ServiceStep";
+import { ResourceStep } from "./ResourceStep";
 import { DetailsStep } from "./DetailsStep";
 import { createAppointment } from "./actions";
 import { BookingPending } from "./BookingPending";
 import { Service } from "@/types/Service";
 import { Business } from "@/types/Business";
+
+interface Resource {
+  id: string;
+  name: string;
+  specialty?: string | null;
+}
 
 interface Props {
   business: Business;
@@ -30,15 +37,16 @@ const darkenColor = (hex: string, amount = 40): string => {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 };
 
-const stepLabels = ["Servicio", "Fecha", "Hora", "Tus datos"];
+const stepLabels = ["Servicio", "Recurso", "Fecha", "Hora", "Tus datos"];
 
-// ── LEFT PANEL — fuera del componente principal ──
+// ── LEFT PANEL ──
 interface LeftPanelProps {
   business: Business;
   primaryColor: string;
   darkColor: string;
   compact: boolean;
   selectedService: Service | null;
+  selectedResource: Resource | null;
   selectedDate: DateValue | null;
   selectedTime: string | null;
   active?: number;
@@ -50,6 +58,7 @@ function LeftPanel({
   darkColor,
   compact,
   selectedService,
+  selectedResource,
   selectedDate,
   selectedTime,
   active = 0,
@@ -63,7 +72,7 @@ function LeftPanel({
         display: "flex",
         flexDirection: compact ? "row" : "column",
         alignItems: "center",
-        justifyContent: compact ? "center" : "center",
+        justifyContent: "center",
         gap: compact ? 14 : 16,
         padding: compact ? "16px 20px" : "40px 32px",
         position: "relative",
@@ -99,7 +108,7 @@ function LeftPanel({
         )}
       </div>
 
-      {/* Nombre y descripción */}
+      {/* Nombre */}
       <div
         style={{
           zIndex: 1,
@@ -134,7 +143,7 @@ function LeftPanel({
         )}
       </div>
 
-      {/* Resumen de selecciones — solo desktop */}
+      {/* Resumen — solo desktop */}
       {!compact && active > 0 && (
         <div
           style={{
@@ -162,7 +171,6 @@ function LeftPanel({
             Tu selección
           </div>
 
-          {/* Servicio */}
           {selectedService && (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
@@ -210,8 +218,53 @@ function LeftPanel({
             </div>
           )}
 
-          {/* Fecha */}
-          {selectedDate && active >= 2 && (
+          {selectedResource && active >= 2 && (
+            <>
+              <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    minWidth: 32,
+                    borderRadius: 8,
+                    background: "rgba(255,255,255,0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 14,
+                  }}
+                >
+                  👤
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.45)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Recurso
+                  </div>
+                  <div
+                    style={{ fontSize: 13, fontWeight: 700, color: "white" }}
+                  >
+                    {selectedResource.name}
+                  </div>
+                  {selectedResource.specialty && (
+                    <div
+                      style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}
+                    >
+                      {selectedResource.specialty}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {selectedDate && active >= 3 && (
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -255,8 +308,7 @@ function LeftPanel({
             </>
           )}
 
-          {/* Hora */}
-          {selectedTime && active >= 3 && (
+          {selectedTime && active >= 4 && (
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -302,7 +354,7 @@ function LeftPanel({
         </div>
       )}
 
-      {/* Redes sociales — solo desktop */}
+      {/* Redes sociales */}
       {!compact &&
         (business.facebook || business.instagram || business.website) && (
           <div style={{ display: "flex", gap: 8, zIndex: 1 }}>
@@ -398,7 +450,7 @@ function LeftPanel({
   );
 }
 
-// ── STEPS HEADER — fuera del componente principal ──
+// ── STEPS HEADER ──
 interface StepsHeaderProps {
   active: number;
   primaryColor: string;
@@ -493,26 +545,42 @@ export default function AppointmentBooking({ business }: Props) {
 
   const [active, setActive] = useState(0);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(
+    null,
+  );
   const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [pendingModalOpen, setPendingModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const totalSteps = 4;
 
+  const totalSteps = 5;
   const primaryColor = business.primaryColor ?? "#2563eb";
   const darkColor = darkenColor(primaryColor, 40);
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
+    setSelectedResource(null); // reset recurso si cambia servicio
+    setSelectedDate(null);
+    setSelectedTime(null);
     setActive(1);
   };
-  const handleDateSelect = (date: DateValue) => {
-    setSelectedDate(date);
+
+  const handleResourceSelect = (resource: Resource) => {
+    setSelectedResource(resource);
+    setSelectedDate(null);
+    setSelectedTime(null);
     setActive(2);
   };
+
+  const handleDateSelect = (date: DateValue) => {
+    setSelectedDate(date);
+    setSelectedTime(null);
+    setActive(3);
+  };
+
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
-    setActive(3);
+    setActive(4);
   };
 
   const handleSubmit = async (details: any) => {
@@ -525,6 +593,7 @@ export default function AppointmentBooking({ business }: Props) {
         selectedService.id,
         details.name,
         details.phone,
+        selectedResource?.id ?? null,
       );
       setPendingModalOpen(true);
     } catch (error) {
@@ -537,6 +606,7 @@ export default function AppointmentBooking({ business }: Props) {
   const handleBookAnother = () => {
     setPendingModalOpen(false);
     setSelectedService(null);
+    setSelectedResource(null);
     setSelectedDate(null);
     setSelectedTime(null);
     setActive(0);
@@ -545,66 +615,19 @@ export default function AppointmentBooking({ business }: Props) {
   return (
     <>
       <style>{`
-        .booking-wrap {
-          min-height: 100dvh;
-          display: flex;
-          flex-direction: column;
-          background: #f8fafc;
-        }
-        .booking-left-desktop {
-          display: none;
-        }
-        .booking-left-mobile {
-          display: block;
-          flex-shrink: 0;
-        }
-        .booking-right {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          min-height: 0;
-          overflow: hidden;
-        }
-        .booking-content {
-          flex: 1;
-          overflow-y: auto;
-          padding: 24px;
-        }
-        .booking-footer {
-          background: white;
-          border-top: 1px solid #f1f5f9;
-          padding: 14px 24px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-shrink: 0;
-        }
+        .booking-wrap { min-height: 100dvh; display: flex; flex-direction: column; background: #f8fafc; }
+        .booking-left-desktop { display: none; }
+        .booking-left-mobile { display: block; flex-shrink: 0; }
+        .booking-right { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+        .booking-content { flex: 1; overflow-y: auto; padding: 24px; }
+        .booking-footer { background: white; border-top: 1px solid #f1f5f9; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         @media (min-width: 768px) {
-          .booking-wrap {
-            flex-direction: row;
-            height: 100dvh;
-            overflow: hidden;
-          }
-          .booking-left-desktop {
-            display: block;
-            width: 320px;
-            min-width: 320px;
-            flex-shrink: 0;
-            height: 100%;
-          }
-          .booking-left-mobile {
-            display: none;
-          }
-          .booking-right {
-            flex: 1;
-            min-width: 0;
-          }
-          .booking-content {
-            padding: 32px 40px;
-          }
-          .booking-footer {
-            padding: 16px 40px;
-          }
+          .booking-wrap { flex-direction: row; height: 100dvh; overflow: hidden; }
+          .booking-left-desktop { display: block; width: 320px; min-width: 320px; flex-shrink: 0; height: 100%; }
+          .booking-left-mobile { display: none; }
+          .booking-right { flex: 1; min-width: 0; }
+          .booking-content { padding: 32px 40px; }
+          .booking-footer { padding: 16px 40px; }
         }
       `}</style>
 
@@ -617,13 +640,13 @@ export default function AppointmentBooking({ business }: Props) {
             darkColor={darkColor}
             compact={false}
             selectedService={selectedService}
+            selectedResource={selectedResource}
             selectedDate={selectedDate}
             selectedTime={selectedTime}
             active={active}
           />
         </div>
 
-        {/* Right */}
         <div className="booking-right">
           {/* Mobile header */}
           <div className="booking-left-mobile">
@@ -633,6 +656,7 @@ export default function AppointmentBooking({ business }: Props) {
               darkColor={darkColor}
               compact={active > 0}
               selectedService={selectedService}
+              selectedResource={selectedResource}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               active={active}
@@ -647,32 +671,44 @@ export default function AppointmentBooking({ business }: Props) {
                 slug={slug}
                 primaryColor={primaryColor}
                 selectedService={selectedService}
-
                 onNext={handleServiceSelect}
               />
             )}
             {active === 1 && (
-              <DateStep
+              <ResourceStep
+                slug={slug}
                 primaryColor={primaryColor}
                 selectedService={selectedService}
+                selectedResource={selectedResource}
+                onNext={handleResourceSelect}
+              />
+            )}
+            {active === 2 && (
+              <DateStep
+                slug={slug}
+                primaryColor={primaryColor}
+                selectedService={selectedService}
+                selectedResource={selectedResource}
                 selectedDate={selectedDate}
                 onNext={handleDateSelect}
               />
             )}
-            {active === 2 && (
+            {active === 3 && (
               <TimeStep
                 slug={slug}
                 primaryColor={primaryColor}
                 selectedService={selectedService}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
+                staffId={selectedResource?.id ?? null}
                 onNext={handleTimeSelect}
               />
             )}
-            {active === 3 && (
+            {active === 4 && (
               <DetailsStep
                 primaryColor={primaryColor}
                 selectedService={selectedService}
+                selectedResource={selectedResource}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 onSubmit={handleSubmit}
