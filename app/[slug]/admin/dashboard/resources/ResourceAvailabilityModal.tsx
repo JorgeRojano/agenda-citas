@@ -31,8 +31,8 @@ type Vacation = {
 
 type NewVacation = {
   name: string;
-  start: Date | string | null;
-  end: Date | string | null;
+  start: Date | null;
+  end: Date | null;
 };
 
 const emptyDays = (): DaySchedule[] =>
@@ -50,12 +50,11 @@ function formatDate(iso: string) {
 }
 
 function vacationStatus(start: string, end: string) {
-  const now   = new Date();
-  const s     = new Date(start);
-  const e     = new Date(end);
-  if (e < now)  return { label: "Pasado",  color: "dimmed" } as const;
-  if (s <= now) return { label: "En curso", color: "yellow" } as const;
-  // days until start
+  const now = new Date();
+  const s   = new Date(start);
+  const e   = new Date(end);
+  if (e < now)  return { label: "Pasado",   color: "dimmed" } as const;
+  if (s <= now) return { label: "En curso",  color: "yellow" } as const;
   const days = Math.ceil((s.getTime() - now.getTime()) / 86400000);
   if (days <= 30) return { label: "Próximo", color: "orange" } as const;
   return { label: "Futuro", color: "blue" } as const;
@@ -77,9 +76,9 @@ export function ResourceAvailabilityModal({
   const { slug } = useParams<{ slug: string }>();
 
   // ── Horario ──
-  const [days, setDays]       = useState<DaySchedule[]>(emptyDays());
-  const [saved, setSaved]     = useState<DaySchedule[]>(emptyDays());
-  const [saving, setSaving]   = useState(false);
+  const [days, setDays]     = useState<DaySchedule[]>(emptyDays());
+  const [saved, setSaved]   = useState<DaySchedule[]>(emptyDays());
+  const [saving, setSaving] = useState(false);
   const [loadingSched, setLoadingSched] = useState(false);
 
   const hasChanges = useMemo(
@@ -88,13 +87,12 @@ export function ResourceAvailabilityModal({
   );
 
   // ── Vacaciones ──
-  const [vacations, setVacations]           = useState<Vacation[]>([]);
-  const [loadingVac, setLoadingVac]         = useState(false);
-  const [savingVac, setSavingVac]           = useState(false);
-  const [deletingId, setDeletingId]         = useState<string | null>(null);
-  const [newVac, setNewVac]                 = useState<NewVacation>({ name: "", start: null, end: null });
+  const [vacations, setVacations]   = useState<Vacation[]>([]);
+  const [loadingVac, setLoadingVac] = useState(false);
+  const [savingVac, setSavingVac]   = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [newVac, setNewVac]         = useState<NewVacation>({ name: "", start: null, end: null });
 
-  // Cargar al abrir
   useEffect(() => {
     if (!opened || !profileId) return;
 
@@ -119,7 +117,6 @@ export function ResourceAvailabilityModal({
       .finally(() => setLoadingVac(false));
   }, [opened, profileId, slug]);
 
-  // ── Horario: mutaciones ──
   const toggleDay = (dow: number, on: boolean) =>
     setDays((prev) => prev.map((d) =>
       d.dayOfWeek === dow ? { ...d, slots: on ? [{ start: "09:00", end: "17:00" }] : [] } : d,
@@ -142,7 +139,6 @@ export function ResourceAvailabilityModal({
         : d,
     ));
 
-  // ── Horario: guardar ──
   const handleSaveSchedule = async () => {
     for (const day of days) {
       const label = weekDays.find((d) => d.value === day.dayOfWeek)?.label;
@@ -186,14 +182,9 @@ export function ResourceAvailabilityModal({
     showNotification({ title: "Guardado", message: `Horario de ${profileName} actualizado`, color: "green" });
   };
 
-  // ── Vacaciones: agregar ──
   const handleAddVacation = async () => {
     if (!newVac.start || !newVac.end) {
       showNotification({ title: "Error", message: "Selecciona fechas de inicio y fin", color: "red" });
-      return;
-    }
-    if (newVac.start > newVac.end) {
-      showNotification({ title: "Error", message: "La fecha de inicio debe ser menor al fin", color: "red" });
       return;
     }
 
@@ -220,16 +211,16 @@ export function ResourceAvailabilityModal({
     showNotification({ title: "Guardado", message: "Período de ausencia agregado", color: "green" });
   };
 
-  // ── Vacaciones: eliminar ──
   const handleDeleteVacation = async (id: string) => {
     setDeletingId(id);
-    await fetch(`/api/business/${slug}/resources/${profileId}/vacations?id=${id}`, {
-      method: "DELETE",
-    });
+    await fetch(`/api/business/${slug}/resources/${profileId}/vacations?id=${id}`, { method: "DELETE" });
     setVacations((prev) => prev.filter((v) => v.id !== id));
     setDeletingId(null);
     showNotification({ title: "Eliminado", message: "Período de ausencia eliminado", color: "red" });
   };
+
+  // Altura del área scrolleable: viewport - header modal - tabs list - footer
+  const SCROLL_HEIGHT = "calc(90vh - 180px)";
 
   return (
     <Modal
@@ -260,7 +251,6 @@ export function ResourceAvailabilityModal({
         <Button variant="subtle" color="gray" size="xs" onClick={onClose} px={8}>✕</Button>
       </Group>
 
-      {/* Tabs */}
       <Tabs defaultValue="schedule" keepMounted={false}>
         <Tabs.List grow style={{ borderBottom: "1px solid #f1f5f9" }}>
           <Tabs.Tab value="schedule">Horario semanal</Tabs.Tab>
@@ -269,48 +259,51 @@ export function ResourceAvailabilityModal({
 
         {/* ── Tab Horario ── */}
         <Tabs.Panel value="schedule">
-          <Stack gap="xs" p="md" style={{ maxHeight: "55vh", overflowY: "auto" }}>
-            {loadingSched ? (
-              <Text size="sm" c="dimmed" ta="center" py="xl">Cargando horarios...</Text>
-            ) : (
-              days.map((day) => {
-                const label = weekDays.find((d) => d.value === day.dayOfWeek)?.label ?? "";
-                const isOn  = day.slots.length > 0;
-                return (
-                  <div key={day.dayOfWeek} style={{ background: "#f8fafc", border: "1px solid #f1f5f9", borderRadius: 12, overflow: "hidden" }}>
-                    <Group gap="sm" p="sm" wrap="nowrap">
-                      <Switch
-                        checked={isOn}
-                        onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)}
-                        size="md"
-                      />
-                      <Text fw={700} size="sm" c={isOn ? "dark" : "dimmed"} style={{ flex: 1 }}>{label}</Text>
+          {/* Área scrolleable */}
+          <div style={{ height: SCROLL_HEIGHT, overflowY: "auto", padding: "12px 16px" }}>
+            <Stack gap="xs">
+              {loadingSched ? (
+                <Text size="sm" c="dimmed" ta="center" py="xl">Cargando horarios...</Text>
+              ) : (
+                days.map((day) => {
+                  const label = weekDays.find((d) => d.value === day.dayOfWeek)?.label ?? "";
+                  const isOn  = day.slots.length > 0;
+                  return (
+                    <div key={day.dayOfWeek} style={{ background: "#f8fafc", border: "1px solid #f1f5f9", borderRadius: 12, overflow: "hidden" }}>
+                      <Group gap="sm" p="sm" wrap="nowrap">
+                        <Switch
+                          checked={isOn}
+                          onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)}
+                          size="md"
+                        />
+                        <Text fw={700} size="sm" c={isOn ? "dark" : "dimmed"} style={{ flex: 1 }}>{label}</Text>
+                        {isOn && (
+                          <Button size="xs" variant="subtle" color="blue" leftSection={<IconPlus size={12} />} onClick={() => addSlot(day.dayOfWeek)} px={8}>
+                            Agregar rango
+                          </Button>
+                        )}
+                      </Group>
                       {isOn && (
-                        <Button size="xs" variant="subtle" color="blue" leftSection={<IconPlus size={12} />} onClick={() => addSlot(day.dayOfWeek)} px={8}>
-                          Agregar rango
-                        </Button>
+                        <Stack gap={6} px="sm" pb="sm">
+                          {day.slots.map((slot, idx) => (
+                            <Group key={idx} gap={8} wrap="nowrap">
+                              <TimeInput value={slot.start} onChange={(e) => updateSlot(day.dayOfWeek, idx, "start", e.target.value)} size="sm" style={{ flex: 1 }} />
+                              <Text size="sm" c="dimmed" fw={600}>→</Text>
+                              <TimeInput value={slot.end} onChange={(e) => updateSlot(day.dayOfWeek, idx, "end", e.target.value)} size="sm" style={{ flex: 1 }} />
+                              <Button size="xs" variant="light" color="red" px={8} onClick={() => removeSlot(day.dayOfWeek, idx)}>
+                                <IconX size={12} />
+                              </Button>
+                            </Group>
+                          ))}
+                        </Stack>
                       )}
-                    </Group>
-                    {isOn && (
-                      <Stack gap={6} px="sm" pb="sm">
-                        {day.slots.map((slot, idx) => (
-                          <Group key={idx} gap={8} wrap="nowrap">
-                            <TimeInput value={slot.start} onChange={(e) => updateSlot(day.dayOfWeek, idx, "start", e.target.value)} size="sm" style={{ flex: 1 }} />
-                            <Text size="sm" c="dimmed" fw={600}>→</Text>
-                            <TimeInput value={slot.end} onChange={(e) => updateSlot(day.dayOfWeek, idx, "end", e.target.value)} size="sm" style={{ flex: 1 }} />
-                            <Button size="xs" variant="light" color="red" px={8} onClick={() => removeSlot(day.dayOfWeek, idx)}>
-                              <IconX size={12} />
-                            </Button>
-                          </Group>
-                        ))}
-                      </Stack>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </Stack>
-
+                    </div>
+                  );
+                })
+              )}
+            </Stack>
+          </div>
+          {/* Footer fijo */}
           <Group p="md" justify="flex-end" gap="sm" style={{ borderTop: "1px solid #f1f5f9" }}>
             <Button variant="subtle" color="gray" onClick={onClose}>Cancelar</Button>
             <Button
@@ -327,103 +320,100 @@ export function ResourceAvailabilityModal({
 
         {/* ── Tab Vacaciones ── */}
         <Tabs.Panel value="vacations">
-          <Stack gap="xs" p="md" style={{ maxHeight: "55vh", overflowY: "auto" }}>
-
-            {/* Lista de vacaciones existentes */}
-            {loadingVac ? (
-              <Text size="sm" c="dimmed" ta="center" py="md">Cargando...</Text>
-            ) : vacations.length === 0 ? (
-              <Text size="sm" c="dimmed" ta="center" py="md" fs="italic">Sin períodos de ausencia registrados</Text>
-            ) : (
-              vacations.map((v) => {
-                const status  = vacationStatus(v.start, v.end);
-                const isPast  = status.label === "Pasado";
-                const isSingle = v.start.slice(0, 10) === v.end.slice(0, 10);
-                return (
-                  <Group
-                    key={v.id}
-                    gap="sm"
-                    p="sm"
-                    style={{
-                      background: "#f8fafc",
-                      border: "1px solid #f1f5f9",
-                      borderRadius: 10,
-                      opacity: isPast ? 0.55 : 1,
-                    }}
-                    wrap="nowrap"
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <Text size="sm" fw={700} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {v.name ?? "Sin nombre"}
-                      </Text>
-                      <Text size="xs" c="dimmed" mt={2}>
-                        {isSingle ? formatDate(v.start) : `${formatDate(v.start)} — ${formatDate(v.end)}`}
-                      </Text>
-                    </div>
-                    <Text size="xs" c={status.color} fw={600} style={{ flexShrink: 0 }}>
-                      {status.label}
-                    </Text>
-                    <Button
-                      size="xs" variant="light" color="red" px={6}
-                      loading={deletingId === v.id}
-                      onClick={() => handleDeleteVacation(v.id)}
+          {/* Área scrolleable */}
+          <div style={{ height: SCROLL_HEIGHT, overflowY: "auto", padding: "12px 16px" }}>
+            <Stack gap="xs">
+              {loadingVac ? (
+                <Text size="sm" c="dimmed" ta="center" py="md">Cargando...</Text>
+              ) : vacations.length === 0 ? (
+                <Text size="sm" c="dimmed" ta="center" py="md" fs="italic">Sin períodos de ausencia registrados</Text>
+              ) : (
+                vacations.map((v) => {
+                  const status   = vacationStatus(v.start, v.end);
+                  const isPast   = status.label === "Pasado";
+                  const isSingle = v.start.slice(0, 10) === v.end.slice(0, 10);
+                  return (
+                    <Group
+                      key={v.id}
+                      gap="sm"
+                      p="sm"
+                      style={{
+                        background: "#f8fafc", border: "1px solid #f1f5f9",
+                        borderRadius: 10, opacity: isPast ? 0.55 : 1,
+                      }}
+                      wrap="nowrap"
                     >
-                      <IconTrash size={12} />
-                    </Button>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="sm" fw={700} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {v.name ?? "Sin nombre"}
+                        </Text>
+                        <Text size="xs" c="dimmed" mt={2}>
+                          {isSingle ? formatDate(v.start) : `${formatDate(v.start)} — ${formatDate(v.end)}`}
+                        </Text>
+                      </div>
+                      <Text size="xs" c={status.color} fw={600} style={{ flexShrink: 0 }}>{status.label}</Text>
+                      <Button
+                        size="xs" variant="light" color="red" px={6}
+                        loading={deletingId === v.id}
+                        onClick={() => handleDeleteVacation(v.id)}
+                      >
+                        <IconTrash size={12} />
+                      </Button>
+                    </Group>
+                  );
+                })
+              )}
+
+              {/* Formulario agregar */}
+              <div style={{ background: "#f8fafc", border: "1px dashed #e2e8f0", borderRadius: 12, padding: 12, marginTop: 4 }}>
+                <Text size="xs" fw={700} c="dimmed" mb={10} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+                  Agregar período de ausencia
+                </Text>
+                <Stack gap={8}>
+                  <TextInput
+                    placeholder="Motivo (opcional)"
+                    size="sm"
+                    value={newVac.name}
+                    onChange={(e) => setNewVac((p) => ({ ...p, name: e.target.value }))}
+                  />
+                  <Group gap={8} wrap="nowrap">
+                    <DatePickerInput
+                      placeholder="Inicio"
+                      size="sm"
+                      style={{ flex: 1 }}
+                      value={newVac.start}
+                      onChange={(v) => setNewVac((p) => ({ ...p, start: v }))}
+                      minDate={new Date()}
+                      valueFormat="DD MMM YYYY"
+                      clearable
+                    />
+                    <Text size="sm" c="dimmed">→</Text>
+                    <DatePickerInput
+                      placeholder="Fin"
+                      size="sm"
+                      style={{ flex: 1 }}
+                      value={newVac.end}
+                      onChange={(v) => setNewVac((p) => ({ ...p, end: v }))}
+                      minDate={newVac.start ?? new Date()}
+                      valueFormat="DD MMM YYYY"
+                      clearable
+                    />
                   </Group>
-                );
-              })
-            )}
-
-            {/* Formulario agregar */}
-            <div style={{ background: "#f8fafc", border: "1px dashed #e2e8f0", borderRadius: 12, padding: 12, marginTop: 4 }}>
-              <Text size="xs" fw={700} c="dimmed" mb={10} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
-                Agregar período de ausencia
-              </Text>
-              <Stack gap={8}>
-                <TextInput
-                  placeholder="Motivo (opcional)"
-                  size="sm"
-                  value={newVac.name}
-                  onChange={(e) => setNewVac((p) => ({ ...p, name: e.target.value }))}
-                />
-                <Group gap={8} wrap="nowrap">
-                  <DatePickerInput
-                    placeholder="Inicio"
-                    size="sm"
-                    style={{ flex: 1 }}
-                    value={newVac.start}
-                    onChange={(v) => setNewVac((p) => ({ ...p, start: v }))}
-                    minDate={new Date()}
-                    valueFormat="DD MMM YYYY"
-                    clearable
-                  />
-                  <Text size="sm" c="dimmed">→</Text>
-                  <DatePickerInput
-                    placeholder="Fin"
-                    size="sm"
-                    style={{ flex: 1 }}
-                    value={newVac.end}
-                    onChange={(v) => setNewVac((p) => ({ ...p, end: v }))}
-                    minDate={newVac.start ?? new Date()}
-                    valueFormat="DD MMM YYYY"
-                    clearable
-                  />
-                </Group>
-                <Button
-                  size="xs"
-                  color="blue"
-                  loading={savingVac}
-                  onClick={handleAddVacation}
-                  disabled={!newVac.start || !newVac.end}
-                  style={{ alignSelf: "flex-end" }}
-                >
-                  Agregar
-                </Button>
-              </Stack>
-            </div>
-          </Stack>
-
+                  <Button
+                    size="xs"
+                    color="blue"
+                    loading={savingVac}
+                    onClick={handleAddVacation}
+                    disabled={!newVac.start || !newVac.end}
+                    style={{ alignSelf: "flex-end" }}
+                  >
+                    Agregar
+                  </Button>
+                </Stack>
+              </div>
+            </Stack>
+          </div>
+          {/* Footer fijo */}
           <Group p="md" justify="flex-end" style={{ borderTop: "1px solid #f1f5f9" }}>
             <Button variant="subtle" color="gray" onClick={onClose}>Cerrar</Button>
           </Group>
