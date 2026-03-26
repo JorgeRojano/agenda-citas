@@ -58,8 +58,35 @@ export async function getAvailableSlots(
   const dayStartUTC = fromZonedTime(startOfDayMexico, TIME_ZONE);
   const dayEndUTC   = fromZonedTime(endOfDayMexico, TIME_ZONE);
 
-  // Sin staffId no hay slots — la disponibilidad es siempre por recurso
-  if (!staffId) return [];
+  // Sin staffId → usar horario del negocio
+  if (!staffId) {
+    const timeRanges = await prisma.businessTimeSlot.findMany({
+      where: { businessId, dayOfWeek },
+    });
+    if (!timeRanges.length) return [];
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        businessId,
+        status:    { in: ["PENDING", "CONFIRMED"] },
+        startTime: { lt: dayEndUTC },
+        endTime:   { gt: dayStartUTC },
+      },
+    });
+
+    const blocked = await prisma.blockedTime.findMany({
+      where: { businessId, start: { lt: dayEndUTC }, end: { gt: dayStartUTC } },
+    });
+
+    const slots = generateSlotsFromTimeRanges(mexicoDate, timeRanges, serviceDuration);
+    return slots.filter((slotUTC) => {
+      const slotEndUTC = addMinutes(slotUTC, serviceDuration);
+      return !appointments.some((a) => isOverlapping(slotUTC, slotEndUTC, a.startTime, a.endTime))
+          && !blocked.some((b) => isOverlapping(slotUTC, slotEndUTC, b.start, b.end));
+    });
+  }
+
+  // Con staffId → verificar vacaciones y usar ResourceTimeSlot
 
   // Verificar que el recurso no esté de vacaciones ese día
   const vacation = await prisma.resourceVacation.findFirst({

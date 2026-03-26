@@ -27,17 +27,12 @@ import {
 } from "./actions";
 import { showNotification } from "@mantine/notifications";
 import { Service } from "@/types/Service";
+import { Resource } from "@/types/Resource";
 
 interface Business {
   id: string;
   name: string;
   slug: string;
-}
-
-interface Resource {
-  id: string;
-  name: string;
-  specialty: string | null;
 }
 
 interface ServiceWithResources extends Service {
@@ -483,7 +478,7 @@ export default function ServicesClient({
             allResources.map((resource) => (
               <div
                 key={resource.id}
-                onClick={() => handleToggleResource(resource.id)}
+                onClick={() => handleToggleResource(resource.id as string)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -491,10 +486,10 @@ export default function ServicesClient({
                   padding: "10px 12px",
                   borderRadius: 10,
                   cursor: "pointer",
-                  background: selectedResourceIds.includes(resource.id)
+                  background: selectedResourceIds.includes(resource.id as string)
                     ? "#f5f3ff"
                     : "white",
-                  border: `1.5px solid ${selectedResourceIds.includes(resource.id) ? "#7c3aed" : "#f1f5f9"}`,
+                  border: `1.5px solid ${selectedResourceIds.includes(resource.id as string) ? "#7c3aed" : "#f1f5f9"}`,
                   transition: "all 0.1s",
                 }}
               >
@@ -526,8 +521,8 @@ export default function ServicesClient({
                   )}
                 </div>
                 <Checkbox
-                  checked={selectedResourceIds.includes(resource.id)}
-                  onChange={() => handleToggleResource(resource.id)}
+                  checked={selectedResourceIds.includes(resource.id as string)}
+                  onChange={() => handleToggleResource(resource.id as string)}
                   color="violet"
                   onClick={(e) => e.stopPropagation()}
                 />

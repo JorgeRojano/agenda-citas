@@ -7,21 +7,15 @@ export async function PATCH(
 ) {
   try {
     const { slug, id } = await params;
-    const { status } = await req.json();
+    const body = await req.json();
+    const { status, assignedToId } = body;
 
-    if (!id || !status || !slug) {
+    if (!id || !slug) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
     }
 
-    // Validamos que la cita pertenezca al negocio con ese slug
-    // Esto es seguridad básica en multi-tenant
     const appointment = await prisma.appointment.findFirst({
-      where: {
-        id: id,
-        business: {
-          slug: slug,
-        },
-      },
+      where: { id, business: { slug } },
     });
 
     if (!appointment) {
@@ -31,13 +25,14 @@ export async function PATCH(
       );
     }
 
+    const updateData: any = {};
+    if (status)                        updateData.status       = status;
+    if (assignedToId !== undefined)    updateData.assignedToId = assignedToId;
+
     const updated = await prisma.appointment.update({
       where: { id },
-      data: { status },
-      include: {
-        service: true,
-        business: true,
-      },
+      data: updateData,
+      include: { service: true, business: true },
     });
 
     return NextResponse.json({ ok: true, appointment: updated });

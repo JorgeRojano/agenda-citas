@@ -3,10 +3,11 @@ import "react-phone-number-input/style.css";
 import { Text, TextInput, Title, Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useState } from "react";
+import { Resource } from "@/types/Resource";
 
 interface Props {
   selectedService: any;
-  selectedResource?: { id: string; name: string; specialty?: string | null } | null;
+  selectedResource: Resource;
   selectedDate: any;
   selectedTime: any;
   onSubmit: (values: any) => void;

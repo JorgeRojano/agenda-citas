@@ -1,14 +1,9 @@
 "use client";
 
-import { Stack, Text, Title, Center, Loader, Alert } from "@mantine/core";
-import { IconInfoCircle, IconCheck } from "@tabler/icons-react";
+import { Resource } from "@/types/Resource";
+import { Stack, Text, Title, Center, Loader } from "@mantine/core";
+import { IconCheck } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-
-interface Resource {
-  id: string;
-  name: string;
-  specialty?: string | null;
-}
 
 interface Props {
   slug: string;
@@ -68,26 +63,20 @@ export function ResourceStep({
             <Text size="sm" c="dimmed">Buscando recursos disponibles...</Text>
           </Stack>
         </Center>
-      ) : resources.length === 0 ? (
-        <Alert variant="light" color="gray" title="Sin recursos disponibles" icon={<IconInfoCircle />}>
-          No hay colaboradores disponibles para este servicio en este momento.
-        </Alert>
       ) : (
         <Stack gap="xs">
-          {resources.map((resource) => {
+          {/* Opción sin preferencia */}
+          {[{ id: null, name: "Sin preferencia", specialty: "Cualquier colaborador disponible" }, ...resources].map((resource) => {
             const isSelected = selectedResource?.id === resource.id;
+            const isAny      = resource.id === null;
             return (
               <div
-                key={resource.id}
+                key={resource.id ?? "any"}
                 onClick={() => onNext(resource)}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  padding: "14px 16px",
-                  background: "white",
-                  borderRadius: 14,
-                  cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 14,
+                  padding: "14px 16px", background: "white",
+                  borderRadius: 14, cursor: "pointer",
                   border: `2px solid ${isSelected ? primaryColor : "transparent"}`,
                   boxShadow: isSelected
                     ? `0 0 0 4px ${primaryColor}22`
@@ -110,11 +99,11 @@ export function ResourceStep({
                 {/* Avatar */}
                 <div style={{
                   width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
-                  background: getAvatarColor(resource.name),
+                  background: isAny ? "#f1f5f9" : getAvatarColor(resource.name),
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 16, fontWeight: 700, color: "white",
+                  fontSize: isAny ? 22 : 16, fontWeight: 700, color: isAny ? "#94a3b8" : "white",
                 }}>
-                  {getInitials(resource.name)}
+                  {isAny ? "★" : getInitials(resource.name)}
                 </div>
 
                 {/* Info */}

@@ -13,8 +13,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { createAppointmentByAdmin } from "./actions";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-
-interface Resource { id: string; name: string; specialty?: string }
+import { Resource } from "@/types/Resource";
 
 export default function CreateAppointmentButton({
   slug,
@@ -247,7 +246,7 @@ export default function CreateAppointmentButton({
                     placeholder="Sin asignar"
                     clearable
                     data={resources.map((r) => ({
-                      value: r.id,
+                      value: r.id as string,
                       label: r.specialty ? `${r.name} · ${r.specialty}` : r.name,
                     }))}
                     {...form.getInputProps("assignedToId")}

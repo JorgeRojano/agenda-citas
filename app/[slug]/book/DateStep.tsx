@@ -1,5 +1,6 @@
 "use client";
 
+import { Resource } from "@/types/Resource";
 import { Text, Stack, Title, Center, Loader, Alert } from "@mantine/core";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useEffect, useMemo, useState } from "react";
@@ -19,7 +20,7 @@ function getAvailableDays(count: number, closedDays: number[]): Date[] {
 interface Props {
   onNext: (date: Date) => void;
   selectedService: any;
-  selectedResource?: { id: string; name: string } | null;
+  selectedResource: Resource;
   selectedDate: any;
   slug: string;
   primaryColor?: string;
@@ -37,21 +38,29 @@ export function DateStep({
   const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
+    setLoading(true);
+
     if (!selectedResource?.id) {
-      setClosedDays([]);
-      setLoading(false);
+      // Sin preferencia de recurso → usar horario del negocio
+      fetch(`/api/business/${slug}/schedule`)
+        .then((r) => r.json())
+        .then((slots: { dayOfWeek: number }[]) => {
+          if (!Array.isArray(slots)) { setClosedDays([]); return; }
+          const openDays = new Set(slots.map((s) => s.dayOfWeek));
+          setClosedDays([0, 1, 2, 3, 4, 5, 6].filter((d) => !openDays.has(d)));
+        })
+        .catch(() => setClosedDays([]))
+        .finally(() => setLoading(false));
       return;
     }
 
-    setLoading(true);
-    // Fetch días activos del recurso via el endpoint de schedule
+    // Con recurso → usar ResourceTimeSlot
     fetch(`/api/business/${slug}/resources/${selectedResource.id}/schedule`)
       .then((r) => r.json())
       .then((data: { dayOfWeek: number }[]) => {
         if (!Array.isArray(data)) { setClosedDays([]); return; }
         const openDays = new Set(data.map((s) => s.dayOfWeek));
-        const closed   = [0, 1, 2, 3, 4, 5, 6].filter((d) => !openDays.has(d));
-        setClosedDays(closed);
+        setClosedDays([0, 1, 2, 3, 4, 5, 6].filter((d) => !openDays.has(d)));
       })
       .catch(() => setClosedDays([]))
       .finally(() => setLoading(false));

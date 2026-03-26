@@ -8,4 +8,6 @@ export type AppointmentItem = {
   status: string;
   phone: string;
   assignedTo: string | null;
+  serviceId: string;
+  assignedToId: string | null;
 };

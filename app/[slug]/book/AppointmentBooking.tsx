@@ -18,12 +18,7 @@ import { createAppointment } from "./actions";
 import { BookingPending } from "./BookingPending";
 import { Service } from "@/types/Service";
 import { Business } from "@/types/Business";
-
-interface Resource {
-  id: string;
-  name: string;
-  specialty?: string | null;
-}
+import { Resource } from "@/types/Resource";
 
 interface Props {
   business: Business;
@@ -688,7 +683,7 @@ export default function AppointmentBooking({ business }: Props) {
                 slug={slug}
                 primaryColor={primaryColor}
                 selectedService={selectedService}
-                selectedResource={selectedResource}
+                selectedResource={selectedResource as Resource}
                 selectedDate={selectedDate}
                 onNext={handleDateSelect}
               />
@@ -708,7 +703,7 @@ export default function AppointmentBooking({ business }: Props) {
               <DetailsStep
                 primaryColor={primaryColor}
                 selectedService={selectedService}
-                selectedResource={selectedResource}
+                selectedResource={selectedResource as Resource}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 onSubmit={handleSubmit}
