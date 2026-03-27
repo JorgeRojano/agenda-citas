@@ -21,19 +21,8 @@ const weekDays = [
 
 type TimeSlot    = { start: string; end: string };
 type DaySchedule = { dayOfWeek: number; slots: TimeSlot[] };
-
-type Vacation = {
-  id: string;
-  name: string | null;
-  start: string;
-  end: string;
-};
-
-type NewVacation = {
-  name: string;
-  start: Date | string | null;
-  end: Date | string | null;
-};
+type Vacation    = { id: string; name: string | null; start: string; end: string };
+type NewVacation = { name: string; start: Date | string | null; end: Date | string | null };
 
 const emptyDays = (): DaySchedule[] =>
   weekDays.map((d) => ({ dayOfWeek: d.value, slots: [] }));
@@ -75,18 +64,13 @@ export function ResourceAvailabilityModal({
 }: Props) {
   const { slug } = useParams<{ slug: string }>();
 
-  // ── Horario ──
   const [days, setDays]     = useState<DaySchedule[]>(emptyDays());
   const [saved, setSaved]   = useState<DaySchedule[]>(emptyDays());
   const [saving, setSaving] = useState(false);
   const [loadingSched, setLoadingSched] = useState(false);
 
-  const hasChanges = useMemo(
-    () => JSON.stringify(days) !== JSON.stringify(saved),
-    [days, saved],
-  );
+  const hasChanges = useMemo(() => JSON.stringify(days) !== JSON.stringify(saved), [days, saved]);
 
-  // ── Vacaciones ──
   const [vacations, setVacations]   = useState<Vacation[]>([]);
   const [loadingVac, setLoadingVac] = useState(false);
   const [savingVac, setSavingVac]   = useState(false);
@@ -95,7 +79,6 @@ export function ResourceAvailabilityModal({
 
   useEffect(() => {
     if (!opened || !profileId) return;
-
     setLoadingSched(true);
     fetch(`/api/business/${slug}/resources/${profileId}/schedule`)
       .then((r) => r.json())
@@ -158,24 +141,19 @@ export function ResourceAvailabilityModal({
         }
       }
     }
-
     setSaving(true);
     const flatSlots = days.flatMap((d) =>
       d.slots.map((s) => ({ dayOfWeek: d.dayOfWeek, startTime: s.start, endTime: s.end })),
     );
-
     const res = await fetch(`/api/business/${slug}/resources/${profileId}/schedule`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slots: flatSlots }),
     });
     setSaving(false);
-
     if (!res.ok) {
       showNotification({ title: "Error", message: "No se pudo guardar el horario", color: "red" });
       return;
     }
-
     setSaved(days);
     const activeDays = days.filter((d) => d.slots.length > 0).map((d) => d.dayOfWeek);
     onSaved(activeDays);
@@ -187,24 +165,16 @@ export function ResourceAvailabilityModal({
       showNotification({ title: "Error", message: "Selecciona fechas de inicio y fin", color: "red" });
       return;
     }
-
     setSavingVac(true);
     const res = await fetch(`/api/business/${slug}/resources/${profileId}/vacations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name:  newVac.name || null,
-        start: new Date(newVac.start).toISOString(),
-        end:   new Date(newVac.end).toISOString(),
-      }),
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newVac.name || null, start: new Date(newVac.start).toISOString(), end: new Date(newVac.end).toISOString() }),
     });
     setSavingVac(false);
-
     if (!res.ok) {
       showNotification({ title: "Error", message: "No se pudo guardar la ausencia", color: "red" });
       return;
     }
-
     const created = await res.json();
     setVacations((prev) => [...prev, created].sort((a, b) => a.start.localeCompare(b.start)));
     setNewVac({ name: "", start: null, end: null });
@@ -219,27 +189,17 @@ export function ResourceAvailabilityModal({
     showNotification({ title: "Eliminado", message: "Período de ausencia eliminado", color: "red" });
   };
 
-  // Altura del área scrolleable: viewport - header modal - tabs list - footer
   const SCROLL_HEIGHT = "calc(90vh - 180px)";
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      centered
-      radius="lg"
-      size="md"
-      padding={0}
-      withCloseButton={false}
-    >
+    <Modal opened={opened} onClose={onClose} centered radius="lg" size="md" padding={0} withCloseButton={false}>
       {/* Header */}
-      <Group p="md" style={{ borderBottom: "1px solid #f1f5f9" }} justify="space-between" wrap="nowrap">
+      <Group p="md" style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }} justify="space-between" wrap="nowrap">
         <Group gap="sm" wrap="nowrap">
           <div style={{
             width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
-            background: avatarColor,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 700, color: "white",
+            background: avatarColor, display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: 14, fontWeight: 700, color: "white",
           }}>
             {initials}
           </div>
@@ -252,14 +212,13 @@ export function ResourceAvailabilityModal({
       </Group>
 
       <Tabs defaultValue="schedule" keepMounted={false}>
-        <Tabs.List grow style={{ borderBottom: "1px solid #f1f5f9" }}>
+        <Tabs.List grow style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }}>
           <Tabs.Tab value="schedule">Horario semanal</Tabs.Tab>
           <Tabs.Tab value="vacations">Vacaciones</Tabs.Tab>
         </Tabs.List>
 
         {/* ── Tab Horario ── */}
         <Tabs.Panel value="schedule">
-          {/* Área scrolleable */}
           <div style={{ height: SCROLL_HEIGHT, overflowY: "auto", padding: "12px 16px" }}>
             <Stack gap="xs">
               {loadingSched ? (
@@ -269,14 +228,14 @@ export function ResourceAvailabilityModal({
                   const label = weekDays.find((d) => d.value === day.dayOfWeek)?.label ?? "";
                   const isOn  = day.slots.length > 0;
                   return (
-                    <div key={day.dayOfWeek} style={{ background: "#f8fafc", border: "1px solid #f1f5f9", borderRadius: 12, overflow: "hidden" }}>
+                    <div key={day.dayOfWeek} style={{
+                      background: "var(--mantine-color-default-hover)",
+                      border: "1px solid var(--mantine-color-default-border)",
+                      borderRadius: 12, overflow: "hidden",
+                    }}>
                       <Group gap="sm" p="sm" wrap="nowrap">
-                        <Switch
-                          checked={isOn}
-                          onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)}
-                          size="md"
-                        />
-                        <Text fw={700} size="sm" c={isOn ? "dark" : "dimmed"} style={{ flex: 1 }}>{label}</Text>
+                        <Switch checked={isOn} onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)} size="md" />
+                        <Text fw={700} size="sm" c={isOn ? undefined : "dimmed"} style={{ flex: 1 }}>{label}</Text>
                         {isOn && (
                           <Button size="xs" variant="subtle" color="blue" leftSection={<IconPlus size={12} />} onClick={() => addSlot(day.dayOfWeek)} px={8}>
                             Agregar rango
@@ -303,16 +262,9 @@ export function ResourceAvailabilityModal({
               )}
             </Stack>
           </div>
-          {/* Footer fijo */}
-          <Group p="md" justify="flex-end" gap="sm" style={{ borderTop: "1px solid #f1f5f9" }}>
+          <Group p="md" justify="flex-end" gap="sm" style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}>
             <Button variant="subtle" color="gray" onClick={onClose}>Cancelar</Button>
-            <Button
-              leftSection={<IconDeviceFloppy size={16} />}
-              onClick={handleSaveSchedule}
-              loading={saving}
-              disabled={!hasChanges}
-              color="green"
-            >
+            <Button leftSection={<IconDeviceFloppy size={16} />} onClick={handleSaveSchedule} loading={saving} disabled={!hasChanges} color="green">
               Guardar horario
             </Button>
           </Group>
@@ -320,7 +272,6 @@ export function ResourceAvailabilityModal({
 
         {/* ── Tab Vacaciones ── */}
         <Tabs.Panel value="vacations">
-          {/* Área scrolleable */}
           <div style={{ height: SCROLL_HEIGHT, overflowY: "auto", padding: "12px 16px" }}>
             <Stack gap="xs">
               {loadingVac ? (
@@ -334,14 +285,12 @@ export function ResourceAvailabilityModal({
                   const isSingle = v.start.slice(0, 10) === v.end.slice(0, 10);
                   return (
                     <Group
-                      key={v.id}
-                      gap="sm"
-                      p="sm"
+                      key={v.id} gap="sm" p="sm" wrap="nowrap"
                       style={{
-                        background: "#f8fafc", border: "1px solid #f1f5f9",
+                        background: "var(--mantine-color-default-hover)",
+                        border: "1px solid var(--mantine-color-default-border)",
                         borderRadius: 10, opacity: isPast ? 0.55 : 1,
                       }}
-                      wrap="nowrap"
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <Text size="sm" fw={700} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -352,11 +301,7 @@ export function ResourceAvailabilityModal({
                         </Text>
                       </div>
                       <Text size="xs" c={status.color} fw={600} style={{ flexShrink: 0 }}>{status.label}</Text>
-                      <Button
-                        size="xs" variant="light" color="red" px={6}
-                        loading={deletingId === v.id}
-                        onClick={() => handleDeleteVacation(v.id)}
-                      >
+                      <Button size="xs" variant="light" color="red" px={6} loading={deletingId === v.id} onClick={() => handleDeleteVacation(v.id)}>
                         <IconTrash size={12} />
                       </Button>
                     </Group>
@@ -365,44 +310,35 @@ export function ResourceAvailabilityModal({
               )}
 
               {/* Formulario agregar */}
-              <div style={{ background: "#f8fafc", border: "1px dashed #e2e8f0", borderRadius: 12, padding: 12, marginTop: 4 }}>
+              <div style={{
+                background: "var(--mantine-color-default-hover)",
+                border: "1px dashed var(--mantine-color-default-border)",
+                borderRadius: 12, padding: 12, marginTop: 4,
+              }}>
                 <Text size="xs" fw={700} c="dimmed" mb={10} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
                   Agregar período de ausencia
                 </Text>
                 <Stack gap={8}>
                   <TextInput
-                    placeholder="Motivo (opcional)"
-                    size="sm"
+                    placeholder="Motivo (opcional)" size="sm"
                     value={newVac.name}
                     onChange={(e) => setNewVac((p) => ({ ...p, name: e.target.value }))}
                   />
                   <Group gap={8} wrap="nowrap">
                     <DatePickerInput
-                      placeholder="Inicio"
-                      size="sm"
-                      style={{ flex: 1 }}
-                      value={newVac.start}
-                      onChange={(v) => setNewVac((p) => ({ ...p, start: v }))}
-                      minDate={new Date()}
-                      valueFormat="DD MMM YYYY"
-                      clearable
+                      placeholder="Inicio" size="sm" style={{ flex: 1 }}
+                      value={newVac.start} onChange={(v) => setNewVac((p) => ({ ...p, start: v }))}
+                      minDate={new Date()} valueFormat="DD MMM YYYY" clearable
                     />
                     <Text size="sm" c="dimmed">→</Text>
                     <DatePickerInput
-                      placeholder="Fin"
-                      size="sm"
-                      style={{ flex: 1 }}
-                      value={newVac.end}
-                      onChange={(v) => setNewVac((p) => ({ ...p, end: v }))}
-                      minDate={newVac.start ?? new Date()}
-                      valueFormat="DD MMM YYYY"
-                      clearable
+                      placeholder="Fin" size="sm" style={{ flex: 1 }}
+                      value={newVac.end} onChange={(v) => setNewVac((p) => ({ ...p, end: v }))}
+                      minDate={newVac.start ?? new Date()} valueFormat="DD MMM YYYY" clearable
                     />
                   </Group>
                   <Button
-                    size="xs"
-                    color="blue"
-                    loading={savingVac}
+                    size="xs" color="blue" loading={savingVac}
                     onClick={handleAddVacation}
                     disabled={!newVac.start || !newVac.end}
                     style={{ alignSelf: "flex-end" }}
@@ -413,8 +349,7 @@ export function ResourceAvailabilityModal({
               </div>
             </Stack>
           </div>
-          {/* Footer fijo */}
-          <Group p="md" justify="flex-end" style={{ borderTop: "1px solid #f1f5f9" }}>
+          <Group p="md" justify="flex-end" style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}>
             <Button variant="subtle" color="gray" onClick={onClose}>Cerrar</Button>
           </Group>
         </Tabs.Panel>

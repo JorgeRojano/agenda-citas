@@ -80,13 +80,13 @@ export function ServiceStep({
                 onClick={() => onNext(service)}
                 className="service-card"
                 style={{
-                  background: "white",
+                  background: isSelected
+                    ? `${primaryColor}12`
+                    : "var(--mantine-color-body)",
                   borderRadius: 16,
                   cursor: "pointer",
-                  border: `2px solid ${isSelected ? primaryColor : "transparent"}`,
-                  boxShadow: isSelected
-                    ? `0 0 0 4px ${primaryColor}22`
-                    : "0 2px 8px rgba(0,0,0,0.06)",
+                  border: `2px solid ${isSelected ? primaryColor : "var(--mantine-color-default-border)"}`,
+                  boxShadow: isSelected ? `0 0 0 4px ${primaryColor}22` : "none",
                   transition: "all 0.15s ease",
                   position: "relative",
                 }}
@@ -104,7 +104,9 @@ export function ServiceStep({
 
                 <div style={{
                   width: 48, height: 48, minWidth: 48, borderRadius: 14,
-                  background: isSelected ? `${primaryColor}18` : "#f8fafc",
+                  background: isSelected
+                    ? `${primaryColor}18`
+                    : "var(--mantine-color-default-hover)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 22, flexShrink: 0,
                 }}>
@@ -122,7 +124,7 @@ export function ServiceStep({
                 </div>
 
                 {service.showPrice && (
-                  <Text fw={700} size="lg" className="service-price" style={{ color: primaryColor }}>
+                  <Text fw={700} size="lg" className="service-price">
                     ${(service.price / 100).toFixed(2)}
                   </Text>
                 )}

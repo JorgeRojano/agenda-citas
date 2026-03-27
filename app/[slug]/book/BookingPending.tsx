@@ -37,7 +37,7 @@ export function BookingPending({
   return (
     <Stack gap="md" align="center" style={{ textAlign: "center" }}>
 
-      {/* Ícono */}
+      {/* Ícono — gradiente del negocio, queda igual */}
       <div style={{
         width: 80, height: 80, borderRadius: "50%",
         background: "linear-gradient(135deg, #22c55e, #16a34a)",
@@ -57,23 +57,32 @@ export function BookingPending({
 
       {/* Resumen */}
       <div style={{
-        background: "#f8fafc", borderRadius: 14, padding: 16,
-        border: "1px solid #f1f5f9", width: "100%", textAlign: "left",
+        background: "var(--mantine-color-default-hover)", // era #f8fafc
+        borderRadius: 14, padding: 16,
+        border: "1px solid var(--mantine-color-default-border)", // era #f1f5f9
+        width: "100%", textAlign: "left",
       }}>
         {selectedService && (
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
-            paddingBottom: 10, borderBottom: "1px solid #f1f5f9",
+            paddingBottom: 10,
+            borderBottom: "1px solid var(--mantine-color-default-border)", // era #f1f5f9
           }}>
             <div style={{
               width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: `${primaryColor}15`,
+              background: `${primaryColor}15`, // dinámico, queda igual
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14,
             }}>💼</div>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8" }}>Servicio</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{selectedService.name}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
+                {/* era #94a3b8 */}
+                Servicio
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
+                {/* era #0f172a */}
+                {selectedService.name}
+              </div>
             </div>
           </div>
         )}
@@ -81,17 +90,24 @@ export function BookingPending({
         {selectedDate && (
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
-            paddingTop: 10, paddingBottom: 10, borderBottom: "1px solid #f1f5f9",
+            paddingTop: 10, paddingBottom: 10,
+            borderBottom: "1px solid var(--mantine-color-default-border)", // era #f1f5f9
           }}>
             <div style={{
               width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: "#eff6ff",
+              background: "var(--mantine-color-blue-light)", // era #eff6ff
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14,
             }}>📅</div>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8" }}>Fecha</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{formatDate(selectedDate)}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
+                {/* era #94a3b8 */}
+                Fecha
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
+                {/* era #0f172a */}
+                {formatDate(selectedDate)}
+              </div>
             </div>
           </div>
         )}
@@ -103,13 +119,19 @@ export function BookingPending({
           }}>
             <div style={{
               width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: "#f0fdf4",
+              background: "var(--mantine-color-green-light)", // era #f0fdf4
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14,
             }}>🕛</div>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8" }}>Hora</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{formatTime(selectedTime)}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
+                {/* era #94a3b8 */}
+                Hora
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
+                {/* era #0f172a */}
+                {formatTime(selectedTime)}
+              </div>
             </div>
           </div>
         )}
@@ -119,7 +141,10 @@ export function BookingPending({
         variant="outline"
         fullWidth
         onClick={onBookAnother}
-        style={{ borderColor: "#e2e8f0", color: "#64748b" }}
+        style={{
+          borderColor: "var(--mantine-color-default-border)",
+          color: "var(--mantine-color-dimmed)",
+        }}
       >
         Agendar otra cita
       </Button>

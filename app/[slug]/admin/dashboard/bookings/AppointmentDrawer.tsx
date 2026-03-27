@@ -1,10 +1,10 @@
 "use client";
 
-import { Button, Select, Stack, Text, Group } from "@mantine/core";
+import { Button, Select, Text, Group } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { notifications } from "@mantine/notifications";
-import { IconBrandWhatsapp, IconCheck, IconX, IconCalendarOff } from "@tabler/icons-react";
+import { IconBrandWhatsapp, IconCheck, IconCalendarOff } from "@tabler/icons-react";
 import { getWhatsAppLink } from "@/lib/utils";
 import { AppointmentItem } from "@/types/Appointment";
 
@@ -16,10 +16,10 @@ interface Props {
   onStatusUpdated?: (appointmentId: string, status: string) => void;
 }
 
-const statusConfig: Record<string, { label: string; border: string; bg: string; badgeBg: string; badgeColor: string }> = {
-  PENDING:   { label: "Pendiente",  border: "#f59e0b", bg: "#fffbeb", badgeBg: "#fffbeb", badgeColor: "#b45309" },
-  CONFIRMED: { label: "Confirmada", border: "#22c55e", bg: "#f0fdf4", badgeBg: "#f0fdf4", badgeColor: "#15803d" },
-  CANCELLED: { label: "Cancelada",  border: "#cbd5e1", bg: "#f8fafc", badgeBg: "#f1f5f9", badgeColor: "#64748b" },
+const statusConfig: Record<string, { label: string; border: string; badgeBg: string; badgeColor: string }> = {
+  PENDING:   { label: "Pendiente",  border: "#f59e0b", badgeBg: "#fffbeb", badgeColor: "#b45309" },
+  CONFIRMED: { label: "Confirmada", border: "#22c55e", badgeBg: "#f0fdf4", badgeColor: "#15803d" },
+  CANCELLED: { label: "Cancelada",  border: "#cbd5e1", badgeBg: "#f1f5f9", badgeColor: "#64748b" },
 };
 
 function getInitials(name: string) {
@@ -28,19 +28,18 @@ function getInitials(name: string) {
 
 export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onStatusUpdated }: Props) {
   const router = useRouter();
-  const [assignedToId, setAssignedToId]   = useState<string | null>(item?.assignedToId ?? null);
-  const [assignedTo, setAssignedTo]       = useState<string | null>(item?.assignedTo ?? null);
-  const [resources, setResources]         = useState<{ id: string; name: string; specialty?: string }[]>([]);
-  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const [assignedToId, setAssignedToId]     = useState<string | null>(item?.assignedToId ?? null);
+  const [assignedTo, setAssignedTo]         = useState<string | null>(item?.assignedTo ?? null);
+  const [resources, setResources]           = useState<{ id: string; name: string; specialty?: string }[]>([]);
+  const [loadingAction, setLoadingAction]   = useState<string | null>(null);
   const [savingResource, setSavingResource] = useState(false);
 
-  // Sync cuando cambia el item
   useEffect(() => {
     setAssignedToId(item?.assignedToId ?? null);
     setAssignedTo(item?.assignedTo ?? null);
   }, [item?.id]);
 
-  // Cargar recursos al abrir — filtrar por fecha de la cita
   useEffect(() => {
     if (!item) return;
     const dateForApi = new Date(item.start).toString();
@@ -161,9 +160,9 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
   const content = (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Header */}
-      <div style={{ padding: "14px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--mantine-color-default-border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <Text fw={700} size="sm">Detalle de cita</Text>
-        <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 8, background: "#f1f5f9", border: "none", cursor: "pointer", fontSize: 14, color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+        <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 8, background: "var(--mantine-color-default-hover)", border: "none", cursor: "pointer", fontSize: 14, color: "var(--mantine-color-dimmed)", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
       </div>
 
       {/* Body */}
@@ -171,7 +170,7 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
 
         {/* Cliente */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#2563eb", flexShrink: 0 }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--mantine-color-blue-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "var(--mantine-color-blue-light-color)", flexShrink: 0 }}>
             {initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -184,7 +183,7 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
         </div>
 
         {/* Info */}
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ background: "var(--mantine-color-default-hover)", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <Text size="xs" c="dimmed">Servicio</Text>
             <Text size="xs" fw={600}>{item.service}</Text>
@@ -207,7 +206,6 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
           </div>
           {item.status !== "CANCELLED" && !isPast ? (
             <>
-              {/* Desktop — Select de Mantine */}
               <div className="resource-select-desktop">
                 <Select
                   placeholder="Sin asignar"
@@ -219,7 +217,6 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
                   clearable={false}
                 />
               </div>
-              {/* Mobile — select nativo para evitar temblor */}
               <div className="resource-select-mobile">
                 <select
                   value={assignedToId ?? ""}
@@ -227,9 +224,11 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
                   onChange={(e) => e.target.value && handleAssignResource(e.target.value)}
                   style={{
                     width: "100%", padding: "9px 12px",
-                    borderRadius: 8, border: "1px solid #e2e8f0",
-                    fontSize: 14, background: "white",
-                    color: assignedToId ? "#0f172a" : "#94a3b8",
+                    borderRadius: 8,
+                    border: "1px solid var(--mantine-color-default-border)",
+                    fontSize: 14,
+                    background: "var(--mantine-color-body)",
+                    color: "var(--mantine-color-text)",
                     opacity: savingResource ? 0.6 : 1,
                   }}
                 >
@@ -248,15 +247,15 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
         </div>
 
         {/* Alerta sin recurso */}
-        {item.status === "PENDING" && !assignedToId && (
+        {item.status === "PENDING" && !assignedToId && !isPast && (
           <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
             <Text size="xs" c="yellow.8" fw={600}>⚠️ Asigna un recurso antes de confirmar</Text>
           </div>
         )}
       </div>
 
-      {/* Footer acciones */}
-      <div style={{ padding: "14px 20px", borderTop: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+      {/* Footer */}
+      <div style={{ padding: "14px 20px", borderTop: "1px solid var(--mantine-color-default-border)", display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
         {item.status === "PENDING" && !isPast && (
           <Group gap={8}>
             <Button flex={1} color="green" loading={loadingAction === "CONFIRMED"} disabled={!assignedToId || !!loadingAction} onClick={handleConfirm}>
@@ -278,7 +277,7 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
           </>
         )}
         {isPast && (
-          <div style={{ background: "#f8fafc", border: "1px solid #f1f5f9", borderRadius: 8, padding: "10px 14px" }}>
+          <div style={{ background: "var(--mantine-color-default-hover)", border: "1px solid var(--mantine-color-default-border)", borderRadius: 8, padding: "10px 14px" }}>
             <Text size="xs" c="dimmed" ta="center">Esta cita es de un día pasado — no se puede modificar</Text>
           </div>
         )}
@@ -289,27 +288,23 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
   return (
     <>
       <style>{`
-        .drawer-overlay {
-          position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200;
-        }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; }
         .drawer-panel {
-          position: fixed; top: 0; right: 0; bottom: 0;
-          width: 360px; background: white;
-          box-shadow: -4px 0 24px rgba(0,0,0,0.1);
+          position: fixed; top: 0; right: 0; bottom: 0; width: 360px;
+          background: var(--mantine-color-body);
+          box-shadow: -4px 0 24px rgba(0,0,0,0.2);
           z-index: 201; display: flex; flex-direction: column;
           animation: slideIn 0.2s ease;
         }
         .bottom-sheet-panel {
           position: fixed; left: 0; right: 0; bottom: 0;
-          background: white; border-radius: 16px 16px 0 0;
-          box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+          background: var(--mantine-color-body);
+          border-radius: 16px 16px 0 0;
+          box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
           z-index: 201; display: flex; flex-direction: column;
-          max-height: 90vh;
-          animation: slideUp 0.2s ease;
+          max-height: 90vh; animation: slideUp 0.2s ease;
         }
-        .bottom-sheet-handle {
-          display: flex; justify-content: center; padding: 10px 0 4px;
-        }
+        .bottom-sheet-handle { display: flex; justify-content: center; padding: 10px 0 4px; }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .resource-select-desktop { display: block; }
@@ -323,14 +318,10 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
       `}</style>
 
       <div className="drawer-overlay" onClick={onClose} />
-
-      {/* Desktop drawer */}
       <div className="drawer-panel">{content}</div>
-
-      {/* Mobile bottom sheet */}
       <div className="bottom-sheet-panel">
         <div className="bottom-sheet-handle">
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: "#e2e8f0" }} />
+          <div style={{ width: 36, height: 4, borderRadius: 99, background: "var(--mantine-color-default-border)" }} />
         </div>
         {content}
       </div>

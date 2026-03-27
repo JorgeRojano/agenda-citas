@@ -10,9 +10,7 @@ function getAvailableDays(count: number, closedDays: number[]): Date[] {
   for (let i = 0; i < count; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
-    if (!closedDays.includes(date.getDay())) {
-      availableDays.push(date);
-    }
+    if (!closedDays.includes(date.getDay())) availableDays.push(date);
   }
   return availableDays;
 }
@@ -27,21 +25,14 @@ interface Props {
 }
 
 export function DateStep({
-  onNext,
-  selectedService,
-  selectedResource,
-  selectedDate,
-  slug,
-  primaryColor = "#2563eb",
+  onNext, selectedService, selectedResource, selectedDate, slug, primaryColor = "#2563eb",
 }: Props) {
   const [closedDays, setClosedDays] = useState<number[]>([]);
   const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
     setLoading(true);
-
     if (!selectedResource?.id) {
-      // Sin preferencia de recurso → usar horario del negocio
       fetch(`/api/business/${slug}/schedule`)
         .then((r) => r.json())
         .then((slots: { dayOfWeek: number }[]) => {
@@ -53,8 +44,6 @@ export function DateStep({
         .finally(() => setLoading(false));
       return;
     }
-
-    // Con recurso → usar ResourceTimeSlot
     fetch(`/api/business/${slug}/resources/${selectedResource.id}/schedule`)
       .then((r) => r.json())
       .then((data: { dayOfWeek: number }[]) => {
@@ -75,11 +64,7 @@ export function DateStep({
   return (
     <Stack gap="md">
       <style>{`
-        .dates-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-        }
+        .dates-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .service-chip { display: flex; }
         @media (min-width: 768px) {
           .dates-grid { grid-template-columns: repeat(5, 1fr); gap: 10px; }
@@ -123,32 +108,40 @@ export function DateStep({
       ) : (
         <div className="dates-grid">
           {days.map((date) => {
-            const dateId    = date.toLocaleDateString("en-CA");
+            const dateId     = date.toLocaleDateString("en-CA");
             const isSelected = selectedDateId === dateId;
-            const dayName   = date.toLocaleDateString("es-MX", { weekday: "short" });
-            const dayNum    = date.getDate();
-            const month     = date.toLocaleDateString("es-MX", { month: "short" });
+            const dayName    = date.toLocaleDateString("es-MX", { weekday: "short" });
+            const dayNum     = date.getDate();
+            const month      = date.toLocaleDateString("es-MX", { month: "short" });
 
             return (
               <div
                 key={dateId}
                 onClick={() => onNext(date)}
                 style={{
-                  background: isSelected ? primaryColor : "white",
+                  background: isSelected ? primaryColor : "var(--mantine-color-body)",
                   borderRadius: 14, padding: "12px 8px", textAlign: "center",
                   cursor: "pointer",
-                  border: `2px solid ${isSelected ? primaryColor : "#f1f5f9"}`,
-                  boxShadow: isSelected ? `0 4px 12px ${primaryColor}40` : "0 1px 4px rgba(0,0,0,0.05)",
+                  border: `2px solid ${isSelected ? primaryColor : "var(--mantine-color-default-border)"}`,
+                  boxShadow: isSelected ? `0 4px 12px ${primaryColor}40` : "none",
                   transition: "all 0.15s ease",
                 }}
               >
-                <Text size="xs" fw={700} style={{ textTransform: "uppercase", letterSpacing: "0.04em", color: isSelected ? "rgba(255,255,255,0.7)" : "#94a3b8" }}>
+                <Text size="xs" fw={700} style={{
+                  textTransform: "uppercase", letterSpacing: "0.04em",
+                  color: isSelected ? "rgba(255,255,255,0.7)" : "var(--mantine-color-dimmed)",
+                }}>
                   {dayName}
                 </Text>
-                <Text fw={700} size="xl" style={{ color: isSelected ? "white" : "#0f172a", margin: "4px 0" }}>
+                <Text fw={700} size="xl" style={{
+                  color: isSelected ? "white" : "var(--mantine-color-text)",
+                  margin: "4px 0",
+                }}>
                   {dayNum}
                 </Text>
-                <Text size="xs" style={{ color: isSelected ? "rgba(255,255,255,0.7)" : "#94a3b8" }}>
+                <Text size="xs" style={{
+                  color: isSelected ? "rgba(255,255,255,0.7)" : "var(--mantine-color-dimmed)",
+                }}>
                   {month}
                 </Text>
               </div>

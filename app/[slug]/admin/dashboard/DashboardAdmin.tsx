@@ -32,8 +32,7 @@ const dayLabels: Record<number, string> = { 1: "Lun", 2: "Mar", 3: "Mié", 4: "J
 function formatDayLabel(dateKey: string): { prefix: string; label: string } {
   const today    = new Date().toLocaleDateString("en-CA");
   const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString("en-CA");
-
-  if (dateKey === today)    return { prefix: "Hoy", label: new Date(dateKey + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" }) };
+  if (dateKey === today)    return { prefix: "Hoy",    label: new Date(dateKey + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" }) };
   if (dateKey === tomorrow) return { prefix: "Mañana", label: new Date(dateKey + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" }) };
   return { prefix: "Próximo", label: new Date(dateKey + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" }) };
 }
@@ -43,12 +42,12 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
   const { slug } = useParams();
   const [accordionOpen, setAccordionOpen] = useState(false);
 
-  const today    = new Date();
-  const todayDay = today.getDay();
-  const greeting = today.getHours() < 12 ? "Buenos días" : today.getHours() < 18 ? "Buenas tardes" : "Buenas noches";
+  const today     = new Date();
+  const todayDay  = today.getDay();
+  const greeting  = today.getHours() < 12 ? "Buenos días" : today.getHours() < 18 ? "Buenas tardes" : "Buenas noches";
   const dateLabel = today.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const maxBarCount = Math.max(...Object.values(weekDayCounts), 1);
+  const maxBarCount  = Math.max(...Object.values(weekDayCounts), 1);
   const totalPending = Object.values(pendingByDay).reduce((acc, arr) => acc + arr.length, 0);
   const pendingDays  = Object.keys(pendingByDay).sort();
 
@@ -72,16 +71,16 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
       {/* Pending accordion */}
       {totalPending > 0 && (
         <div style={{
-          background: "#fffbeb", border: "1px solid #fde68a",
+          background: "var(--mantine-color-yellow-light)",
+          border: "1px solid var(--mantine-color-yellow-light-hover)",
           borderRadius: 12, overflow: "hidden",
         }}>
-          {/* Header clickeable */}
           <div
             onClick={() => setAccordionOpen((o) => !o)}
             style={{
               display: "flex", alignItems: "center", gap: 12,
               padding: "14px 18px", cursor: "pointer", userSelect: "none",
-              borderBottom: accordionOpen ? "1px solid #fde68a" : "none",
+              borderBottom: accordionOpen ? "1px solid var(--mantine-color-yellow-light-hover)" : "none",
             }}
           >
             <Text size="xl">⏳</Text>
@@ -95,38 +94,40 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
             </div>
             <IconChevronDown
               size={18}
-              color="#b45309"
-              style={{ transform: accordionOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+              style={{ color: "var(--mantine-color-yellow-8)", transform: accordionOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
             />
           </div>
 
-          {/* Body */}
           {accordionOpen && (
             <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
               {pendingDays.map((dateKey) => {
-                const appts  = pendingByDay[dateKey];
+                const appts = pendingByDay[dateKey];
                 const { prefix, label } = formatDayLabel(dateKey);
                 return (
                   <div
                     key={dateKey}
                     style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "10px 14px", background: "white",
-                      borderRadius: 10, border: "1px solid #f1f5f9",
+                      padding: "10px 14px",
+                      background: "var(--mantine-color-body)",
+                      borderRadius: 10,
+                      border: "1px solid var(--mantine-color-default-border)",
                     }}
                   >
                     <div style={{ minWidth: 80 }}>
                       <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.05em" }}>{prefix}</Text>
-                      <Text size="xs" c="dark" mt={2}>{label}</Text>
+                      <Text size="xs" mt={2}>{label}</Text>
                     </div>
                     <div style={{ flex: 1, display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {appts.map((a, i) => (
                         <span
                           key={i}
                           style={{
-                            fontSize: 12, background: "#fffbeb", color: "#b45309",
+                            fontSize: 12,
+                            background: "var(--mantine-color-yellow-light)",
+                            color: "var(--mantine-color-yellow-light-color)",
                             padding: "3px 10px", borderRadius: 99,
-                            border: "1px solid #fde68a",
+                            border: "1px solid var(--mantine-color-yellow-light-hover)",
                           }}
                         >
                           {a.clientName} · {a.time}
@@ -134,9 +135,7 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
                       ))}
                     </div>
                     <Button
-                      size="xs"
-                      color="yellow"
-                      variant="light"
+                      size="xs" color="yellow" variant="light"
                       onClick={() => router.push(`/${slug}/admin/dashboard/bookings?date=${dateKey}`)}
                       style={{ flexShrink: 0 }}
                     >
@@ -193,7 +192,7 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
 
         {/* Próximas citas hoy */}
         <Card withBorder radius="md" padding={0}>
-          <Group px="md" py="sm" justify="space-between" style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <Group px="md" py="sm" justify="space-between" style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }}>
             <Text fw={700} size="sm">Próximas citas hoy</Text>
             <Text size="xs" c="blue" fw={600} style={{ cursor: "pointer" }} onClick={() => router.push(`/${slug}/admin/dashboard/bookings`)}>
               Ver todas →
@@ -206,9 +205,13 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
               upcomingToday.map((appt) => (
                 <div key={appt.id} style={{
                   display: "flex", alignItems: "center", gap: 12,
-                  padding: "10px 0", borderBottom: "1px solid #f8fafc",
+                  padding: "10px 0",
+                  borderBottom: "1px solid var(--mantine-color-default-border)",
                 }}>
-                  <div style={{ background: "#f1f5f9", borderRadius: 8, padding: "6px 10px", textAlign: "center", minWidth: 70 }}>
+                  <div style={{
+                    background: "var(--mantine-color-default-hover)",
+                    borderRadius: 8, padding: "6px 10px", textAlign: "center", minWidth: 70,
+                  }}>
                     <Text size="xs" fw={700}>{formatTime(appt.startTime)}</Text>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -234,22 +237,23 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
             <Text fw={700} size="sm" mb="md">Accesos rápidos</Text>
             <SimpleGrid cols={2} spacing="sm">
               {[
-                { icon: "📅", label: "Ver citas",       action: () => router.push(`/${slug}/admin/dashboard/bookings`) },
-                { icon: "🏷️", label: "Servicios",       action: () => router.push(`/${slug}/admin/dashboard/services`) },
-                { icon: "🕐", label: "Disponibilidad",  action: () => router.push(`/${slug}/admin/dashboard/availability`) },
-                { icon: "⚙️", label: "Configuración",   action: () => router.push(`/${slug}/admin/dashboard/settings`) },
+                { icon: "📅", label: "Ver citas",      action: () => router.push(`/${slug}/admin/dashboard/bookings`) },
+                { icon: "🏷️", label: "Servicios",      action: () => router.push(`/${slug}/admin/dashboard/services`) },
+                { icon: "🕐", label: "Disponibilidad", action: () => router.push(`/${slug}/admin/dashboard/availability`) },
+                { icon: "⚙️", label: "Configuración",  action: () => router.push(`/${slug}/admin/dashboard/settings`) },
               ].map((item) => (
                 <div
                   key={item.label}
                   onClick={item.action}
                   style={{
                     padding: "14px 12px", borderRadius: 12,
-                    border: "1.5px solid #f1f5f9", background: "#f8fafc",
+                    border: "1px solid var(--mantine-color-default-border)",
+                    background: "var(--mantine-color-default-hover)",
                     cursor: "pointer", textAlign: "center",
                   }}
                 >
                   <Text size="xl" mb={6}>{item.icon}</Text>
-                  <Text size="xs" fw={600} c="dark">{item.label}</Text>
+                  <Text size="xs" fw={600}>{item.label}</Text>
                 </div>
               ))}
             </SimpleGrid>
@@ -263,15 +267,19 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
             </Group>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80 }}>
               {[1, 2, 3, 4, 5].map((day) => {
-                const count  = weekDayCounts[day] ?? 0;
-                const height = Math.max((count / maxBarCount) * 100, 5);
+                const count   = weekDayCounts[day] ?? 0;
+                const height  = Math.max((count / maxBarCount) * 100, 5);
                 const isToday = todayDay === day;
                 return (
                   <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, height: "100%", justifyContent: "flex-end" }}>
                     <Text size="xs" c="dimmed" fw={700}>{count}</Text>
                     <div style={{
                       width: "100%", borderRadius: "6px 6px 0 0",
-                      background: isToday ? "#2563eb" : count > 0 ? "#93c5fd" : "#e2e8f0",
+                      background: isToday
+                        ? "var(--mantine-color-blue-6)"
+                        : count > 0
+                          ? "var(--mantine-color-blue-3)"
+                          : "var(--mantine-color-default-border)",
                       height: `${height}%`, minHeight: 4,
                     }} />
                     <Text size="xs" c={isToday ? "blue" : "dimmed"} fw={isToday ? 700 : 400}>

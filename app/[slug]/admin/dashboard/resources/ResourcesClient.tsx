@@ -1,39 +1,22 @@
 "use client";
 
 import {
-  SimpleGrid,
-  Card,
-  Text,
-  Group,
-  Badge,
-  Button,
-  Modal,
-  TextInput,
-  PasswordInput,
-  Stack,
-  Title,
+  SimpleGrid, Card, Text, Group, Badge, Button, Modal,
+  TextInput, PasswordInput, Stack, Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 import { IconPlus, IconEdit, IconTrash, IconClock } from "@tabler/icons-react";
 import { useState } from "react";
 import { showNotification } from "@mantine/notifications";
-import {
-  createStaffMember,
-  updateStaffMember,
-  deleteStaffMember,
-} from "./actions";
+import { createStaffMember, updateStaffMember, deleteStaffMember } from "./actions";
 import { ResourceAvailabilityModal } from "./ResourceAvailabilityModal";
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 interface StaffMember {
-  id: string;
-  name: string;
-  email: string;
-  specialty: string;
-  role: string;
-  activeDays?: number[];
+  id: string; name: string; email: string; specialty: string;
+  role: string; activeDays?: number[];
 }
 
 interface Props {
@@ -42,12 +25,7 @@ interface Props {
 }
 
 function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
 function getAvatarColor(name: string) {
@@ -61,65 +39,45 @@ function getAvatarColor(name: string) {
   return colors[name.charCodeAt(0) % colors.length];
 }
 
-export default function ResourcesClient({
-  business,
-  staff: initialStaff,
-}: Props) {
+export default function ResourcesClient({ business, staff: initialStaff }: Props) {
   const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [loading, setLoading] = useState(false);
 
-  // ── Availability modal state ──
   const [availTarget, setAvailTarget] = useState<StaffMember | null>(null);
-  const [availOpened, { open: openAvail, close: closeAvail }] =
-    useDisclosure(false);
+  const [availOpened, { open: openAvail, close: closeAvail }] = useDisclosure(false);
 
-  const handleOpenAvail = (member: StaffMember) => {
-    setAvailTarget(member);
-    openAvail();
-  };
-
+  const handleOpenAvail = (member: StaffMember) => { setAvailTarget(member); openAvail(); };
   const handleAvailSaved = (activeDays: number[]) => {
     if (!availTarget) return;
-    setStaff((prev) =>
-      prev.map((s) => (s.id === availTarget.id ? { ...s, activeDays } : s)),
-    );
+    setStaff((prev) => prev.map((s) => s.id === availTarget.id ? { ...s, activeDays } : s));
   };
 
-  // ── Create ──
   const [opened, { open, close }] = useDisclosure(false);
   const form = useForm({
     initialValues: { name: "", email: "", password: "", specialty: "" },
     validate: {
-      name: (v) => (v.trim().length < 2 ? "Nombre requerido" : null),
-      email: (v) => (!/^\S+@\S+$/.test(v) ? "Email inválido" : null),
+      name:     (v) => (v.trim().length < 2 ? "Nombre requerido" : null),
+      email:    (v) => (!/^\S+@\S+$/.test(v) ? "Email inválido" : null),
       password: (v) => (v.length < 6 ? "Mínimo 6 caracteres" : null),
     },
   });
 
-  // ── Edit ──
   const [editingMember, setEditingMember] = useState<StaffMember | null>(null);
-  const [editOpened, { open: openEdit, close: closeEdit }] =
-    useDisclosure(false);
+  const [editOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false);
   const editForm = useForm({
     initialValues: { name: "", email: "", specialty: "" },
     validate: {
-      name: (v) => (v.trim().length < 2 ? "Nombre requerido" : null),
+      name:  (v) => (v.trim().length < 2 ? "Nombre requerido" : null),
       email: (v) => (!/^\S+@\S+$/.test(v) ? "Email inválido" : null),
     },
   });
 
-  // ── Delete ──
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [deleteOpened, { open: openDelete, close: closeDelete }] =
-    useDisclosure(false);
+  const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
 
   const handleOpenEdit = (member: StaffMember) => {
     setEditingMember(member);
-    editForm.setValues({
-      name: member.name,
-      email: member.email,
-      specialty: member.specialty,
-    });
+    editForm.setValues({ name: member.name, email: member.email, specialty: member.specialty });
     openEdit();
   };
 
@@ -127,23 +85,11 @@ export default function ResourcesClient({
     setLoading(true);
     try {
       await createStaffMember(business.id, values);
-      showNotification({
-        title: "Recurso creado",
-        message: `${values.name} fue agregado exitosamente`,
-        color: "green",
-      });
-      form.reset();
-      close();
-      window.location.reload();
+      showNotification({ title: "Recurso creado", message: `${values.name} fue agregado exitosamente`, color: "green" });
+      form.reset(); close(); window.location.reload();
     } catch (error: any) {
-      showNotification({
-        title: "Error",
-        message: error.message,
-        color: "red",
-      });
-    } finally {
-      setLoading(false);
-    }
+      showNotification({ title: "Error", message: error.message, color: "red" });
+    } finally { setLoading(false); }
   };
 
   const handleEdit = async (values: typeof editForm.values) => {
@@ -151,24 +97,12 @@ export default function ResourcesClient({
     setLoading(true);
     try {
       await updateStaffMember(business.id, editingMember.id, values);
-      setStaff((prev) =>
-        prev.map((s) => (s.id === editingMember.id ? { ...s, ...values } : s)),
-      );
-      showNotification({
-        title: "Guardado",
-        message: "Recurso actualizado",
-        color: "green",
-      });
+      setStaff((prev) => prev.map((s) => s.id === editingMember.id ? { ...s, ...values } : s));
+      showNotification({ title: "Guardado", message: "Recurso actualizado", color: "green" });
       closeEdit();
     } catch (error: any) {
-      showNotification({
-        title: "Error",
-        message: error.message,
-        color: "red",
-      });
-    } finally {
-      setLoading(false);
-    }
+      showNotification({ title: "Error", message: error.message, color: "red" });
+    } finally { setLoading(false); }
   };
 
   const handleDelete = async () => {
@@ -177,21 +111,11 @@ export default function ResourcesClient({
     try {
       await deleteStaffMember(business.id, deleteId);
       setStaff((prev) => prev.filter((s) => s.id !== deleteId));
-      showNotification({
-        title: "Eliminado",
-        message: "Recurso eliminado",
-        color: "red",
-      });
+      showNotification({ title: "Eliminado", message: "Recurso eliminado", color: "red" });
       closeDelete();
     } catch (error: any) {
-      showNotification({
-        title: "Error",
-        message: error.message,
-        color: "red",
-      });
-    } finally {
-      setLoading(false);
-    }
+      showNotification({ title: "Error", message: error.message, color: "red" });
+    } finally { setLoading(false); }
   };
 
   return (
@@ -199,9 +123,7 @@ export default function ResourcesClient({
       <Group justify="space-between" mb="lg">
         <div>
           <Title order={3}>Recursos</Title>
-          <Text size="sm" c="dimmed">
-            Gestiona los terapeutas y colaboradores de tu negocio
-          </Text>
+          <Text size="sm" c="dimmed">Gestiona los terapeutas y colaboradores de tu negocio</Text>
         </div>
       </Group>
 
@@ -209,98 +131,48 @@ export default function ResourcesClient({
         {staff.map((member) => {
           const activeDays = member.activeDays ?? [];
           return (
-            <Card
-              key={member.id}
-              withBorder
-              radius="md"
-              padding={0}
-              shadow="sm"
-              style={{ overflow: "hidden" }}
-            >
+            <Card key={member.id} withBorder radius="md" padding={0} shadow="sm" style={{ overflow: "hidden" }}>
               {/* Body */}
-              <Stack
-                align="center"
-                gap="xs"
-                p="md"
-                pb="sm"
-                style={{ borderBottom: "1px solid #f8fafc" }}
-              >
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: "50%",
-                    background: getAvatarColor(member.name),
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 18,
-                    fontWeight: 700,
-                    color: "white",
-                  }}
-                >
+              <Stack align="center" gap="xs" p="md" pb="sm" style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: "50%",
+                  background: getAvatarColor(member.name),
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 18, fontWeight: 700, color: "white",
+                }}>
                   {getInitials(member.name)}
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <Text fw={700} size="sm">
-                    {member.name}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    {member.email}
-                  </Text>
+                  <Text fw={700} size="sm">{member.name}</Text>
+                  <Text size="xs" c="dimmed">{member.email}</Text>
                 </div>
                 <Group gap={6}>
-                  {member.role === "ADMIN" && (
-                    <Badge variant="light" color="violet" size="sm">
-                      Admin
-                    </Badge>
-                  )}
-                  {member.specialty && (
-                    <Badge variant="light" color="blue" size="sm">
-                      {member.specialty}
-                    </Badge>
-                  )}
+                  {member.role === "ADMIN" && <Badge variant="light" color="violet" size="sm">Admin</Badge>}
+                  {member.specialty && <Badge variant="light" color="blue" size="sm">{member.specialty}</Badge>}
                 </Group>
               </Stack>
 
               {/* Availability preview */}
-              <Stack
-                gap={4}
-                px="md"
-                py="xs"
-                style={{ borderBottom: "1px solid #f8fafc" }}
-              >
-                <Text
-                  size="xs"
-                  fw={700}
-                  c="dimmed"
-                  style={{
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
+              <Stack gap={4} px="md" py="xs" style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }}>
+                <Text size="xs" fw={700} c="dimmed" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
                   Disponibilidad
                 </Text>
                 {activeDays.length === 0 ? (
-                  <Text size="xs" c="red.3" fs="italic">
-                    Sin horario configurado
-                  </Text>
+                  <Text size="xs" c="red.4" fs="italic">Sin horario configurado</Text>
                 ) : (
                   <Group gap={4}>
                     {DAY_LABELS.map((label, dow) => (
                       <div
                         key={dow}
                         style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: "2px 6px",
-                          borderRadius: 6,
+                          fontSize: 10, fontWeight: 700,
+                          padding: "2px 6px", borderRadius: 6,
                           background: activeDays.includes(dow)
-                            ? "#dcfce7"
-                            : "#f1f5f9",
+                            ? "var(--mantine-color-green-light)"
+                            : "var(--mantine-color-default-hover)",
                           color: activeDays.includes(dow)
-                            ? "#16a34a"
-                            : "#cbd5e1",
+                            ? "var(--mantine-color-green-light-color)"
+                            : "var(--mantine-color-dimmed)",
                         }}
                       >
                         {label}
@@ -310,43 +182,15 @@ export default function ResourcesClient({
                 )}
               </Stack>
 
-              {/* Footer buttons */}
+              {/* Footer */}
               <Stack gap={6} p="sm">
-                <Button
-                  variant="light"
-                  color="green"
-                  size="xs"
-                  fullWidth
-                  leftSection={<IconClock size={13} />}
-                  onClick={() => handleOpenAvail(member)}
-                >
+                <Button variant="light" color="green" size="xs" fullWidth leftSection={<IconClock size={13} />} onClick={() => handleOpenAvail(member)}>
                   Disponibilidad
                 </Button>
                 {member.role !== "ADMIN" && (
                   <Group gap="xs">
-                    <Button
-                      variant="light"
-                      color="blue"
-                      size="xs"
-                      flex={1}
-                      leftSection={<IconEdit size={13} />}
-                      onClick={() => handleOpenEdit(member)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="light"
-                      color="red"
-                      size="xs"
-                      flex={1}
-                      leftSection={<IconTrash size={13} />}
-                      onClick={() => {
-                        setDeleteId(member.id);
-                        openDelete();
-                      }}
-                    >
-                      Eliminar
-                    </Button>
+                    <Button variant="light" color="blue" size="xs" flex={1} leftSection={<IconEdit size={13} />} onClick={() => handleOpenEdit(member)}>Editar</Button>
+                    <Button variant="light" color="red" size="xs" flex={1} leftSection={<IconTrash size={13} />} onClick={() => { setDeleteId(member.id); openDelete(); }}>Eliminar</Button>
                   </Group>
                 )}
               </Stack>
@@ -356,37 +200,24 @@ export default function ResourcesClient({
 
         {/* Add card */}
         <Card
-          withBorder
-          radius="md"
-          padding="md"
-          shadow="sm"
-          onClick={open}
+          withBorder radius="md" padding="md" shadow="sm" onClick={open}
           style={{
-            border: "2px dashed #dee2e6",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: 180,
-            background: "transparent",
+            border: "2px dashed var(--mantine-color-default-border)",
+            cursor: "pointer", display: "flex", alignItems: "center",
+            justifyContent: "center", minHeight: 180, background: "transparent",
           }}
         >
           <Stack align="center" gap="xs">
-            <IconPlus size={28} color="#adb5bd" />
-            <Text size="sm" fw={600} c="dimmed">
-              Agregar recurso
-            </Text>
+            <IconPlus size={28} color="var(--mantine-color-dimmed)" />
+            <Text size="sm" fw={600} c="dimmed">Agregar recurso</Text>
           </Stack>
         </Card>
       </SimpleGrid>
 
-      {/* Availability modal */}
       {availTarget && (
         <ResourceAvailabilityModal
-          opened={availOpened}
-          onClose={closeAvail}
-          profileId={availTarget.id}
-          profileName={availTarget.name}
+          opened={availOpened} onClose={closeAvail}
+          profileId={availTarget.id} profileName={availTarget.name}
           avatarColor={getAvatarColor(availTarget.name)}
           initials={getInitials(availTarget.name)}
           onSaved={handleAvailSaved}
@@ -397,103 +228,42 @@ export default function ResourcesClient({
       <Modal opened={opened} onClose={close} title="Nuevo recurso" centered>
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="md">
-            <div
-              style={{
-                background: "#eff6ff",
-                border: "1px solid #bfdbfe",
-                borderRadius: 10,
-                padding: "10px 14px",
-                display: "flex",
-                gap: 8,
-              }}
-            >
+            <div style={{
+              background: "var(--mantine-color-blue-light)",
+              border: "1px solid var(--mantine-color-blue-light-hover)",
+              borderRadius: 10, padding: "10px 14px", display: "flex", gap: 8,
+            }}>
               <Text size="xs">ℹ️</Text>
-              <Text size="xs" c="blue.7">
-                Se creará una cuenta de acceso para este recurso con las
-                credenciales que ingreses.
-              </Text>
+              <Text size="xs" c="blue.7">Se creará una cuenta de acceso para este recurso con las credenciales que ingreses.</Text>
             </div>
-            <TextInput
-              label="Nombre completo"
-              placeholder="Ej: Ana Martínez"
-              required
-              {...form.getInputProps("name")}
-            />
-            <TextInput
-              label="Email"
-              placeholder="ana@correo.com"
-              required
-              {...form.getInputProps("email")}
-            />
-            <PasswordInput
-              label="Contraseña"
-              placeholder="Mínimo 6 caracteres"
-              required
-              {...form.getInputProps("password")}
-            />
-            <TextInput
-              label="Especialidad (opcional)"
-              placeholder="Ej: Terapeuta de lenguaje"
-              {...form.getInputProps("specialty")}
-            />
-            <Button type="submit" loading={loading} fullWidth>
-              Crear recurso
-            </Button>
+            <TextInput label="Nombre completo" placeholder="Ej: Ana Martínez" required {...form.getInputProps("name")} />
+            <TextInput label="Email" placeholder="ana@correo.com" required {...form.getInputProps("email")} />
+            <PasswordInput label="Contraseña" placeholder="Mínimo 6 caracteres" required {...form.getInputProps("password")} />
+            <TextInput label="Especialidad (opcional)" placeholder="Ej: Terapeuta de lenguaje" {...form.getInputProps("specialty")} />
+            <Button type="submit" loading={loading} fullWidth>Crear recurso</Button>
           </Stack>
         </form>
       </Modal>
 
       {/* Modal editar */}
-      <Modal
-        opened={editOpened}
-        onClose={closeEdit}
-        title="Editar recurso"
-        centered
-      >
+      <Modal opened={editOpened} onClose={closeEdit} title="Editar recurso" centered>
         <form onSubmit={editForm.onSubmit(handleEdit)}>
           <Stack gap="md">
-            <TextInput
-              label="Nombre completo"
-              required
-              {...editForm.getInputProps("name")}
-            />
-            <TextInput
-              label="Email"
-              required
-              {...editForm.getInputProps("email")}
-            />
-            <TextInput
-              label="Especialidad (opcional)"
-              placeholder="Ej: Terapeuta de lenguaje"
-              {...editForm.getInputProps("specialty")}
-            />
-            <Button type="submit" loading={loading} fullWidth>
-              Guardar cambios
-            </Button>
+            <TextInput label="Nombre completo" required {...editForm.getInputProps("name")} />
+            <TextInput label="Email" required {...editForm.getInputProps("email")} />
+            <TextInput label="Especialidad (opcional)" placeholder="Ej: Terapeuta de lenguaje" {...editForm.getInputProps("specialty")} />
+            <Button type="submit" loading={loading} fullWidth>Guardar cambios</Button>
           </Stack>
         </form>
       </Modal>
 
       {/* Modal eliminar */}
-      <Modal
-        opened={deleteOpened}
-        onClose={closeDelete}
-        title="Eliminar recurso"
-        centered
-        size="sm"
-      >
+      <Modal opened={deleteOpened} onClose={closeDelete} title="Eliminar recurso" centered size="sm">
         <Stack gap="md">
-          <Text size="sm">
-            ¿Estás seguro? Esta acción eliminará la cuenta de acceso del recurso
-            y no se puede deshacer.
-          </Text>
+          <Text size="sm">¿Estás seguro? Esta acción eliminará la cuenta de acceso del recurso y no se puede deshacer.</Text>
           <Group justify="flex-end">
-            <Button variant="subtle" onClick={closeDelete}>
-              Cancelar
-            </Button>
-            <Button color="red" loading={loading} onClick={handleDelete}>
-              Eliminar
-            </Button>
+            <Button variant="subtle" onClick={closeDelete}>Cancelar</Button>
+            <Button color="red" loading={loading} onClick={handleDelete}>Eliminar</Button>
           </Group>
         </Stack>
       </Modal>

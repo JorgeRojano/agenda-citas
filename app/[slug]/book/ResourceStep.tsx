@@ -29,11 +29,7 @@ function getAvatarColor(name: string) {
 }
 
 export function ResourceStep({
-  slug,
-  selectedService,
-  selectedResource,
-  onNext,
-  primaryColor = "#2563eb",
+  slug, selectedService, selectedResource, onNext, primaryColor = "#2563eb",
 }: Props) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading]     = useState(false);
@@ -51,9 +47,7 @@ export function ResourceStep({
     <Stack gap="md">
       <div>
         <Title order={4}>¿Con quién quieres tu cita?</Title>
-        <Text size="sm" c="dimmed" mt={4}>
-          Selecciona un terapeuta o colaborador disponible
-        </Text>
+        <Text size="sm" c="dimmed" mt={4}>Selecciona un terapeuta o colaborador disponible</Text>
       </div>
 
       {loading ? (
@@ -65,7 +59,6 @@ export function ResourceStep({
         </Center>
       ) : (
         <Stack gap="xs">
-          {/* Opción sin preferencia */}
           {[{ id: null, name: "Sin preferencia", specialty: "Cualquier colaborador disponible" }, ...resources].map((resource) => {
             const isSelected = selectedResource?.id === resource.id;
             const isAny      = resource.id === null;
@@ -75,12 +68,13 @@ export function ResourceStep({
                 onClick={() => onNext(resource)}
                 style={{
                   display: "flex", alignItems: "center", gap: 14,
-                  padding: "14px 16px", background: "white",
+                  padding: "14px 16px",
+                  background: isSelected
+                    ? `${primaryColor}12`
+                    : "var(--mantine-color-body)",
                   borderRadius: 14, cursor: "pointer",
-                  border: `2px solid ${isSelected ? primaryColor : "transparent"}`,
-                  boxShadow: isSelected
-                    ? `0 0 0 4px ${primaryColor}22`
-                    : "0 2px 8px rgba(0,0,0,0.06)",
+                  border: `2px solid ${isSelected ? primaryColor : "var(--mantine-color-default-border)"}`,
+                  boxShadow: isSelected ? `0 0 0 4px ${primaryColor}22` : "none",
                   transition: "all 0.15s ease",
                   position: "relative",
                 }}
@@ -99,9 +93,12 @@ export function ResourceStep({
                 {/* Avatar */}
                 <div style={{
                   width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
-                  background: isAny ? "#f1f5f9" : getAvatarColor(resource.name),
+                  background: isAny
+                    ? "var(--mantine-color-default-hover)"
+                    : getAvatarColor(resource.name),
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: isAny ? 22 : 16, fontWeight: 700, color: isAny ? "#94a3b8" : "white",
+                  fontSize: isAny ? 22 : 16, fontWeight: 700,
+                  color: isAny ? "var(--mantine-color-dimmed)" : "white",
                 }}>
                   {isAny ? "★" : getInitials(resource.name)}
                 </div>

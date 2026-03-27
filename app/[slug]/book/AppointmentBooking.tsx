@@ -4,11 +4,7 @@ import { useState } from "react";
 import { Button, Modal } from "@mantine/core";
 import { useParams } from "next/navigation";
 import { DateValue } from "@mantine/dates";
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconWorld,
-} from "@tabler/icons-react";
+import { IconBrandFacebook, IconBrandInstagram, IconWorld } from "@tabler/icons-react";
 import { DateStep } from "./DateStep";
 import { TimeStep } from "./TimeStep";
 import { ServiceStep } from "./ServiceStep";
@@ -48,91 +44,44 @@ interface LeftPanelProps {
 }
 
 function LeftPanel({
-  business,
-  primaryColor,
-  darkColor,
-  compact,
-  selectedService,
-  selectedResource,
-  selectedDate,
-  selectedTime,
-  active = 0,
+  business, primaryColor, darkColor, compact,
+  selectedService, selectedResource, selectedDate, selectedTime, active = 0,
 }: LeftPanelProps) {
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        background: `linear-gradient(160deg, ${primaryColor}, ${darkColor})`,
-        display: "flex",
-        flexDirection: compact ? "row" : "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: compact ? 14 : 16,
-        padding: compact ? "16px 20px" : "40px 32px",
-        position: "relative",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}
-    >
+    <div style={{
+      width: "100%", height: "100%",
+      background: `linear-gradient(160deg, ${primaryColor}, ${darkColor})`,
+      display: "flex",
+      flexDirection: compact ? "row" : "column",
+      alignItems: "center", justifyContent: "center",
+      gap: compact ? 14 : 16,
+      padding: compact ? "16px 20px" : "40px 32px",
+      position: "relative", overflow: "hidden", boxSizing: "border-box",
+    }}>
       {/* Logo */}
-      <div
-        style={{
-          width: compact ? 44 : 88,
-          height: compact ? 44 : 88,
-          minWidth: compact ? 44 : 88,
-          borderRadius: compact ? 12 : 24,
-          background: "white",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: compact ? 20 : 40,
-          zIndex: 1,
-          boxShadow: "0 12px 32px rgba(0,0,0,0.2)",
-          overflow: "hidden",
-        }}
-      >
-        {business.logoUrl ? (
-          <img
-            src={business.logoUrl}
-            alt="logo"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <span>🏢</span>
-        )}
+      <div style={{
+        width: compact ? 44 : 88, height: compact ? 44 : 88, minWidth: compact ? 44 : 88,
+        borderRadius: compact ? 12 : 24, background: "white",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: compact ? 20 : 40, zIndex: 1,
+        boxShadow: "0 12px 32px rgba(0,0,0,0.2)", overflow: "hidden",
+      }}>
+        {business.logoUrl
+          ? <img src={business.logoUrl} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <span>🏢</span>}
       </div>
 
       {/* Nombre */}
-      <div
-        style={{
-          zIndex: 1,
-          minWidth: 0,
-          textAlign: compact ? "left" : "center",
-        }}
-      >
-        <div
-          style={{
-            fontSize: compact ? 16 : 24,
-            fontWeight: 700,
-            color: "white",
-            fontFamily: "Georgia, serif",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: compact ? "nowrap" : "normal",
-          }}
-        >
+      <div style={{ zIndex: 1, minWidth: 0, textAlign: compact ? "left" : "center" }}>
+        <div style={{
+          fontSize: compact ? 16 : 24, fontWeight: 700, color: "white",
+          fontFamily: "Georgia, serif", overflow: "hidden",
+          textOverflow: "ellipsis", whiteSpace: compact ? "nowrap" : "normal",
+        }}>
           {business.name}
         </div>
         {!compact && business.description && (
-          <div
-            style={{
-              fontSize: 13,
-              color: "rgba(255,255,255,0.6)",
-              marginTop: 6,
-              lineHeight: 1.5,
-            }}
-          >
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 6, lineHeight: 1.5 }}>
             {business.description}
           </div>
         )}
@@ -140,75 +89,22 @@ function LeftPanel({
 
       {/* Resumen — solo desktop */}
       {!compact && active > 0 && (
-        <div
-          style={{
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            borderRadius: 14,
-            padding: "14px 16px",
-            width: "100%",
-            zIndex: 1,
-            boxSizing: "border-box",
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: "rgba(255,255,255,0.5)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}
-          >
+        <div style={{
+          background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)",
+          borderRadius: 14, padding: "14px 16px", width: "100%",
+          zIndex: 1, boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 10,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Tu selección
           </div>
 
           {selectedService && (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  minWidth: 32,
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 14,
-                }}
-              >
-                💼
-              </div>
+              <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>💼</div>
               <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "rgba(255,255,255,0.45)",
-                    fontWeight: 600,
-                  }}
-                >
-                  Servicio
-                </div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "white",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {selectedService.name}
-                </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
-                  {selectedService.duration} min · $
-                  {(selectedService.price / 100).toFixed(2)}
-                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>Servicio</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selectedService.name}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{selectedService.duration} min · ${(selectedService.price / 100).toFixed(2)}</div>
               </div>
             </div>
           )}
@@ -217,43 +113,11 @@ function LeftPanel({
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    minWidth: 32,
-                    borderRadius: 8,
-                    background: "rgba(255,255,255,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 14,
-                  }}
-                >
-                  👤
-                </div>
+                <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👤</div>
                 <div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255,255,255,0.45)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Recurso
-                  </div>
-                  <div
-                    style={{ fontSize: 13, fontWeight: 700, color: "white" }}
-                  >
-                    {selectedResource.name}
-                  </div>
-                  {selectedResource.specialty && (
-                    <div
-                      style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}
-                    >
-                      {selectedResource.specialty}
-                    </div>
-                  )}
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>Recurso</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{selectedResource.name}</div>
+                  {selectedResource.specialty && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{selectedResource.specialty}</div>}
                 </div>
               </div>
             </>
@@ -263,40 +127,11 @@ function LeftPanel({
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    minWidth: 32,
-                    borderRadius: 8,
-                    background: "rgba(255,255,255,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 14,
-                  }}
-                >
-                  📅
-                </div>
+                <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📅</div>
                 <div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255,255,255,0.45)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Fecha
-                  </div>
-                  <div
-                    style={{ fontSize: 13, fontWeight: 700, color: "white" }}
-                  >
-                    {new Date(selectedDate).toLocaleDateString("es-MX", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      timeZone: "UTC",
-                    })}
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>Fecha</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>
+                    {new Date(selectedDate).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })}
                   </div>
                 </div>
               </div>
@@ -307,40 +142,11 @@ function LeftPanel({
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    minWidth: 32,
-                    borderRadius: 8,
-                    background: "rgba(255,255,255,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 14,
-                  }}
-                >
-                  🕐
-                </div>
+                <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🕐</div>
                 <div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255,255,255,0.45)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Hora
-                  </div>
-                  <div
-                    style={{ fontSize: 13, fontWeight: 700, color: "white" }}
-                  >
-                    {new Date(selectedTime).toLocaleTimeString("es-MX", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                      timeZone: "America/Mexico_City",
-                    })}
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>Hora</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>
+                    {new Date(selectedTime).toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Mexico_City" })}
                   </div>
                 </div>
               </div>
@@ -350,94 +156,38 @@ function LeftPanel({
       )}
 
       {/* Redes sociales */}
-      {!compact &&
-        (business.facebook || business.instagram || business.website) && (
-          <div style={{ display: "flex", gap: 8, zIndex: 1 }}>
-            {business.facebook && (
-              <a
-                href={business.facebook}
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: "flex" }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "rgba(255,255,255,0.12)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <IconBrandFacebook size={18} color="white" />
-                </div>
-              </a>
-            )}
-            {business.instagram && (
-              <a
-                href={business.instagram}
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: "flex" }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "rgba(255,255,255,0.12)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <IconBrandInstagram size={18} color="white" />
-                </div>
-              </a>
-            )}
-            {business.website && (
-              <a
-                href={business.website}
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: "flex" }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "rgba(255,255,255,0.12)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <IconWorld size={18} color="white" />
-                </div>
-              </a>
-            )}
-          </div>
-        )}
+      {!compact && (business.facebook || business.instagram || business.website) && (
+        <div style={{ display: "flex", gap: 8, zIndex: 1 }}>
+          {business.facebook && (
+            <a href={business.facebook} target="_blank" rel="noreferrer" style={{ display: "flex" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IconBrandFacebook size={18} color="white" />
+              </div>
+            </a>
+          )}
+          {business.instagram && (
+            <a href={business.instagram} target="_blank" rel="noreferrer" style={{ display: "flex" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IconBrandInstagram size={18} color="white" />
+              </div>
+            </a>
+          )}
+          {business.website && (
+            <a href={business.website} target="_blank" rel="noreferrer" style={{ display: "flex" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IconWorld size={18} color="white" />
+              </div>
+            </a>
+          )}
+        </div>
+      )}
 
       {!compact && (
-        <div
-          style={{
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            color: "rgba(255,255,255,0.8)",
-            fontSize: 11,
-            fontWeight: 600,
-            padding: "5px 14px",
-            borderRadius: 99,
-            zIndex: 1,
-          }}
-        >
+        <div style={{
+          background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)",
+          color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: 600,
+          padding: "5px 14px", borderRadius: 99, zIndex: 1,
+        }}>
           Agenda tu cita
         </div>
       )}
@@ -453,78 +203,41 @@ interface StepsHeaderProps {
 
 function StepsHeader({ active, primaryColor }: StepsHeaderProps) {
   return (
-    <div
-      style={{
-        background: "white",
-        borderBottom: "1px solid #f1f5f9",
-        padding: "16px 24px",
-        display: "flex",
-        flexShrink: 0,
-      }}
-    >
+    <div style={{
+      background: "var(--mantine-color-body)",
+      borderBottom: "1px solid var(--mantine-color-default-border)",
+      padding: "16px 24px", display: "flex", flexShrink: 0,
+    }}>
       {stepLabels.map((label, i) => (
-        <div
-          key={i}
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 5,
-            position: "relative",
-          }}
-        >
+        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, position: "relative" }}>
           {i < stepLabels.length - 1 && (
-            <div
-              style={{
-                position: "absolute",
-                top: 16,
-                left: "50%",
-                width: "100%",
-                height: 2,
-                background: i < active ? "#bbf7d0" : "#f1f5f9",
-                zIndex: 0,
-              }}
-            />
+            <div style={{
+              position: "absolute", top: 16, left: "50%", width: "100%", height: 2,
+              background: i < active ? "var(--mantine-color-green-light-hover)" : "var(--mantine-color-default-border)",
+              zIndex: 0,
+            }} />
           )}
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              fontWeight: 700,
-              zIndex: 1,
-              background:
-                i < active
-                  ? "#dcfce7"
-                  : i === active
-                    ? primaryColor
-                    : "#f1f5f9",
-              color:
-                i < active ? "#16a34a" : i === active ? "white" : "#94a3b8",
-              boxShadow: i === active ? `0 0 0 4px ${primaryColor}22` : "none",
-            }}
-          >
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, fontWeight: 700, zIndex: 1,
+            background: i < active
+              ? "var(--mantine-color-green-light)"
+              : i === active
+                ? primaryColor
+                : "var(--mantine-color-default-hover)",
+            color: i < active
+              ? "var(--mantine-color-green-light-color)"
+              : i === active ? "white"
+              : "var(--mantine-color-dimmed)",
+            boxShadow: i === active ? `0 0 0 4px ${primaryColor}22` : "none",
+          }}>
             {i < active ? "✓" : i + 1}
           </div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              color:
-                i === active
-                  ? primaryColor
-                  : i < active
-                    ? "#16a34a"
-                    : "#94a3b8",
-            }}
-          >
+          <div style={{
+            fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
+            color: i === active ? primaryColor : i < active ? "var(--mantine-color-green-6)" : "var(--mantine-color-dimmed)",
+          }}>
             {label}
           </div>
         </div>
@@ -536,25 +249,23 @@ function StepsHeader({ active, primaryColor }: StepsHeaderProps) {
 // ── MAIN COMPONENT ──
 export default function AppointmentBooking({ business }: Props) {
   const params = useParams();
-  const slug = params.slug as string;
+  const slug   = params.slug as string;
 
-  const [active, setActive] = useState(0);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(
-    null,
-  );
-  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [active, setActive]                     = useState(0);
+  const [selectedService, setSelectedService]   = useState<Service | null>(null);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const [selectedDate, setSelectedDate]         = useState<DateValue | null>(null);
+  const [selectedTime, setSelectedTime]         = useState<string | null>(null);
   const [pendingModalOpen, setPendingModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting]             = useState(false);
 
-  const totalSteps = 5;
+  const totalSteps   = 5;
   const primaryColor = business.primaryColor ?? "#2563eb";
-  const darkColor = darkenColor(primaryColor, 40);
+  const darkColor    = darkenColor(primaryColor, 40);
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
-    setSelectedResource(null); // reset recurso si cambia servicio
+    setSelectedResource(null);
     setSelectedDate(null);
     setSelectedTime(null);
     setActive(1);
@@ -582,14 +293,7 @@ export default function AppointmentBooking({ business }: Props) {
     if (!selectedTime || !selectedService?.id) return;
     setSubmitting(true);
     try {
-      await createAppointment(
-        slug,
-        selectedTime,
-        selectedService.id,
-        details.name,
-        details.phone,
-        selectedResource?.id ?? null,
-      );
+      await createAppointment(slug, selectedTime, selectedService.id, details.name, details.phone, selectedResource?.id ?? null);
       setPendingModalOpen(true);
     } catch (error) {
       console.error("Error al crear la cita:", error);
@@ -610,12 +314,12 @@ export default function AppointmentBooking({ business }: Props) {
   return (
     <>
       <style>{`
-        .booking-wrap { min-height: 100dvh; display: flex; flex-direction: column; background: #f8fafc; }
+        .booking-wrap { min-height: 100dvh; display: flex; flex-direction: column; background: var(--mantine-color-default-hover); }
         .booking-left-desktop { display: none; }
         .booking-left-mobile { display: block; flex-shrink: 0; }
         .booking-right { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
         .booking-content { flex: 1; overflow-y: auto; padding: 24px; }
-        .booking-footer { background: white; border-top: 1px solid #f1f5f9; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .booking-footer { background: var(--mantine-color-body); border-top: 1px solid var(--mantine-color-default-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         @media (min-width: 768px) {
           .booking-wrap { flex-direction: row; height: 100dvh; overflow: hidden; }
           .booking-left-desktop { display: block; width: 320px; min-width: 320px; flex-shrink: 0; height: 100%; }
@@ -627,110 +331,31 @@ export default function AppointmentBooking({ business }: Props) {
       `}</style>
 
       <div className="booking-wrap">
-        {/* Desktop left */}
         <div className="booking-left-desktop">
-          <LeftPanel
-            business={business}
-            primaryColor={primaryColor}
-            darkColor={darkColor}
-            compact={false}
-            selectedService={selectedService}
-            selectedResource={selectedResource}
-            selectedDate={selectedDate}
-            selectedTime={selectedTime}
-            active={active}
-          />
+          <LeftPanel business={business} primaryColor={primaryColor} darkColor={darkColor} compact={false} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
         </div>
 
         <div className="booking-right">
-          {/* Mobile header */}
           <div className="booking-left-mobile">
-            <LeftPanel
-              business={business}
-              primaryColor={primaryColor}
-              darkColor={darkColor}
-              compact={active > 0}
-              selectedService={selectedService}
-              selectedResource={selectedResource}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              active={active}
-            />
+            <LeftPanel business={business} primaryColor={primaryColor} darkColor={darkColor} compact={active > 0} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
           </div>
 
           <StepsHeader active={active} primaryColor={primaryColor} />
 
           <div className="booking-content">
-            {active === 0 && (
-              <ServiceStep
-                slug={slug}
-                primaryColor={primaryColor}
-                selectedService={selectedService}
-                onNext={handleServiceSelect}
-              />
-            )}
-            {active === 1 && (
-              <ResourceStep
-                slug={slug}
-                primaryColor={primaryColor}
-                selectedService={selectedService}
-                selectedResource={selectedResource}
-                onNext={handleResourceSelect}
-              />
-            )}
-            {active === 2 && (
-              <DateStep
-                slug={slug}
-                primaryColor={primaryColor}
-                selectedService={selectedService}
-                selectedResource={selectedResource as Resource}
-                selectedDate={selectedDate}
-                onNext={handleDateSelect}
-              />
-            )}
-            {active === 3 && (
-              <TimeStep
-                slug={slug}
-                primaryColor={primaryColor}
-                selectedService={selectedService}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                staffId={selectedResource?.id ?? null}
-                onNext={handleTimeSelect}
-              />
-            )}
-            {active === 4 && (
-              <DetailsStep
-                primaryColor={primaryColor}
-                selectedService={selectedService}
-                selectedResource={selectedResource as Resource}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                onSubmit={handleSubmit}
-              />
-            )}
+            {active === 0 && <ServiceStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} onNext={handleServiceSelect} />}
+            {active === 1 && <ResourceStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} selectedResource={selectedResource} onNext={handleResourceSelect} />}
+            {active === 2 && <DateStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} onNext={handleDateSelect} />}
+            {active === 3 && <TimeStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} staffId={selectedResource?.id ?? null} onNext={handleTimeSelect} />}
+            {active === 4 && <DetailsStep primaryColor={primaryColor} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} selectedTime={selectedTime} onSubmit={handleSubmit} />}
           </div>
 
           <div className="booking-footer">
-            {active > 0 ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActive(active - 1)}
-              >
-                ← Regresar
-              </Button>
-            ) : (
-              <div />
-            )}
+            {active > 0
+              ? <Button variant="outline" size="sm" onClick={() => setActive(active - 1)}>← Regresar</Button>
+              : <div />}
             {active === totalSteps - 1 && (
-              <Button
-                type="submit"
-                form="details-form"
-                size="sm"
-                loading={submitting}
-                style={{ background: primaryColor }}
-              >
+              <Button type="submit" form="details-form" size="sm" loading={submitting} style={{ background: primaryColor }}>
                 Solicitar cita
               </Button>
             )}
@@ -738,14 +363,7 @@ export default function AppointmentBooking({ business }: Props) {
         </div>
       </div>
 
-      <Modal
-        opened={pendingModalOpen}
-        onClose={() => {}}
-        centered
-        withCloseButton={false}
-        radius="lg"
-        size="sm"
-      >
+      <Modal opened={pendingModalOpen} onClose={() => {}} centered withCloseButton={false} radius="lg" size="sm">
         <BookingPending
           serviceName={selectedService?.name || ""}
           time={selectedTime}

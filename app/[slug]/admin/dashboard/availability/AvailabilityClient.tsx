@@ -9,7 +9,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconDeviceFloppy, IconX, IconPlus, IconTrash } from "@tabler/icons-react";
 import { showNotification } from "@mantine/notifications";
 
-// ── Tipos ──
 const weekDays = [
   { label: "Domingo",   value: 0 },
   { label: "Lunes",     value: 1 },
@@ -20,22 +19,12 @@ const weekDays = [
   { label: "Sábado",    value: 6 },
 ];
 
-type TimeSlot    = { start: string; end: string };
-type DaySchedule = { dayOfWeek: number; slots: TimeSlot[] };
+type TimeSlot     = { start: string; end: string };
+type DaySchedule  = { dayOfWeek: number; slots: TimeSlot[] };
 type Availability = { days: DaySchedule[] };
 
-type BlockedTime = {
-  id: string;
-  name: string | null;
-  start: string;
-  end: string;
-};
-
-type NewBlocked = {
-  name: string;
-  start: Date | string | null;
-  end: Date | string | null;
-};
+type BlockedTime = { id: string; name: string | null; start: string; end: string };
+type NewBlocked  = { name: string; start: Date | string | null; end: Date | string | null };
 
 const createEmptyAvailability = (): Availability => ({
   days: weekDays.map((d) => ({ dayOfWeek: d.value, slots: [] })),
@@ -71,7 +60,6 @@ interface Props {
 }
 
 export default function AvailabilityClient({ slug, initialSchedule, initialBlockedTimes }: Props) {
-  // ── Horario semanal ──
   const buildAvailability = (data: typeof initialSchedule): Availability => {
     const grouped = createEmptyAvailability();
     data.forEach((s) => {
@@ -91,45 +79,36 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
     [availability, savedAvailability],
   );
 
-  // ── Festivos ──
   const [blockedTimes, setBlockedTimes]   = useState<BlockedTime[]>(initialBlockedTimes);
   const [deletingId, setDeletingId]       = useState<string | null>(null);
   const [savingBlocked, setSavingBlocked] = useState(false);
   const [newBlocked, setNewBlocked]       = useState<NewBlocked>({ name: "", start: null, end: null });
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
 
-  // ── Horario: helpers ──
   const toggleExpand = (dow: number, idx: number) => {
     const key = `${dow}-${idx}`;
     setExpandedSlots((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-  const isExpanded = (dow: number, idx: number) =>
-    expandedSlots[`${dow}-${idx}`] ?? false;
+  const isExpanded = (dow: number, idx: number) => expandedSlots[`${dow}-${idx}`] ?? false;
 
   const toggleDay = (dow: number, enabled: boolean) =>
     setAvailability((prev) => ({
       days: prev.days.map((d) =>
-        d.dayOfWeek === dow
-          ? { ...d, slots: enabled ? [{ start: "09:00", end: "17:00" }] : [] }
-          : d,
+        d.dayOfWeek === dow ? { ...d, slots: enabled ? [{ start: "09:00", end: "17:00" }] : [] } : d,
       ),
     }));
 
   const addSlot = (dow: number) =>
     setAvailability((prev) => ({
       days: prev.days.map((d) =>
-        d.dayOfWeek === dow
-          ? { ...d, slots: [...d.slots, { start: "09:00", end: "17:00" }] }
-          : d,
+        d.dayOfWeek === dow ? { ...d, slots: [...d.slots, { start: "09:00", end: "17:00" }] } : d,
       ),
     }));
 
   const removeSlot = (dow: number, idx: number) =>
     setAvailability((prev) => ({
       days: prev.days.map((d) =>
-        d.dayOfWeek === dow
-          ? { ...d, slots: d.slots.filter((_, i) => i !== idx) }
-          : d,
+        d.dayOfWeek === dow ? { ...d, slots: d.slots.filter((_, i) => i !== idx) } : d,
       ),
     }));
 
@@ -142,11 +121,9 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
       ),
     }));
 
-  // ── Horario: guardar ──
   const handleSaveSchedule = async () => {
     setSaving(true);
     const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-
     for (const day of availability.days) {
       const label = weekDays.find((d) => d.value === day.dayOfWeek)?.label;
       for (const slot of day.slots) {
@@ -165,60 +142,46 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
         }
       }
     }
-
     const flatSlots = availability.days.flatMap((day) =>
       day.slots.map((slot) => ({ dayOfWeek: day.dayOfWeek, startTime: slot.start, endTime: slot.end })),
     );
-
     const res = await fetch(`/api/business/${slug}/schedule`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slots: flatSlots }),
     });
-
     if (!res.ok) {
       showNotification({ title: "Error", message: "Error guardando horario", color: "red" });
       setSaving(false); return;
     }
-
     setSavedAvailability(availability);
     showNotification({ title: "Guardado", message: "Horario guardado correctamente", color: "green" });
     setSaving(false);
   };
 
-  // ── Festivos: agregar ──
   const handleAddBlocked = async () => {
     if (!newBlocked.start || !newBlocked.end) {
       showNotification({ title: "Error", message: "Selecciona fechas de inicio y fin", color: "red" });
       return;
     }
-
     setSavingBlocked(true);
-
-    // Formatear como YYYY-MM-DD para evitar desfase de zona horaria
     const toDateStr = (d: Date | string) => {
       const dt = new Date(d);
-      const y  = dt.getUTCFullYear();
-      const m  = String(dt.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(dt.getUTCDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
+      return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
     };
-    const startStr = `${toDateStr(newBlocked.start)}T00:00:00.000Z`;
-    const endStr   = `${toDateStr(newBlocked.end)}T23:59:59.999Z`;
-
     const res = await fetch(`/api/business/${slug}/blocked-times`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newBlocked.name || null, start: startStr, end: endStr }),
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: newBlocked.name || null,
+        start: `${toDateStr(newBlocked.start)}T00:00:00.000Z`,
+        end:   `${toDateStr(newBlocked.end)}T23:59:59.999Z`,
+      }),
     });
     setSavingBlocked(false);
-
     if (!res.ok) {
       const data = await res.json();
       showNotification({ title: "Error", message: data.error ?? "No se pudo guardar el festivo", color: "red" });
       return;
     }
-
     const created = await res.json();
     setBlockedTimes((prev) => [...prev, created].sort((a, b) => a.start.localeCompare(b.start)));
     setNewBlocked({ name: "", start: null, end: null });
@@ -226,7 +189,6 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
     closeModal();
   };
 
-  // ── Festivos: eliminar ──
   const handleDeleteBlocked = async (id: string) => {
     setDeletingId(id);
     await fetch(`/api/business/${slug}/blocked-times?id=${id}`, { method: "DELETE" });
@@ -241,26 +203,41 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
         .day-row {
           display: grid; grid-template-columns: 160px 1fr;
           align-items: start; gap: 16px; padding: 16px 20px;
-          background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;
+          background: var(--mantine-color-default-hover);
+          border-radius: 12px;
+          border: 1px solid var(--mantine-color-default-border);
         }
         .day-col-left { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
         .day-col-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
         .time-pill {
           display: flex; align-items: center; gap: 6px;
-          background: white; border: 1.5px solid #e2e8f0;
+          background: var(--mantine-color-body);
+          border: 1.5px solid var(--mantine-color-default-border);
           border-radius: 99px; padding: 6px 14px;
-          font-size: 13px; font-weight: 500; color: #374151;
+          font-size: 13px; font-weight: 500;
+          color: var(--mantine-color-text);
+          cursor: pointer;
         }
         .pill-remove {
-          width: 16px; height: 16px; background: #fee2e2; color: #e11d48;
+          width: 16px; height: 16px;
+          background: var(--mantine-color-red-light);
+          color: var(--mantine-color-red-light-color);
           border-radius: 50%; border: none; font-size: 10px; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           font-weight: 700; line-height: 1;
         }
         .add-range-btn {
-          padding: 6px 12px; background: white; color: #2563eb;
-          border: 1.5px dashed #bfdbfe; border-radius: 99px;
-          font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+          padding: 6px 12px;
+          background: var(--mantine-color-body);
+          color: var(--mantine-color-blue-6);
+          border: 1.5px dashed var(--mantine-color-blue-light-hover);
+          border-radius: 99px; font-size: 12px; font-weight: 600;
+          cursor: pointer; font-family: inherit;
+        }
+        .edit-slot-bg {
+          background: var(--mantine-color-blue-light);
+          border: 1.5px solid var(--mantine-color-blue-light-hover);
+          border-radius: 12px; padding: 14px; margin-bottom: 6px; width: 100%;
         }
         @media (max-width: 600px) {
           .day-row { grid-template-columns: 1fr; gap: 10px; }
@@ -270,7 +247,7 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
           .day-col-right { flex-direction: column; align-items: stretch; }
         }
         .edit-slot-grid { display: flex; align-items: flex-end; gap: 8px; }
-        .edit-slot-arrow { color: #94a3b8; padding-bottom: 10px; flex-shrink: 0; }
+        .edit-slot-arrow { color: var(--mantine-color-dimmed); padding-bottom: 10px; flex-shrink: 0; }
         .edit-slot-desktop-btn { display: flex; }
         .edit-slot-mobile-actions { display: none; }
         @media (max-width: 600px) {
@@ -282,25 +259,17 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
       `}</style>
 
       <Stack gap="md">
-        {/* ── Horario semanal ── */}
         <Group justify="space-between">
           <div>
             <Title order={3}>Disponibilidad</Title>
             <Text size="sm" c="dimmed" mt={2}>Horario semanal y cierres especiales del negocio</Text>
           </div>
-          <Button
-            leftSection={<IconDeviceFloppy size={18} />}
-            onClick={handleSaveSchedule}
-            disabled={!hasChanges}
-            loading={saving}
-          >
+          <Button leftSection={<IconDeviceFloppy size={18} />} onClick={handleSaveSchedule} disabled={!hasChanges} loading={saving}>
             {hasChanges ? "Guardar horario" : "Guardado"}
           </Button>
         </Group>
 
-        <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.06em" }}>
-          Horario semanal
-        </Text>
+        <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.06em" }}>Horario semanal</Text>
 
         <Stack gap="xs">
           {availability.days.map((day) => {
@@ -310,7 +279,7 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
               <div key={day.dayOfWeek} className="day-row">
                 <div className="day-col-left">
                   <Switch checked={isOpen} onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)} size="md" />
-                  <Text fw={600} c={isOpen ? "dark" : "dimmed"} size="sm">{dayLabel}</Text>
+                  <Text fw={600} c={isOpen ? undefined : "dimmed"} size="sm">{dayLabel}</Text>
                 </div>
                 <div className="day-col-right">
                   {!isOpen ? (
@@ -320,7 +289,7 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
                       {day.slots.map((slot, index) => (
                         <div key={index} style={{ width: isExpanded(day.dayOfWeek, index) ? "100%" : "auto" }}>
                           {isExpanded(day.dayOfWeek, index) ? (
-                            <div style={{ background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 12, padding: 14, marginBottom: 6, width: "100%" }}>
+                            <div className="edit-slot-bg">
                               <div className="edit-slot-grid">
                                 <div style={{ flex: 1 }}>
                                   <Text size="xs" fw={600} c="dimmed" mb={4}>Abre</Text>
@@ -340,7 +309,7 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
                               </div>
                             </div>
                           ) : (
-                            <div className="time-pill" onClick={() => toggleExpand(day.dayOfWeek, index)} style={{ cursor: "pointer" }}>
+                            <div className="time-pill" onClick={() => toggleExpand(day.dayOfWeek, index)}>
                               <span>✏️ {formatTime(slot.start)} → {formatTime(slot.end)}</span>
                               <button className="pill-remove" onClick={(e) => { e.stopPropagation(); removeSlot(day.dayOfWeek, index); }}>✕</button>
                             </div>
@@ -358,15 +327,13 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
 
         <Divider />
 
-        {/* ── Festivos ── */}
+        {/* Festivos */}
         <Group justify="space-between">
           <div>
             <Text fw={600} size="sm">Festivos y cierres especiales</Text>
             <Text size="xs" c="dimmed" mt={2}>El negocio no atiende en estas fechas</Text>
           </div>
-          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={openModal}>
-            Agregar festivo
-          </Button>
+          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={openModal}>Agregar festivo</Button>
         </Group>
 
         {blockedTimes.length === 0 ? (
@@ -378,14 +345,13 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
               const isSingle = b.start.slice(0, 10) === b.end.slice(0, 10);
               return (
                 <Group
-                  key={b.id}
-                  gap="sm"
-                  p="sm"
+                  key={b.id} gap="sm" p="sm" wrap="nowrap"
                   style={{
-                    background: "#f8fafc", border: "1px solid #f1f5f9",
-                    borderRadius: 10, opacity: status.label === "Pasado" ? 0.55 : 1,
+                    background: "var(--mantine-color-default-hover)",
+                    border: "1px solid var(--mantine-color-default-border)",
+                    borderRadius: 10,
+                    opacity: status.label === "Pasado" ? 0.55 : 1,
                   }}
-                  wrap="nowrap"
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Text size="sm" fw={700} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -396,11 +362,7 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
                     </Text>
                   </div>
                   <Text size="xs" c={status.color} fw={600} style={{ flexShrink: 0 }}>{status.label}</Text>
-                  <Button
-                    size="xs" variant="light" color="red" px={6}
-                    loading={deletingId === b.id}
-                    onClick={() => handleDeleteBlocked(b.id)}
-                  >
+                  <Button size="xs" variant="light" color="red" px={6} loading={deletingId === b.id} onClick={() => handleDeleteBlocked(b.id)}>
                     <IconTrash size={12} />
                   </Button>
                 </Group>
@@ -410,47 +372,29 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
         )}
       </Stack>
 
-      {/* Modal agregar festivo */}
       <Modal opened={modalOpened} onClose={closeModal} title="Agregar cierre especial" centered size="sm">
         <Stack gap="md">
           <TextInput
-            label="Nombre"
-            placeholder="Ej: Semana Santa, Año Nuevo..."
+            label="Nombre" placeholder="Ej: Semana Santa, Año Nuevo..."
             value={newBlocked.name}
             onChange={(e) => setNewBlocked((p) => ({ ...p, name: e.target.value }))}
           />
           <Group gap={8} wrap="nowrap">
             <DatePickerInput
-              label="Inicio"
-              placeholder="Fecha inicio"
-              style={{ flex: 1 }}
-              value={newBlocked.start}
-              onChange={(v) => setNewBlocked((p) => ({ ...p, start: v }))}
-              minDate={new Date()}
-              valueFormat="DD MMM YYYY"
-              clearable
+              label="Inicio" placeholder="Fecha inicio" style={{ flex: 1 }}
+              value={newBlocked.start} onChange={(v) => setNewBlocked((p) => ({ ...p, start: v }))}
+              minDate={new Date()} valueFormat="DD MMM YYYY" clearable
             />
             <DatePickerInput
-              label="Fin"
-              placeholder="Fecha fin"
-              style={{ flex: 1 }}
-              value={newBlocked.end}
-              onChange={(v) => setNewBlocked((p) => ({ ...p, end: v }))}
-              minDate={newBlocked.start ? new Date(newBlocked.start) : new Date()}
-              valueFormat="DD MMM YYYY"
-              clearable
+              label="Fin" placeholder="Fecha fin" style={{ flex: 1 }}
+              value={newBlocked.end} onChange={(v) => setNewBlocked((p) => ({ ...p, end: v }))}
+              minDate={newBlocked.start ? new Date(newBlocked.start) : new Date()} valueFormat="DD MMM YYYY" clearable
             />
           </Group>
           <Text size="xs" c="dimmed">Para un día suelto selecciona la misma fecha en inicio y fin.</Text>
           <Group justify="flex-end">
             <Button variant="subtle" color="gray" onClick={closeModal}>Cancelar</Button>
-            <Button
-              loading={savingBlocked}
-              disabled={!newBlocked.start || !newBlocked.end}
-              onClick={handleAddBlocked}
-            >
-              Agregar
-            </Button>
+            <Button loading={savingBlocked} disabled={!newBlocked.start || !newBlocked.end} onClick={handleAddBlocked}>Agregar</Button>
           </Group>
         </Stack>
       </Modal>

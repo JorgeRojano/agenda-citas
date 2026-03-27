@@ -19,7 +19,7 @@ export default function CreateAppointmentButton({
   slug,
   primaryColor,
   services,
-  disabled
+  disabled,
 }: {
   slug: string;
   primaryColor: string | null;
@@ -27,19 +27,19 @@ export default function CreateAppointmentButton({
   disabled?: boolean;
 }) {
   const [opened, { open, close }] = useDisclosure(false);
-  const [resources, setResources]         = useState<Resource[]>([]);
+  const [resources, setResources]               = useState<Resource[]>([]);
   const [loadingResources, setLoadingResources] = useState(false);
-  const [slots, setSlots]                 = useState<string[]>([]);
-  const [selectedSlot, setSelectedSlot]   = useState<string | null>(null);
-  const [phone, setPhone]                 = useState("+52");
-  const [phoneError, setPhoneError]       = useState<string | null>(null);
-  const [loading, setLoading]             = useState(false);
-  const [loadingSlots, setLoadingSlots]   = useState(false);
+  const [slots, setSlots]                       = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot]         = useState<string | null>(null);
+  const [phone, setPhone]                       = useState("+52");
+  const [phoneError, setPhoneError]             = useState<string | null>(null);
+  const [loading, setLoading]                   = useState(false);
+  const [loadingSlots, setLoadingSlots]         = useState(false);
 
   const searchParams = useSearchParams();
-  const dateString = searchParams.get("date") ?? new Date().toLocaleDateString("en-CA");
-  const today      = new Date().toLocaleDateString("en-CA");
-  const isPastDate = dateString < today;
+  const dateString   = searchParams.get("date") ?? new Date().toLocaleDateString("en-CA");
+  const today        = new Date().toLocaleDateString("en-CA");
+  const isPastDate   = dateString < today;
 
   const displayDate = new Date(dateString + "T12:00:00").toLocaleDateString("es-MX", {
     weekday: "long", day: "numeric", month: "long",
@@ -53,7 +53,6 @@ export default function CreateAppointmentButton({
     },
   });
 
-  // ── Fetch recursos disponibles cuando cambia el servicio ──
   useEffect(() => {
     const { serviceId } = form.values;
     if (!serviceId || !dateString) {
@@ -61,36 +60,25 @@ export default function CreateAppointmentButton({
       form.setFieldValue("assignedToId", "");
       return;
     }
-
     setLoadingResources(true);
     form.setFieldValue("assignedToId", "");
     setSlots([]);
     setSelectedSlot(null);
-
     const dateForApi = new Date(dateString + "T12:00:00").toString();
-
-    fetch(
-      `/api/business/${slug}/staff?date=${encodeURIComponent(dateForApi)}&serviceId=${serviceId}`,
-    )
+    fetch(`/api/business/${slug}/staff?date=${encodeURIComponent(dateForApi)}&serviceId=${serviceId}`)
       .then((r) => r.json())
       .then((data: Resource[]) => setResources(data))
       .finally(() => setLoadingResources(false));
   }, [form.values.serviceId, dateString]);
 
-  // ── Fetch slots cuando cambia recurso ──
   useEffect(() => {
     const { serviceId, assignedToId } = form.values;
     if (!serviceId || !dateString) { setSlots([]); return; }
-
     setLoadingSlots(true);
     setSelectedSlot(null);
-
-    const dateForApi  = new Date(dateString + "T12:00:00").toString();
-    const staffParam  = assignedToId ? `&staffId=${assignedToId}` : "";
-
-    fetch(
-      `/api/business/${slug}/availability?date=${encodeURIComponent(dateForApi)}&serviceId=${serviceId}${staffParam}`,
-    )
+    const dateForApi = new Date(dateString + "T12:00:00").toString();
+    const staffParam = assignedToId ? `&staffId=${assignedToId}` : "";
+    fetch(`/api/business/${slug}/availability?date=${encodeURIComponent(dateForApi)}&serviceId=${serviceId}${staffParam}`)
       .then((r) => r.json())
       .then((data) => setSlots(data))
       .finally(() => setLoadingSlots(false));
@@ -112,22 +100,25 @@ export default function CreateAppointmentButton({
 
   const SlotGrid = ({ items }: { items: string[] }) => (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-      {items.map((slot) => (
-        <div
-          key={slot}
-          onClick={() => setSelectedSlot(slot)}
-          style={{
-            padding: "7px 4px", borderRadius: 8, textAlign: "center",
-            cursor: "pointer", fontSize: 11, fontWeight: 600,
-            border: `1.5px solid ${selectedSlot === slot ? "#2563eb" : "#f1f5f9"}`,
-            background: selectedSlot === slot ? "#2563eb" : "white",
-            color: selectedSlot === slot ? "white" : "#374151",
-            transition: "all 0.1s",
-          }}
-        >
-          {formatTime(slot)}
-        </div>
-      ))}
+      {items.map((slot) => {
+        const isSelected = selectedSlot === slot;
+        return (
+          <div
+            key={slot}
+            onClick={() => setSelectedSlot(slot)}
+            style={{
+              padding: "7px 4px", borderRadius: 8, textAlign: "center",
+              cursor: "pointer", fontSize: 11, fontWeight: 600,
+              border: `1.5px solid ${isSelected ? (primaryColor ?? "#2563eb") : "var(--mantine-color-default-border)"}`,
+              background: isSelected ? (primaryColor ?? "#2563eb") : "var(--mantine-color-body)",
+              color: isSelected ? "white" : "var(--mantine-color-text)",
+              transition: "all 0.1s",
+            }}
+          >
+            {formatTime(slot)}
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -150,7 +141,6 @@ export default function CreateAppointmentButton({
       showNotification({ title: "Error", message: "Selecciona un horario", color: "red" });
       return;
     }
-
     setLoading(true);
     try {
       await createAppointmentByAdmin(slug, {
@@ -185,8 +175,13 @@ export default function CreateAppointmentButton({
       <Modal opened={opened} onClose={handleClose} title="Nueva cita" centered size="md">
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="md">
-            {/* Confirmada + fecha */}
-            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+            {/* Banner confirmada */}
+            <div style={{
+              background: "var(--mantine-color-green-light)",
+              border: "1px solid var(--mantine-color-green-light-hover)",
+              borderRadius: 10, padding: "10px 14px",
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
               <span>✅</span>
               <div>
                 <Text size="xs" fw={600} c="green.7">La cita se creará como Confirmada</Text>
@@ -207,7 +202,11 @@ export default function CreateAppointmentButton({
                     defaultCountry="MX" international withCountryCallingCode
                     value={phone}
                     onChange={(v) => { setPhone(v ?? ""); setPhoneError(null); }}
-                    style={{ border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "9px 12px" }}
+                    style={{
+                      border: "1.5px solid var(--mantine-color-default-border)",
+                      borderRadius: 10, padding: "9px 12px",
+                      background: "var(--mantine-color-body)",
+                    }}
                   />
                   {phoneError && <Text size="xs" c="red" mt={4}>{phoneError}</Text>}
                 </div>
@@ -228,7 +227,7 @@ export default function CreateAppointmentButton({
               />
             </div>
 
-            {/* Recurso — solo si hay servicio seleccionado */}
+            {/* Recurso */}
             {form.values.serviceId && (
               <div>
                 <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: "0.06em" }}>
@@ -237,9 +236,7 @@ export default function CreateAppointmentButton({
                 {loadingResources ? (
                   <Center h={40}><Loader size="xs" /></Center>
                 ) : resources.length === 0 ? (
-                  <Text size="xs" c="dimmed" fs="italic">
-                    Ningún recurso tiene disponibilidad este día
-                  </Text>
+                  <Text size="xs" c="dimmed" fs="italic">Ningún recurso tiene disponibilidad este día</Text>
                 ) : (
                   <Select
                     label="Asignar a (opcional)"

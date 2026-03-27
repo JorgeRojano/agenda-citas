@@ -14,9 +14,9 @@ interface Props {
 }
 
 const statusConfig: Record<string, { label: string; border: string; bg: string; btnBg: string; btnColor: string }> = {
-  PENDING:   { label: "Pendiente",  border: "#f59e0b", bg: "#fffbeb", btnBg: "#f59e0b", btnColor: "white" },
-  CONFIRMED: { label: "Confirmada", border: "#22c55e", bg: "#f0fdf4", btnBg: "#22c55e", btnColor: "white" },
-  CANCELLED: { label: "Cancelada",  border: "#cbd5e1", bg: "#f8fafc", btnBg: "#e2e8f0", btnColor: "#64748b" },
+  PENDING:   { label: "Pendiente",  border: "#f59e0b", bg: "var(--mantine-color-yellow-light)",  btnBg: "#f59e0b", btnColor: "white" },
+  CONFIRMED: { label: "Confirmada", border: "#22c55e", bg: "var(--mantine-color-green-light)",   btnBg: "#22c55e", btnColor: "white" },
+  CANCELLED: { label: "Cancelada",  border: "#cbd5e1", bg: "var(--mantine-color-default-hover)", btnBg: "#94a3b8", btnColor: "white" },
 };
 
 const formatTime = (date: Date) =>
@@ -55,11 +55,11 @@ function AppointmentCard({ item, onOpen }: { item: AppointmentItem; onOpen: (ite
         <Text fw={700} size="md" mb={3}>{item.clientName}</Text>
         <Text size="xs" c="dimmed">🏷️ {item.service}</Text>
         {item.assignedTo ? (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#f3f0ff", borderRadius: 99, padding: "3px 10px", marginTop: 6 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--mantine-color-violet-light)", borderRadius: 99, padding: "3px 10px", marginTop: 6 }}>
             <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#7c3aed", color: "white", fontSize: 7, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {resourceInitials}
             </div>
-            <Text size="xs" fw={600} style={{ color: "#7c3aed" }}>{item.assignedTo}</Text>
+            <Text size="xs" fw={600} style={{ color: "var(--mantine-color-violet-light-color)" }}>{item.assignedTo}</Text>
           </div>
         ) : item.status === "PENDING" ? (
           <Text size="xs" c="red.4" mt={4} fs="italic">Sin recurso asignado</Text>
@@ -116,8 +116,8 @@ export default function BookingsClient({ items, slug, business }: Props) {
   const KanbanColumn = ({ title, count, color, items: colItems }: {
     title: string; count: number; color: string; items: AppointmentItem[];
   }) => (
-    <div style={{ background: "white", borderRadius: 14, border: "1px solid #f1f5f9", display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", height: "100%" }}>
-      <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+    <div style={{ background: "var(--mantine-color-body)", borderRadius: 14, border: "1px solid var(--mantine-color-default-border)", display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", height: "100%" }}>
+      <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--mantine-color-default-border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <Text fw={700} size="sm">{title}</Text>
         <Badge color={color} variant="light" size="sm" circle>{count}</Badge>
       </div>
