@@ -1,13 +1,10 @@
 "use client";
 
-import { Badge, Button, Group, Text, Stack, Tabs, Select } from "@mantine/core";
-import { useState } from "react";
-import { IconBrandWhatsapp } from "@tabler/icons-react";
-import { StatusButtons } from "./StatusButtons";
-import CancelAppointmentButton from "./CancelAppointmentButton";
+import { Badge, Button, Text, Stack, Tabs } from "@mantine/core";
+import { useState, useEffect } from "react";
 import DayPicker from "./DayPicker";
 import CreateAppointmentButton from "./CreateAppointmentButton";
-import { getWhatsAppLink } from "@/lib/utils";
+import { AppointmentDrawer } from "./AppointmentDrawer";
 import { AppointmentItem } from "@/types/Appointment";
 
 interface Props {
@@ -16,10 +13,10 @@ interface Props {
   business: any;
 }
 
-const statusConfig: Record<string, { color: string; label: string; border: string; bg: string }> = {
-  PENDING:   { color: "yellow", label: "Pendiente",  border: "#f59e0b", bg: "#fffbeb" },
-  CONFIRMED: { color: "green",  label: "Confirmada", border: "#22c55e", bg: "#f0fdf4" },
-  CANCELLED: { color: "gray",   label: "Cancelada",  border: "#cbd5e1", bg: "#f8fafc" },
+const statusConfig: Record<string, { label: string; border: string; bg: string; btnBg: string; btnColor: string }> = {
+  PENDING:   { label: "Pendiente",  border: "#f59e0b", bg: "#fffbeb", btnBg: "#f59e0b", btnColor: "white" },
+  CONFIRMED: { label: "Confirmada", border: "#22c55e", bg: "#f0fdf4", btnBg: "#22c55e", btnColor: "white" },
+  CANCELLED: { label: "Cancelada",  border: "#cbd5e1", bg: "#f8fafc", btnBg: "#e2e8f0", btnColor: "#64748b" },
 };
 
 const formatTime = (date: Date) =>
@@ -27,63 +24,10 @@ const formatTime = (date: Date) =>
     hour: "2-digit", minute: "2-digit", hour12: true,
   });
 
-function AppointmentCard({ item, slug }: { item: AppointmentItem; slug: string }) {
-  const [assignedTo, setAssignedTo] = useState(item.assignedTo);
-  const [assignedToId, setAssignedToId] = useState(item.assignedToId ?? null);
-  const [resources, setResources]   = useState<{ id: string; name: string }[]>([]);
-  const [assigning, setAssigning]   = useState(false);
-  const [loadingRes, setLoadingRes] = useState(false);
-  const [showSelect, setShowSelect] = useState(false);
-
-  const config = statusConfig[item.status] ?? statusConfig.CONFIRMED;
-
-  const handleWhatsApp = () => {
-    const date = new Date(item.start).toLocaleDateString("es-MX", {
-      weekday: "long", day: "numeric", month: "long",
-      timeZone: "America/Mexico_City",
-    });
-    const time = new Date(item.start).toLocaleTimeString("es-MX", {
-      hour: "numeric", minute: "2-digit", hour12: true,
-      timeZone: "America/Mexico_City",
-    });
-    const message =
-      `Hola ${item.clientName} 👋, te recordamos que tienes una cita confirmada:\n\n` +
-      `📋 *Servicio:* ${item.service}\n` +
-      `📅 *Fecha:* ${date}\n` +
-      `⏰ *Hora:* ${time}\n\n` +
-      `¡Te esperamos! 😊`;
-    window.open(getWhatsAppLink(item.phone, message), "_blank");
-  };
-
-  const handleLoadResources = async () => {
-    if (resources.length > 0) { setShowSelect(true); return; }
-    setLoadingRes(true);
-    const data = await fetch(`/api/business/${slug}/staff?serviceId=${item.serviceId}`)
-      .then((r) => r.json());
-    setResources(data);
-    setLoadingRes(false);
-    setShowSelect(true);
-  };
-
-  const handleAssign = async (resourceId: string) => {
-    setAssigning(true);
-    const res = await fetch(`/api/business/${slug}/appointments/${item.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assignedToId: resourceId }),
-    });
-
-    if (res.ok) {
-      const resource = resources.find((r) => r.id === resourceId);
-      setAssignedTo(resource?.name ?? null);
-      setAssignedToId(resourceId);
-      setShowSelect(false);
-    }
-    setAssigning(false);
-  };
-
-  const resourceInitials = assignedTo
-    ? assignedTo.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+function AppointmentCard({ item, onOpen }: { item: AppointmentItem; onOpen: (item: AppointmentItem) => void }) {
+  const config          = statusConfig[item.status] ?? statusConfig.CONFIRMED;
+  const resourceInitials = item.assignedTo
+    ? item.assignedTo.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : null;
 
   return (
@@ -101,79 +45,39 @@ function AppointmentCard({ item, slug }: { item: AppointmentItem; slug: string }
         <Text size="xs" fw={700} c="dimmed" tt="uppercase">
           {formatTime(item.start)} – {formatTime(item.end)}
         </Text>
-        <Badge color={config.color} variant="filled" radius="xs" size="sm">
+        <span style={{ fontSize: 10, fontWeight: 700, background: config.btnBg, color: config.btnColor, padding: "2px 8px", borderRadius: 4 }}>
           {config.label}
-        </Badge>
+        </span>
       </div>
 
       {/* Body */}
       <div style={{ padding: "0 14px 10px" }}>
-        <Text fw={700} size="md" mb={4}>{item.clientName}</Text>
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: assignedTo ? 8 : 0 }}>
-          <Text size="xs">🏷️</Text>
-          <Text size="xs" c="dimmed">{item.service}</Text>
-        </div>
-        {assignedTo && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#f3f0ff", borderRadius: 99, padding: "3px 10px", marginTop: 4 }}>
-            <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#7c3aed", color: "white", fontSize: 8, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Text fw={700} size="md" mb={3}>{item.clientName}</Text>
+        <Text size="xs" c="dimmed">🏷️ {item.service}</Text>
+        {item.assignedTo ? (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#f3f0ff", borderRadius: 99, padding: "3px 10px", marginTop: 6 }}>
+            <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#7c3aed", color: "white", fontSize: 7, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {resourceInitials}
             </div>
-            <Text size="xs" fw={600} style={{ color: "#7c3aed" }}>{assignedTo}</Text>
+            <Text size="xs" fw={600} style={{ color: "#7c3aed" }}>{item.assignedTo}</Text>
           </div>
-        )}
+        ) : item.status === "PENDING" ? (
+          <Text size="xs" c="red.4" mt={4} fs="italic">Sin recurso asignado</Text>
+        ) : null}
       </div>
 
       {/* Footer */}
-      <div style={{ padding: "8px 14px 12px", borderTop: `1px solid ${config.border}20` }}>
-        {/* Select inline para asignar recurso manualmente */}
-        {item.status === "PENDING" && !assignedTo && (
-          <div style={{ marginBottom: 8 }}>
-            {showSelect ? (
-              <Group gap={6} wrap="nowrap">
-                <Select
-                  placeholder="Asignar recurso"
-                  size="xs"
-                  style={{ flex: 1 }}
-                  data={resources.map((r) => ({ value: r.id, label: r.name }))}
-                  onChange={(v) => v && handleAssign(v)}
-                  disabled={assigning}
-                />
-                <Button size="xs" variant="subtle" color="gray" onClick={() => setShowSelect(false)}>✕</Button>
-              </Group>
-            ) : (
-              <Button
-                size="xs" variant="subtle" color="violet"
-                loading={loadingRes}
-                onClick={handleLoadResources}
-              >
-                + Asignar recurso
-              </Button>
-            )}
-          </div>
-        )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          {item.status === "PENDING" && (
-            <StatusButtons
-              appointmentId={item.id}
-              slug={slug}
-              serviceId={item.serviceId}
-              assignedToId={assignedToId}
-            />
-          )}
-          {item.status === "CONFIRMED" && (
-            <Group gap="xs" justify="flex-end" wrap="nowrap">
-              <Button
-                size="compact-xs" variant="light" color="green"
-                leftSection={<IconBrandWhatsapp size={14} />}
-                onClick={handleWhatsApp}
-              >
-                Recordatorio
-              </Button>
-              <CancelAppointmentButton appointmentId={item.id} slug={slug} />
-            </Group>
-          )}
-        </div>
+      <div style={{ padding: "8px 14px 12px", borderTop: `1px solid ${config.border}20`, display: "flex", justifyContent: "flex-end" }}>
+        <button
+          onClick={() => onOpen(item)}
+          style={{
+            fontSize: 12, fontWeight: 600, padding: "6px 14px",
+            borderRadius: 8, background: config.btnBg, color: config.btnColor,
+            border: "none", cursor: "pointer",
+          }}
+        >
+          Ver detalle →
+        </button>
       </div>
     </div>
   );
@@ -181,10 +85,33 @@ function AppointmentCard({ item, slug }: { item: AppointmentItem; slug: string }
 
 export default function BookingsClient({ items, slug, business }: Props) {
   const [isDayBlocked, setIsDayBlocked] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<AppointmentItem | null>(null);
+  const [localItems, setLocalItems]     = useState<AppointmentItem[]>(items);
 
-  const pending   = items.filter((a) => a.status === "PENDING");
-  const confirmed = items.filter((a) => a.status === "CONFIRMED");
-  const cancelled = items.filter((a) => a.status === "CANCELLED");
+  useEffect(() => {
+    setLocalItems(items);
+    setSelectedItem(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(items)]);
+
+  const handleResourceUpdated = (appointmentId: string, assignedToId: string, assignedTo: string) => {
+    setLocalItems((prev) =>
+      prev.map((i) => i.id === appointmentId ? { ...i, assignedToId, assignedTo } : i),
+    );
+    setSelectedItem((prev) =>
+      prev?.id === appointmentId ? { ...prev, assignedToId, assignedTo } : prev,
+    );
+  };
+
+  const handleStatusUpdated = (appointmentId: string, status: string) => {
+    setLocalItems((prev) =>
+      prev.map((i) => i.id === appointmentId ? { ...i, status } : i),
+    );
+  };
+
+  const pending   = localItems.filter((a) => a.status === "PENDING");
+  const confirmed = localItems.filter((a) => a.status === "CONFIRMED");
+  const cancelled = localItems.filter((a) => a.status === "CANCELLED");
 
   const KanbanColumn = ({ title, count, color, items: colItems }: {
     title: string; count: number; color: string; items: AppointmentItem[];
@@ -194,11 +121,13 @@ export default function BookingsClient({ items, slug, business }: Props) {
         <Text fw={700} size="sm">{title}</Text>
         <Badge color={color} variant="light" size="sm" circle>{count}</Badge>
       </div>
-      <div style={{ padding: 12, flexDirection: "column", gap: 8, overflowY: "auto", flex: 1, minHeight: 0 }}>
+      <div style={{ padding: 12, overflowY: "auto", flex: 1, minHeight: 0 }}>
         {colItems.length === 0 ? (
           <Text size="sm" c="dimmed" ta="center" mt="md">Sin citas</Text>
         ) : (
-          colItems.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {colItems.map((item) => <AppointmentCard key={item.id} item={item} onOpen={setSelectedItem} />)}
+          </div>
         )}
       </div>
     </div>
@@ -262,7 +191,7 @@ export default function BookingsClient({ items, slug, business }: Props) {
             <Stack gap="sm">
               {pending.length === 0
                 ? <Text size="sm" c="dimmed">Sin citas pendientes</Text>
-                : pending.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)}
+                : pending.map((item) => <AppointmentCard key={item.id} item={item} onOpen={setSelectedItem} />)}
             </Stack>
           </Tabs.Panel>
 
@@ -270,7 +199,7 @@ export default function BookingsClient({ items, slug, business }: Props) {
             <Stack gap="sm">
               {confirmed.length === 0
                 ? <Text size="sm" c="dimmed">Sin citas confirmadas</Text>
-                : confirmed.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)}
+                : confirmed.map((item) => <AppointmentCard key={item.id} item={item} onOpen={setSelectedItem} />)}
             </Stack>
           </Tabs.Panel>
 
@@ -278,11 +207,22 @@ export default function BookingsClient({ items, slug, business }: Props) {
             <Stack gap="sm">
               {cancelled.length === 0
                 ? <Text size="sm" c="dimmed">Sin citas canceladas</Text>
-                : cancelled.map((item) => <AppointmentCard key={item.id} item={item} slug={slug} />)}
+                : cancelled.map((item) => <AppointmentCard key={item.id} item={item} onOpen={setSelectedItem} />)}
             </Stack>
           </Tabs.Panel>
         </Tabs>
       </div>
+
+      {/* Drawer / Bottom sheet */}
+      {selectedItem && (
+        <AppointmentDrawer
+          item={selectedItem}
+          slug={slug}
+          onClose={() => setSelectedItem(null)}
+          onResourceUpdated={handleResourceUpdated}
+          onStatusUpdated={handleStatusUpdated}
+        />
+      )}
     </>
   );
 }
