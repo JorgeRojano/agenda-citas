@@ -11,7 +11,7 @@ interface Props {
   selectedDate: any;
   selectedTime: any;
   onSubmit: (values: any) => void;
-  primaryColor?: string;
+  colorName?: string;
 }
 
 export function DetailsStep({
@@ -20,7 +20,7 @@ export function DetailsStep({
   selectedDate,
   selectedTime,
   onSubmit,
-  primaryColor = "#2563eb",
+  colorName = "blue",
 }: Props) {
   const [phone, setPhone] = useState<string>("+52");
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export function DetailsStep({
 
   const rowStyle = {
     display: "flex", alignItems: "center", gap: 12,
-    padding: "12px 16px", borderBottom: "1px solid var(--mantine-color-default-hover)", // era #f8fafc
+    padding: "12px 16px", borderBottom: "1px solid var(--mantine-color-default-hover)",
   };
 
   const iconBox = (bg: string, emoji: string) => (
@@ -101,9 +101,9 @@ export function DetailsStep({
 
       {/* Summary card */}
       <div style={{
-        background: "var(--mantine-color-body)",           // era white
+        background: "var(--mantine-color-body)",
         borderRadius: 14,
-        border: "1px solid var(--mantine-color-default-hover)", // era #f1f5f9
+        border: "1px solid var(--mantine-color-default-hover)",
         boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
         overflow: "hidden",
       }}>
@@ -111,18 +111,11 @@ export function DetailsStep({
         {/* Servicio */}
         {selectedService && (
           <div style={rowStyle}>
-            {iconBox(`${primaryColor}15`, "💼")}
+            {iconBox(`var(--mantine-color-${colorName}-light)`, "💼")} {/* era ${primaryColor}15 */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
-                Servicio
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
-                {selectedService.name}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>Servicio</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>{selectedService.name}</div>
               <div style={{ fontSize: 11, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
                 {selectedService.duration} min · ${(selectedService.price / 100).toFixed(2)}
               </div>
             </div>
@@ -132,21 +125,12 @@ export function DetailsStep({
         {/* Recurso */}
         {selectedResource && (
           <div style={rowStyle}>
-            {iconBox("var(--mantine-color-violet-light)", "👤")} {/* era #f3f0ff */}
+            {iconBox("var(--mantine-color-violet-light)", "👤")}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
-                Recurso
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
-                {selectedResource.name}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>Recurso</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>{selectedResource.name}</div>
               {selectedResource.specialty && (
-                <div style={{ fontSize: 11, color: "var(--mantine-color-dimmed)" }}>
-                  {/* era #94a3b8 */}
-                  {selectedResource.specialty}
-                </div>
+                <div style={{ fontSize: 11, color: "var(--mantine-color-dimmed)" }}>{selectedResource.specialty}</div>
               )}
             </div>
           </div>
@@ -155,14 +139,10 @@ export function DetailsStep({
         {/* Mobile — fecha y hora juntas */}
         {selectedDate && (
           <div className="summary-date-mobile" style={{ alignItems: "center", gap: 12, padding: "12px 16px" }}>
-            {iconBox("var(--mantine-color-blue-light)", "📅")} {/* era #eff6ff */}
+            {iconBox("var(--mantine-color-blue-light)", "📅")}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
-                Fecha y hora
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>Fecha y hora</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
                 {formatDate(selectedDate)} · {formatTime(selectedTime)}
               </div>
             </div>
@@ -172,17 +152,10 @@ export function DetailsStep({
         {/* Desktop — fecha */}
         {selectedDate && (
           <div className="summary-date-desktop" style={{ alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid var(--mantine-color-default-hover)" }}>
-            {/* borderBottom era #f8fafc */}
-            {iconBox("var(--mantine-color-blue-light)", "📅")} {/* era #eff6ff */}
+            {iconBox("var(--mantine-color-blue-light)", "📅")}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
-                Fecha
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
-                {formatDate(selectedDate)}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>Fecha</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>{formatDate(selectedDate)}</div>
             </div>
           </div>
         )}
@@ -190,16 +163,10 @@ export function DetailsStep({
         {/* Desktop — hora */}
         {selectedTime && (
           <div className="summary-date-desktop" style={{ alignItems: "center", gap: 12, padding: "12px 16px" }}>
-            {iconBox("var(--mantine-color-green-light)", "🕛")} {/* era #f0fdf4 */}
+            {iconBox("var(--mantine-color-green-light)", "🕛")}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
-                Hora
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
-                {formatTime(selectedTime)}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>Hora</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>{formatTime(selectedTime)}</div>
             </div>
           </div>
         )}
@@ -218,9 +185,9 @@ export function DetailsStep({
               value={phone}
               onChange={(value) => { setPhone(value ?? ""); setPhoneError(null); }}
               style={{
-                border: "1.5px solid var(--mantine-color-default-border)", // era #e2e8f0
+                border: "1.5px solid var(--mantine-color-default-border)",
                 borderRadius: 10, padding: "9px 12px",
-                background: "var(--mantine-color-default)",                   // era white
+                background: "var(--mantine-color-default)",
               }}
             />
             {phoneError && <Text size="xs" c="red" mt={4}>{phoneError}</Text>}
@@ -232,13 +199,12 @@ export function DetailsStep({
 
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
-          background: "var(--mantine-color-green-light)",            // era #f0fdf4
-          border: "1px solid var(--mantine-color-green-light-hover)", // era #bbf7d0
+          background: "var(--mantine-color-green-light)",
+          border: "1px solid var(--mantine-color-green-light-hover)",
           borderRadius: 10, padding: "10px 14px", marginTop: 20,
         }}>
           <span>🔒</span>
           <Text size="xs" style={{ color: "var(--mantine-color-green-light-color)", fontWeight: 500 }}>
-            {/* era #16a34a — green-light-color es el texto semántico sobre fondo green-light */}
             Tu información está segura y solo será usada para confirmar tu cita
           </Text>
         </div>

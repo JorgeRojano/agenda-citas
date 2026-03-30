@@ -8,20 +8,22 @@ import {
   Textarea,
   Button,
   Group,
-  ColorInput,
   Text,
   Paper,
   Switch,
+  ColorSwatch,
+  SimpleGrid,
+  Tooltip,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { showNotification } from "@mantine/notifications";
-import { IconDeviceFloppy } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconCheck } from "@tabler/icons-react";
 
 type BusinessSettings = {
   name: string;
   description: string;
-  primaryColor: string;
+  primaryColor: string; // ahora guarda nombre Mantine: "blue", "violet", etc.
   logoUrl: string;
   bannerUrl: string;
   whatsapp: string;
@@ -33,7 +35,7 @@ type BusinessSettings = {
 const defaultSettings: BusinessSettings = {
   name: "",
   description: "",
-  primaryColor: "#2563eb",
+  primaryColor: "blue", // era "#2563eb"
   logoUrl: "",
   bannerUrl: "",
   whatsapp: "",
@@ -42,11 +44,28 @@ const defaultSettings: BusinessSettings = {
   website: "",
 };
 
+// Colores sugeridos de la paleta Mantine (tono 6 = color principal)
+const MANTINE_COLORS = [
+  { name: "red",    label: "Rojo"    },
+  { name: "pink",   label: "Rosa"    },
+  { name: "grape",  label: "Uva"     },
+  { name: "violet", label: "Violeta" },
+  { name: "indigo", label: "Índigo"  },
+  { name: "blue",   label: "Azul"    },
+  { name: "cyan",   label: "Cian"    },
+  { name: "teal",   label: "Teal"    },
+  { name: "green",  label: "Verde"   },
+  { name: "lime",   label: "Lima"    },
+  { name: "yellow", label: "Amarillo"},
+  { name: "orange", label: "Naranja" },
+  { name: "gray",   label: "Gris"    },
+  { name: "dark",   label: "Oscuro"  },
+] as const;
+
 export default function SettingsPage() {
   const { slug } = useParams();
   const [settings, setSettings] = useState<BusinessSettings>(defaultSettings);
-  const [savedSettings, setSavedSettings] =
-    useState<BusinessSettings>(defaultSettings);
+  const [savedSettings, setSavedSettings] = useState<BusinessSettings>(defaultSettings);
   const [loading, setLoading] = useState(false);
 
   const [isResource, setIsResource] = useState(false);
@@ -68,14 +87,13 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const fetchAll = async () => {
-      // Fetch business settings
       const res = await fetch(`/api/business/${slug}/settings`);
       if (res.ok) {
         const data = await res.json();
         const loaded = {
           name: data.name ?? "",
           description: data.description ?? "",
-          primaryColor: data.primaryColor ?? "#2563eb",
+          primaryColor: data.primaryColor ?? "blue",
           logoUrl: data.logoUrl ?? "",
           bannerUrl: data.bannerUrl ?? "",
           whatsapp: data.whatsapp ?? "",
@@ -87,7 +105,6 @@ export default function SettingsPage() {
         setSavedSettings(loaded);
       }
 
-      // Fetch profile
       const profileRes = await fetch(`/api/business/${slug}/profile/me`);
       if (profileRes.ok) {
         const profileData = await profileRes.json();
@@ -109,7 +126,6 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setLoading(true);
 
-    // Guardar business settings
     const res = await fetch(`/api/business/${slug}/settings`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -118,17 +134,12 @@ export default function SettingsPage() {
 
     if (!res.ok) {
       setLoading(false);
-      showNotification({
-        title: "Error",
-        message: "No se pudo guardar",
-        color: "red",
-      });
+      showNotification({ title: "Error", message: "No se pudo guardar", color: "red" });
       return;
     }
 
     setSavedSettings(settings);
 
-    // Guardar perfil si cambió
     if (
       profileId &&
       (isResource !== savedIsResource ||
@@ -148,11 +159,7 @@ export default function SettingsPage() {
     }
 
     setLoading(false);
-    showNotification({
-      title: "Guardado",
-      message: "Configuración guardada",
-      color: "green",
-    });
+    showNotification({ title: "Guardado", message: "Configuración guardada", color: "green" });
   };
 
   const update = (field: keyof BusinessSettings, value: string) =>
@@ -195,12 +202,29 @@ export default function SettingsPage() {
       <Paper withBorder radius="md" p="md">
         <Stack gap="sm">
           <Text fw={600}>Apariencia</Text>
-          <ColorInput
-            label="Color principal"
-            value={settings.primaryColor}
-            onChange={(value) => update("primaryColor", value)}
-            format="hex"
-          />
+
+          {/* Color picker — reemplaza ColorInput */}
+          <div>
+            <Text size="sm" fw={500} mb={8}>Color principal</Text>
+            <SimpleGrid cols={7} spacing={8}>
+              {MANTINE_COLORS.map(({ name, label }) => (
+                <Tooltip key={name} label={label} withArrow position="top">
+                  <ColorSwatch
+                    color={`var(--mantine-color-${name}-6)`}
+                    size={32}
+                    radius="sm"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => update("primaryColor", name)}
+                  >
+                    {settings.primaryColor === name && (
+                      <IconCheck size={16} color="white" stroke={3} />
+                    )}
+                  </ColorSwatch>
+                </Tooltip>
+              ))}
+            </SimpleGrid>
+          </div>
+
           <TextInput
             label="URL del logo"
             placeholder="https://..."

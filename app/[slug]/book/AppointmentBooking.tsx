@@ -20,21 +20,14 @@ interface Props {
   business: Business;
 }
 
-const darkenColor = (hex: string, amount = 40): string => {
-  const num = parseInt(hex.replace("#", ""), 16);
-  const r = Math.max(0, (num >> 16) - amount);
-  const g = Math.max(0, ((num >> 8) & 0xff) - amount);
-  const b = Math.max(0, (num & 0xff) - amount);
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
-};
+// darkenColor eliminado — se usa var(--mantine-color-${name}-8) directamente
 
 const stepLabels = ["Servicio", "Recurso", "Fecha", "Hora", "Tus datos"];
 
 // ── LEFT PANEL ──
 interface LeftPanelProps {
   business: Business;
-  primaryColor: string;
-  darkColor: string;
+  colorName: string; // era primaryColor hex + darkColor hex
   compact: boolean;
   selectedService: Service | null;
   selectedResource: Resource | null;
@@ -44,13 +37,14 @@ interface LeftPanelProps {
 }
 
 function LeftPanel({
-  business, primaryColor, darkColor, compact,
+  business, colorName, compact,
   selectedService, selectedResource, selectedDate, selectedTime, active = 0,
 }: LeftPanelProps) {
   return (
     <div style={{
       width: "100%", height: "100%",
-      background: `linear-gradient(160deg, ${primaryColor}, ${darkColor})`,
+      // era: linear-gradient(160deg, ${primaryColor}, ${darkColor})
+      background: `linear-gradient(160deg, var(--mantine-color-${colorName}-6), var(--mantine-color-${colorName}-8))`,
       display: "flex",
       flexDirection: compact ? "row" : "column",
       alignItems: "center", justifyContent: "center",
@@ -198,10 +192,10 @@ function LeftPanel({
 // ── STEPS HEADER ──
 interface StepsHeaderProps {
   active: number;
-  primaryColor: string;
+  colorName: string; // era primaryColor hex
 }
 
-function StepsHeader({ active, primaryColor }: StepsHeaderProps) {
+function StepsHeader({ active, colorName }: StepsHeaderProps) {
   return (
     <div style={{
       background: "var(--mantine-color-body)",
@@ -224,19 +218,26 @@ function StepsHeader({ active, primaryColor }: StepsHeaderProps) {
             background: i < active
               ? "var(--mantine-color-green-light)"
               : i === active
-                ? primaryColor
+                ? `var(--mantine-color-${colorName}-6)` // era primaryColor hex
                 : "var(--mantine-color-default-hover)",
             color: i < active
               ? "var(--mantine-color-green-light-color)"
-              : i === active ? "white"
-              : "var(--mantine-color-dimmed)",
-            boxShadow: i === active ? `0 0 0 4px ${primaryColor}22` : "none",
+              : i === active
+                ? "white"
+                : "var(--mantine-color-dimmed)",
+            // era: 0 0 0 4px ${primaryColor}22
+            boxShadow: i === active ? `0 0 0 4px var(--mantine-color-${colorName}-light)` : "none",
           }}>
             {i < active ? "✓" : i + 1}
           </div>
           <div style={{
             fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
-            color: i === active ? primaryColor : i < active ? "var(--mantine-color-green-6)" : "var(--mantine-color-dimmed)",
+            // era: primaryColor hex / "var(--mantine-color-green-6)" / dimmed
+            color: i === active
+              ? `var(--mantine-color-${colorName}-6)`
+              : i < active
+                ? "var(--mantine-color-green-6)"
+                : "var(--mantine-color-dimmed)",
           }}>
             {label}
           </div>
@@ -259,9 +260,13 @@ export default function AppointmentBooking({ business }: Props) {
   const [pendingModalOpen, setPendingModalOpen] = useState(false);
   const [submitting, setSubmitting]             = useState(false);
 
-  const totalSteps   = 5;
-  const primaryColor = business.primaryColor ?? "#2563eb";
-  const darkColor    = darkenColor(primaryColor, 40);
+  const totalSteps    = 5;
+  const colorName     = business.primaryColor ?? "blue";
+  const primaryColor  = `var(--mantine-color-${colorName}-6)`;
+  const LIGHT_COLORS  = ["yellow", "lime"];
+  const textOnPrimary = LIGHT_COLORS.includes(colorName)
+    ? `var(--mantine-color-black)`
+    : `var(--mantine-color-white)`;
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
@@ -332,22 +337,22 @@ export default function AppointmentBooking({ business }: Props) {
 
       <div className="booking-wrap">
         <div className="booking-left-desktop">
-          <LeftPanel business={business} primaryColor={primaryColor} darkColor={darkColor} compact={false} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
+          <LeftPanel business={business} colorName={colorName} compact={false} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
         </div>
 
         <div className="booking-right">
           <div className="booking-left-mobile">
-            <LeftPanel business={business} primaryColor={primaryColor} darkColor={darkColor} compact={active > 0} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
+            <LeftPanel business={business} colorName={colorName} compact={active > 0} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
           </div>
 
-          <StepsHeader active={active} primaryColor={primaryColor} />
+          <StepsHeader active={active} colorName={colorName} />
 
           <div className="booking-content">
-            {active === 0 && <ServiceStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} onNext={handleServiceSelect} />}
-            {active === 1 && <ResourceStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} selectedResource={selectedResource} onNext={handleResourceSelect} />}
-            {active === 2 && <DateStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} onNext={handleDateSelect} />}
-            {active === 3 && <TimeStep slug={slug} primaryColor={primaryColor} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} staffId={selectedResource?.id ?? null} onNext={handleTimeSelect} />}
-            {active === 4 && <DetailsStep primaryColor={primaryColor} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} selectedTime={selectedTime} onSubmit={handleSubmit} />}
+            {active === 0 && <ServiceStep slug={slug} colorName={colorName} selectedService={selectedService} onNext={handleServiceSelect} />}
+            {active === 1 && <ResourceStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource} onNext={handleResourceSelect} />}
+            {active === 2 && <DateStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} onNext={handleDateSelect} />}
+            {active === 3 && <TimeStep slug={slug} colorName={colorName} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} staffId={selectedResource?.id ?? null} onNext={handleTimeSelect} />}
+            {active === 4 && <DetailsStep colorName={colorName} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} selectedTime={selectedTime} onSubmit={handleSubmit} />}
           </div>
 
           <div className="booking-footer">
@@ -355,7 +360,10 @@ export default function AppointmentBooking({ business }: Props) {
               ? <Button variant="outline" size="sm" onClick={() => setActive(active - 1)}>← Regresar</Button>
               : <div />}
             {active === totalSteps - 1 && (
-              <Button type="submit" form="details-form" size="sm" loading={submitting} style={{ background: primaryColor }}>
+              <Button
+                type="submit" form="details-form" size="sm" loading={submitting}
+                style={{ background: primaryColor, color: textOnPrimary }}
+              >
                 Solicitar cita
               </Button>
             )}
@@ -371,7 +379,7 @@ export default function AppointmentBooking({ business }: Props) {
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           selectedService={selectedService}
-          primaryColor={primaryColor}
+          colorName={colorName}
         />
       </Modal>
     </>

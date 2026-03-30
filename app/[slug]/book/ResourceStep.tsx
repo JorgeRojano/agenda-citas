@@ -10,7 +10,7 @@ interface Props {
   selectedService: any;
   selectedResource: Resource | null;
   onNext: (resource: Resource) => void;
-  primaryColor?: string;
+  colorName?: string;
 }
 
 function getInitials(name: string) {
@@ -29,7 +29,7 @@ function getAvatarColor(name: string) {
 }
 
 export function ResourceStep({
-  slug, selectedService, selectedResource, onNext, primaryColor = "#2563eb",
+  slug, selectedService, selectedResource, onNext, colorName = "blue",
 }: Props) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading]     = useState(false);
@@ -70,11 +70,15 @@ export function ResourceStep({
                   display: "flex", alignItems: "center", gap: 14,
                   padding: "14px 16px",
                   background: isSelected
-                    ? `${primaryColor}12`
-                    : "var(--mantine-color-body)",
+                    ? `var(--mantine-color-${colorName}-light)`       // era ${primaryColor}12
+                    : "var(--mantine-color-default)",
                   borderRadius: 14, cursor: "pointer",
-                  border: `2px solid ${isSelected ? primaryColor : "var(--mantine-color-default-border)"}`,
-                  boxShadow: isSelected ? `0 0 0 4px ${primaryColor}22` : "none",
+                  border: isSelected
+                    ? `2px solid var(--mantine-color-${colorName}-3)` // era primaryColor hex
+                    : "2px solid transparent",
+                  boxShadow: isSelected
+                    ? `0 0 0 4px var(--mantine-color-${colorName}-light)` // era ${primaryColor}22
+                    : "0 1px 3px rgba(0,0,0,0.06)",
                   transition: "all 0.15s ease",
                   position: "relative",
                 }}
@@ -83,14 +87,14 @@ export function ResourceStep({
                   <div style={{
                     position: "absolute", top: 10, right: 10,
                     width: 22, height: 22, borderRadius: "50%",
-                    background: primaryColor,
+                    background: `var(--mantine-color-${colorName}-6)`, // era primaryColor hex
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     <IconCheck size={12} color="white" strokeWidth={3} />
                   </div>
                 )}
 
-                {/* Avatar */}
+                {/* Avatar — gradientes fijos, no son color de negocio */}
                 <div style={{
                   width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
                   background: isAny

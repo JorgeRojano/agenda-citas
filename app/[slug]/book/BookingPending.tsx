@@ -7,7 +7,7 @@ interface Props {
   selectedDate?: any;
   selectedTime?: any;
   selectedService?: any;
-  primaryColor?: string;
+  colorName?: string;
 }
 
 export function BookingPending({
@@ -17,7 +17,7 @@ export function BookingPending({
   selectedDate,
   selectedTime,
   selectedService,
-  primaryColor = "#2563eb",
+  colorName = "blue",
 }: Props) {
   const formatDate = (date: any) => {
     if (!date) return "";
@@ -37,7 +37,7 @@ export function BookingPending({
   return (
     <Stack gap="md" align="center" style={{ textAlign: "center" }}>
 
-      {/* Ícono — gradiente del negocio, queda igual */}
+      {/* Ícono — gradiente fijo semántico, no es color de negocio */}
       <div style={{
         width: 80, height: 80, borderRadius: "50%",
         background: "linear-gradient(135deg, #22c55e, #16a34a)",
@@ -57,30 +57,28 @@ export function BookingPending({
 
       {/* Resumen */}
       <div style={{
-        background: "var(--mantine-color-default-hover)", // era #f8fafc
+        background: "var(--mantine-color-default-hover)",
         borderRadius: 14, padding: 16,
-        border: "1px solid var(--mantine-color-default-border)", // era #f1f5f9
+        border: "1px solid var(--mantine-color-default-border)",
         width: "100%", textAlign: "left",
       }}>
         {selectedService && (
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
             paddingBottom: 10,
-            borderBottom: "1px solid var(--mantine-color-default-border)", // era #f1f5f9
+            borderBottom: "1px solid var(--mantine-color-default-border)",
           }}>
             <div style={{
               width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: `${primaryColor}15`, // dinámico, queda igual
+              background: `var(--mantine-color-${colorName}-light)`, // era ${primaryColor}15
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14,
             }}>💼</div>
             <div>
               <div style={{ fontSize: 10, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
                 Servicio
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
                 {selectedService.name}
               </div>
             </div>
@@ -91,21 +89,19 @@ export function BookingPending({
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
             paddingTop: 10, paddingBottom: 10,
-            borderBottom: "1px solid var(--mantine-color-default-border)", // era #f1f5f9
+            borderBottom: "1px solid var(--mantine-color-default-border)",
           }}>
             <div style={{
               width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: "var(--mantine-color-blue-light)", // era #eff6ff
+              background: "var(--mantine-color-blue-light)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14,
             }}>📅</div>
             <div>
               <div style={{ fontSize: 10, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
                 Fecha
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
                 {formatDate(selectedDate)}
               </div>
             </div>
@@ -119,17 +115,15 @@ export function BookingPending({
           }}>
             <div style={{
               width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: "var(--mantine-color-green-light)", // era #f0fdf4
+              background: "var(--mantine-color-green-light)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14,
             }}>🕛</div>
             <div>
               <div style={{ fontSize: 10, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>
-                {/* era #94a3b8 */}
                 Hora
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mantine-color-text)" }}>
-                {/* era #0f172a */}
                 {formatTime(selectedTime)}
               </div>
             </div>

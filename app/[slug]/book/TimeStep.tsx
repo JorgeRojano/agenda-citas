@@ -11,13 +11,18 @@ interface Props {
   selectedTime: string | null;
   staffId?: string | null;
   onNext: (slot: string) => void;
-  primaryColor?: string;
+  colorName?: string;
 }
 
 export function TimeStep({
-  selectedService, selectedDate, slug, selectedTime, staffId, onNext, primaryColor = "#2563eb",
+  selectedService, selectedDate, slug, selectedTime, staffId, onNext,
+  colorName = "blue",
 }: Props) {
-  const [slots, setSlots]   = useState<string[]>([]);
+  const primaryColor       = `var(--mantine-color-${colorName}-6)`;
+  const textOnPrimary      = `var(--mantine-color-${colorName}-9)`;
+  const textOnPrimaryMuted = `var(--mantine-color-${colorName}-9)`;
+
+  const [slots, setSlots]     = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -47,21 +52,44 @@ export function TimeStep({
     <div className="times-grid">
       {items.map((slot) => {
         const isSelected = selectedTime === slot;
+        const [time, period] = formatTime(slot).split(" ");
         return (
           <div
             key={slot}
             onClick={() => onNext(slot)}
+            className="time-card"
             style={{
-              padding: "10px 6px", borderRadius: 10, textAlign: "center",
-              cursor: "pointer", transition: "all 0.15s ease",
-              border: `1.5px solid ${isSelected ? primaryColor : "var(--mantine-color-default-border)"}`,
-              background: isSelected ? primaryColor : "var(--mantine-color-body)",
-              boxShadow: isSelected ? `0 3px 10px ${primaryColor}40` : "none",
+              padding: "14px 8px 10px",
+              borderRadius: 12,
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              border: isSelected
+                ? `2px solid var(--mantine-color-${colorName}-4)`
+                : "2px solid transparent",
+              background: "var(--mantine-color-default)",
+              boxShadow: isSelected
+                ? `0 2px 8px var(--mantine-color-${colorName}-light-hover)`
+                : "0 1px 3px rgba(0,0,0,0.06)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <Text size="sm" fw={700} style={{ color: isSelected ? "white" : "var(--mantine-color-text)" }}>
-              {formatTime(slot)}
+            <Text fw={900} style={{
+              fontSize: 20, lineHeight: 1,
+              color: "var(--mantine-color-text)",
+              marginBottom: 4,
+            }}>
+              {time}
             </Text>
+            {period && (
+              <Text size="xs" fw={600} style={{
+                textTransform: "uppercase", letterSpacing: "0.06em",
+                color: "var(--mantine-color-dimmed)",
+              }}>
+                {period}
+              </Text>
+            )}
           </div>
         );
       })}
@@ -73,13 +101,13 @@ export function TimeStep({
       <style>{`
         .times-grid {
           display: grid; grid-template-columns: repeat(3, 1fr);
-          gap: 8px; margin-bottom: 4px;
+          gap: 10px; margin-bottom: 4px;
         }
         .time-section-title {
           font-size: 11px; font-weight: 700;
           color: var(--mantine-color-dimmed);
           text-transform: uppercase; letter-spacing: 0.08em;
-          margin-top: 16px; margin-bottom: 8px;
+          margin-top: 4px; margin-bottom: 4px;
           display: flex; align-items: center; gap: 8px;
         }
         .time-section-title::after {
@@ -88,7 +116,7 @@ export function TimeStep({
         }
         .time-chip { display: flex; }
         @media (min-width: 768px) {
-          .times-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+          .times-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
           .time-chip { display: none; }
         }
       `}</style>
@@ -103,12 +131,15 @@ export function TimeStep({
           className="time-chip"
           style={{
             alignItems: "center", gap: 6,
-            background: `${primaryColor}12`,
-            border: `1px solid ${primaryColor}30`,
+            background: `var(--mantine-color-${colorName}-light)`,
+            border: `1px solid var(--mantine-color-${colorName}-light-hover)`,
             borderRadius: 99, padding: "6px 14px", alignSelf: "flex-start",
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 600, color: primaryColor }}>
+          <span style={{
+            fontSize: 12, fontWeight: 600,
+            color: `var(--mantine-color-${colorName}-light-color)`,
+          }}>
             ✓ {selectedService.name} · {selectedService.duration} min ·{" "}
             {new Date(selectedDate).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })}
           </span>
