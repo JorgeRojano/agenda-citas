@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -31,23 +31,22 @@ enum AppointmentStatus {
 //////////////////////
 
 model Profile {
-  id    String   @id
-  role  UserRole @default(USER)
-  email String?
-  name      String?
-  specialty String?
-  isResource Boolean @default(false)
+  id         String    @id
+  role       UserRole  @default(USER)
+  email      String?
+  name       String?
+  specialty  String?
+  isResource Boolean   @default(false)
 
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
 
-  appointments Appointment[]
+  appointments      Appointment[]
   resourceVacations ResourceVacation[]
+  services          ServiceResource[]
+  resourceTimeSlots ResourceTimeSlot[]
 
   createdAt DateTime @default(now())
-
-  services         ServiceResource[]
-  resourceTimeSlots ResourceTimeSlot[]
 
   @@map("profiles")
 }
@@ -57,17 +56,20 @@ model Profile {
 //////////////////////
 
 model Business {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  phone     String?
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  phone       String?
   description String?
 
-  primaryColor String? @default("#2563eb")
-  logoUrl      String? // URL de Supabase Storage
-  bannerUrl    String? // URL de Supabase Storage
+  primaryColor String? @default("blue")
+  logoUrl      String?
+  bannerUrl    String?
 
-  hasStaff  Boolean @default(false)
+  hasStaff Boolean @default(false)
+
+  address String?
+  mapsUrl String?
 
   whatsapp  String?
   facebook  String?
@@ -80,10 +82,26 @@ model Business {
   appointments Appointment[]
   blockedTimes BlockedTime[]
   users        Profile[]
-
-  timeSlots BusinessTimeSlot[] 
+  timeSlots    BusinessTimeSlot[]
+  images       BusinessImage[]
 
   @@index([slug])
+}
+
+//////////////////////
+// BUSINESS IMAGE
+//////////////////////
+
+model BusinessImage {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  url       String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([businessId, order])
 }
 
 //////////////////////
@@ -96,9 +114,7 @@ model BusinessTimeSlot {
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  // 0 = Sunday, 6 = Saturday
   dayOfWeek Int
-
   startTime String // "09:00"
   endTime   String // "12:00"
 
@@ -149,17 +165,15 @@ model Service {
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  name     String
-  duration Int // minutos
-  price    Int // en centavos para evitar floats
-
+  name      String
+  duration  Int     // minutos
+  price     Int     // en centavos para evitar floats
   showPrice Boolean @default(true)
 
   appointments Appointment[]
+  resources    ServiceResource[]
 
   createdAt DateTime @default(now())
-
-  resources ServiceResource[]
 
   @@index([businessId])
 }
@@ -220,5 +234,6 @@ model BlockedTime {
   start      DateTime
   end        DateTime
   createdAt  DateTime @default(now())
+
   @@index([businessId])
 }

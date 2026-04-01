@@ -17,6 +17,8 @@ export async function GET(
       logoUrl: true,
       bannerUrl: true,
       hasStaff: true,
+      address: true,
+      mapsUrl: true,
       whatsapp: true,
       facebook: true,
       instagram: true,
@@ -50,7 +52,8 @@ export async function PATCH(
 
   const {
     name, description, primaryColor,
-    logoUrl, bannerUrl, hasStaff,    // ← nuevo
+    logoUrl, bannerUrl, hasStaff,
+    address, mapsUrl,
     whatsapp, facebook, instagram, website,
   } = body;
 
@@ -63,6 +66,8 @@ export async function PATCH(
       ...(logoUrl !== undefined && { logoUrl }),
       ...(bannerUrl !== undefined && { bannerUrl }),
       ...(hasStaff !== undefined && { hasStaff }),
+      ...(address !== undefined && { address }),
+      ...(mapsUrl !== undefined && { mapsUrl }),
       ...(whatsapp !== undefined && { whatsapp }),
       ...(facebook !== undefined && { facebook }),
       ...(instagram !== undefined && { instagram }),

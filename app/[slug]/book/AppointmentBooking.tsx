@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button, Modal } from "@mantine/core";
 import { useParams } from "next/navigation";
 import { DateValue } from "@mantine/dates";
-import { IconBrandFacebook, IconBrandInstagram, IconWorld } from "@tabler/icons-react";
 import { DateStep } from "./DateStep";
 import { TimeStep } from "./TimeStep";
 import { ServiceStep } from "./ServiceStep";
@@ -75,11 +74,6 @@ function LeftPanel({
         }}>
           {business.name}
         </div>
-        {!compact && business.description && (
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 6, lineHeight: 1.5 }}>
-            {business.description}
-          </div>
-        )}
       </div>
 
       {/* Resumen — solo desktop */}
@@ -151,32 +145,6 @@ function LeftPanel({
         </div>
       )}
 
-      {/* Redes sociales */}
-      {!compact && (business.facebook || business.instagram || business.website) && (
-        <div style={{ display: "flex", gap: 8, zIndex: 1 }}>
-          {business.facebook && (
-            <a href={business.facebook} target="_blank" rel="noreferrer" style={{ display: "flex" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <IconBrandFacebook size={18} color="white" />
-              </div>
-            </a>
-          )}
-          {business.instagram && (
-            <a href={business.instagram} target="_blank" rel="noreferrer" style={{ display: "flex" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <IconBrandInstagram size={18} color="white" />
-              </div>
-            </a>
-          )}
-          {business.website && (
-            <a href={business.website} target="_blank" rel="noreferrer" style={{ display: "flex" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <IconWorld size={18} color="white" />
-              </div>
-            </a>
-          )}
-        </div>
-      )}
 
       {!compact && (
         <div style={{

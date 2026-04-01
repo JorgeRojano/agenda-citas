@@ -21,6 +21,8 @@ export default async function BookPage({ params }: Props) {
       instagram: true,
       website: true,
       hasStaff: true,
+      address: true,
+      mapsUrl: true,
     },
   });
 

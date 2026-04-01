@@ -28,7 +28,7 @@ export default function AdminLoginPage({ business }: Props) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const primaryColor = business?.primaryColor ?? "#2563eb";
+  const colorName = business?.primaryColor ?? "blue";
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -83,7 +83,7 @@ export default function AdminLoginPage({ business }: Props) {
         }
         .login-right {
           flex: 1;
-          background: white;
+          background: var(--mantine-color-body);
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -104,18 +104,18 @@ export default function AdminLoginPage({ business }: Props) {
         }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "white" }}>
+      <div style={{ minHeight: "100vh", background: "var(--mantine-color-body)" }}>
         <div className="login-wrap">
 
           {/* ── LEFT PANEL ── */}
           <div
             className="login-left"
-            style={{ background: `linear-gradient(145deg, ${primaryColor}, ${primaryColor}cc)` }}
+            style={{ background: `linear-gradient(145deg, var(--mantine-color-${colorName}-6), var(--mantine-color-${colorName}-8))` }}
           >
             {/* Logo */}
             <div style={{
               width: 80, height: 80, borderRadius: 22,
-              background: "white",
+              background: "var(--mantine-color-body)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 36, zIndex: 1,
               boxShadow: "0 12px 32px rgba(0,0,0,0.2)",
@@ -128,7 +128,7 @@ export default function AdminLoginPage({ business }: Props) {
               )}
             </div>
 
-            <div style={{ fontSize: 20, fontWeight: 700, color: "white", zIndex: 1, textAlign: "center" }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--mantine-color-white)", zIndex: 1, textAlign: "center" }}>
               {business?.name ?? "Mi Negocio"}
             </div>
 
@@ -153,10 +153,10 @@ export default function AdminLoginPage({ business }: Props) {
           {/* ── RIGHT PANEL ── */}
           <div className="login-right">
             <div style={{ maxWidth: 400, width: "100%", margin: "0 auto" }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "var(--mantine-color-text)", marginBottom: 6 }}>
                 Bienvenido
               </div>
-              <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 32 }}>
+              <div style={{ fontSize: 14, color: "var(--mantine-color-dimmed)", marginBottom: 32 }}>
                 Inicia sesión para gestionar tus citas
               </div>
 
@@ -191,7 +191,8 @@ export default function AdminLoginPage({ business }: Props) {
                   type="submit"
                   fullWidth
                   loading={loading}
-                  style={{ backgroundColor: primaryColor, marginTop: 4 }}
+                  color={colorName}
+                  style={{ marginTop: 4 }}
                 >
                   Entrar
                 </Button>

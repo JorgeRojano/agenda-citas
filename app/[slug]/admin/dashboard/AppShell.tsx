@@ -2,7 +2,7 @@
 
 import {
   AppShell, Burger, Button, Group,
-  NavLink, ScrollArea, Stack,
+  NavLink, ScrollArea, Stack, Text,
 } from "@mantine/core";
 import {
   IconCalendar, IconClock, IconExternalLink,
@@ -98,7 +98,18 @@ export const AppShellAdmin = ({
     }
   };
 
-  if (!mounted) return <div style={{ background: "white", height: "100vh" }} />;
+  if (!mounted) return (
+    <div style={{ background: "var(--mantine-color-body)", height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+      {business?.logoUrl ? (
+        <img src={business.logoUrl} alt="logo" style={{ width: 64, height: 64, borderRadius: 16, objectFit: "cover", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }} />
+      ) : (
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: `var(--mantine-color-${business?.primaryColor ?? "blue"}-6)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 700, color: "white" }}>
+          {business?.name?.slice(0, 2).toUpperCase() ?? "…"}
+        </div>
+      )}
+      <Text size="sm" c="dimmed">Cargando...</Text>
+    </div>
+  );
 
   return (
     <AppShell

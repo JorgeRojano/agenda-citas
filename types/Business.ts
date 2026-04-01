@@ -5,6 +5,8 @@ export interface Business {
   logoUrl: string | null;
   bannerUrl: string | null;
   hasStaff: boolean;
+  address: string | null;
+  mapsUrl: string | null;
   whatsapp: string | null;
   facebook: string | null;
   instagram: string | null;
