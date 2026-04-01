@@ -6,6 +6,7 @@ import {
 import { TimeInput, DatePickerInput } from "@mantine/dates";
 import { useState, useMemo } from "react";
 import { useDisclosure } from "@mantine/hooks";
+import { useRouter } from "next/navigation";
 import { IconDeviceFloppy, IconX, IconPlus, IconTrash } from "@tabler/icons-react";
 import { showNotification } from "@mantine/notifications";
 
@@ -60,6 +61,8 @@ interface Props {
 }
 
 export default function AvailabilityClient({ slug, initialSchedule, initialBlockedTimes }: Props) {
+  const router = useRouter();
+
   const buildAvailability = (data: typeof initialSchedule): Availability => {
     const grouped = createEmptyAvailability();
     data.forEach((s) => {
@@ -156,6 +159,7 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
     setSavedAvailability(availability);
     showNotification({ title: "Guardado", message: "Horario guardado correctamente", color: "green" });
     setSaving(false);
+    router.refresh(); // ← re-ejecuta server components, actualiza cards de recursos
   };
 
   const handleAddBlocked = async () => {
@@ -327,7 +331,6 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
 
         <Divider />
 
-        {/* Festivos */}
         <Group justify="space-between">
           <div>
             <Text fw={600} size="sm">Festivos y cierres especiales</Text>

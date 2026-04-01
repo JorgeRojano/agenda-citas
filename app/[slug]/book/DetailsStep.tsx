@@ -7,7 +7,7 @@ import { Resource } from "@/types/Resource";
 
 interface Props {
   selectedService: any;
-  selectedResource: Resource;
+  selectedResource: Resource | null;
   selectedDate: any;
   selectedTime: any;
   onSubmit: (values: any) => void;

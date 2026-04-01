@@ -67,6 +67,8 @@ model Business {
   logoUrl      String? // URL de Supabase Storage
   bannerUrl    String? // URL de Supabase Storage
 
+  hasStaff  Boolean @default(false)
+
   whatsapp  String?
   facebook  String?
   instagram String?

@@ -22,17 +22,27 @@ export async function createAppointment(
     });
     if (!service) throw new Error("Servicio inválido");
 
+    // Traer admin siempre — lo necesitamos para asignación automática y notificaciones
+    const adminProfile = await prisma.profile.findFirst({
+      where: { businessId: business.id, role: "ADMIN" },
+      select: { id: true, email: true },
+    });
+
+    // Si no tiene staff, asignar automáticamente al admin
+    const resolvedAssignedToId = !business.hasStaff
+      ? (adminProfile?.id ?? null)
+      : (assignedToId ?? null);
+
     const startTime = new Date(slot);
     const endTime   = new Date(startTime.getTime() + service.duration * 60000);
 
-    // Validar solapamiento — si hay recurso, solo contra citas de ese recurso
     const overlapping = await prisma.appointment.findFirst({
       where: {
         businessId: business.id,
         status:    { in: ["PENDING", "CONFIRMED"] },
         startTime: { lt: endTime },
         endTime:   { gt: startTime },
-        ...(assignedToId ? { assignedToId } : {}),
+        ...(resolvedAssignedToId ? { assignedToId: resolvedAssignedToId } : {}),
       },
     });
     if (overlapping) throw new Error("Horario ya ocupado");
@@ -46,18 +56,13 @@ export async function createAppointment(
         startTime,
         endTime,
         status:       "PENDING",
-        assignedToId: assignedToId ?? null,
+        assignedToId: resolvedAssignedToId,
       },
     });
 
-    const date           = formatDateTimeForInput(startTime);
-    const formattedDate  = formatDateTimetoDisplay(startTime);
-    const dashboardUrl   = `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings?date=${date}`;
-
-    const adminProfile = await prisma.profile.findFirst({
-      where: { businessId: business.id, role: "ADMIN" },
-      select: { id: true, email: true },
-    });
+    const date          = formatDateTimeForInput(startTime);
+    const formattedDate = formatDateTimetoDisplay(startTime);
+    const dashboardUrl  = `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings?date=${date}`;
 
     await Promise.all([
       sendPushNotification({

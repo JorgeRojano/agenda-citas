@@ -20,11 +20,13 @@ export default function CreateAppointmentButton({
   primaryColor,
   services,
   disabled,
+  hasStaff = false,
 }: {
   slug: string;
   primaryColor: string | null;
   services: any[];
   disabled?: boolean;
+  hasStaff?: boolean;
 }) {
   const [opened, { open, close }] = useDisclosure(false);
   const [resources, setResources]               = useState<Resource[]>([]);
@@ -53,7 +55,9 @@ export default function CreateAppointmentButton({
     },
   });
 
+  // Fetch recursos — solo si hasStaff
   useEffect(() => {
+    if (!hasStaff) return;
     const { serviceId } = form.values;
     if (!serviceId || !dateString) {
       setResources([]);
@@ -69,11 +73,14 @@ export default function CreateAppointmentButton({
       .then((r) => r.json())
       .then((data: Resource[]) => setResources(data))
       .finally(() => setLoadingResources(false));
-  }, [form.values.serviceId, dateString]);
+  }, [form.values.serviceId, dateString, hasStaff]);
 
+  // Fetch slots — sin recurso si !hasStaff, con recurso si hasStaff
   useEffect(() => {
     const { serviceId, assignedToId } = form.values;
     if (!serviceId || !dateString) { setSlots([]); return; }
+    // Si hasStaff, esperar a que se elija recurso antes de buscar slots
+    if (hasStaff && !assignedToId) { setSlots([]); return; }
     setLoadingSlots(true);
     setSelectedSlot(null);
     const dateForApi = new Date(dateString + "T12:00:00").toString();
@@ -82,7 +89,7 @@ export default function CreateAppointmentButton({
       .then((r) => r.json())
       .then((data) => setSlots(data))
       .finally(() => setLoadingSlots(false));
-  }, [form.values.serviceId, form.values.assignedToId, dateString]);
+  }, [form.values.serviceId, form.values.assignedToId, dateString, hasStaff]);
 
   const formatTime = (slot: string) =>
     new Date(slot).toLocaleTimeString("es-MX", {
@@ -159,6 +166,13 @@ export default function CreateAppointmentButton({
     }
   };
 
+  // Los slots aparecen cuando:
+  // - hasStaff=false: en cuanto se elige servicio
+  // - hasStaff=true:  en cuanto se elige servicio + recurso
+  const showSlots = hasStaff
+    ? !!form.values.serviceId && !!form.values.assignedToId
+    : !!form.values.serviceId;
+
   return (
     <>
       <Button
@@ -227,8 +241,8 @@ export default function CreateAppointmentButton({
               />
             </div>
 
-            {/* Recurso */}
-            {form.values.serviceId && (
+            {/* Recurso — solo si hasStaff */}
+            {hasStaff && form.values.serviceId && (
               <div>
                 <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: "0.06em" }}>
                   Recurso
@@ -253,7 +267,7 @@ export default function CreateAppointmentButton({
             )}
 
             {/* Horarios */}
-            {form.values.serviceId && form.values.assignedToId && (
+            {showSlots && (
               <div>
                 <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: "0.06em" }}>
                   Horario disponible

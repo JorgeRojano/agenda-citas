@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  Modal, Stack, Group, Text, Button, Switch, Tabs, TextInput,
+  Modal, Stack, Group, Text, Button, Switch, Tabs, TextInput, Tooltip,
 } from "@mantine/core";
 import { TimeInput, DatePickerInput } from "@mantine/dates";
-import { IconPlus, IconX, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
+import { IconPlus, IconX, IconDeviceFloppy, IconTrash, IconLock } from "@tabler/icons-react";
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { showNotification } from "@mantine/notifications";
@@ -27,7 +27,16 @@ type NewVacation = { name: string; start: Date | string | null; end: Date | stri
 const emptyDays = (): DaySchedule[] =>
   weekDays.map((d) => ({ dayOfWeek: d.value, slots: [] }));
 
-function toMinutes(t: string) {
+function formatTime12(t: string): string {
+  if (!t || !t.includes(":")) return t;
+  const [h, m] = t.split(":").map(Number);
+  const suffix = h >= 12 ? "PM" : "AM";
+  const hour   = h % 12 === 0 ? 12 : h % 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${suffix}`;
+}
+
+function toMinutes(t: string | undefined): number {
+  if (!t || !t.includes(":")) return 0;
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
 }
@@ -57,12 +66,28 @@ interface Props {
   avatarColor: string;
   initials: string;
   onSaved: (activeDays: number[]) => void;
+  businessSchedule: { dayOfWeek: number; startTime: string; endTime: string }[];
 }
 
 export function ResourceAvailabilityModal({
-  opened, onClose, profileId, profileName, avatarColor, initials, onSaved,
+  opened, onClose, profileId, profileName, avatarColor, initials, onSaved, businessSchedule,
 }: Props) {
   const { slug } = useParams<{ slug: string }>();
+
+  // Derivar días abiertos y rangos del negocio por día
+  const businessOpenDays = useMemo(
+    () => [...new Set(businessSchedule.map((s) => s.dayOfWeek))],
+    [businessSchedule],
+  );
+
+  const businessRangesByDay = useMemo(() => {
+    const map: Record<number, { startTime: string; endTime: string }[]> = {};
+    businessSchedule.forEach((s) => {
+      if (!map[s.dayOfWeek]) map[s.dayOfWeek] = [];
+      map[s.dayOfWeek].push({ startTime: s.startTime, endTime: s.endTime });
+    });
+    return map;
+  }, [businessSchedule]);
 
   const [days, setDays]     = useState<DaySchedule[]>(emptyDays());
   const [saved, setSaved]   = useState<DaySchedule[]>(emptyDays());
@@ -124,10 +149,28 @@ export function ResourceAvailabilityModal({
 
   const handleSaveSchedule = async () => {
     for (const day of days) {
-      const label = weekDays.find((d) => d.value === day.dayOfWeek)?.label;
+      const label      = weekDays.find((d) => d.value === day.dayOfWeek)?.label;
+      const bizRanges  = businessRangesByDay[day.dayOfWeek] ?? [];
       for (const s of day.slots) {
+        if (!s.start || !s.end) {
+          showNotification({ title: "Rango inválido", message: `${label}: completa los horarios de inicio y fin`, color: "red" });
+          return;
+        }
         if (toMinutes(s.end) <= toMinutes(s.start)) {
           showNotification({ title: "Rango inválido", message: `${label}: el cierre debe ser mayor a la apertura`, color: "red" });
+          return;
+        }
+        // Verificar que el slot cae dentro de al menos un rango del negocio
+        const fitsInBusiness = bizRanges.some(
+          (r) => toMinutes(s.start) >= toMinutes(r.startTime) && toMinutes(s.end) <= toMinutes(r.endTime),
+        );
+        if (!fitsInBusiness) {
+          const ranges = bizRanges.map((r) => `${formatTime12(r.startTime)}–${formatTime12(r.endTime)}`).join(", ");
+          showNotification({
+            title:   "Fuera del horario del negocio",
+            message: `${label}: el rango debe estar dentro de ${ranges}`,
+            color:   "red",
+          });
           return;
         }
       }
@@ -225,24 +268,54 @@ export function ResourceAvailabilityModal({
                 <Text size="sm" c="dimmed" ta="center" py="xl">Cargando horarios...</Text>
               ) : (
                 days.map((day) => {
-                  const label = weekDays.find((d) => d.value === day.dayOfWeek)?.label ?? "";
-                  const isOn  = day.slots.length > 0;
+                  const label       = weekDays.find((d) => d.value === day.dayOfWeek)?.label ?? "";
+                  const isOn        = day.slots.length > 0;
+                  const isBlocked   = !businessOpenDays.includes(day.dayOfWeek);
+                  const bizRanges   = businessRangesByDay[day.dayOfWeek] ?? []; // el negocio no abre ese día
+
                   return (
                     <div key={day.dayOfWeek} style={{
-                      background: "var(--mantine-color-default-hover)",
-                      border: "1px solid var(--mantine-color-default-border)",
+                      background: isBlocked ? "var(--mantine-color-default-hover)" : "var(--mantine-color-default-hover)",
+                      border: `1px solid ${isBlocked ? "var(--mantine-color-default-border)" : "var(--mantine-color-default-border)"}`,
                       borderRadius: 12, overflow: "hidden",
+                      opacity: isBlocked ? 0.5 : 1,
                     }}>
                       <Group gap="sm" p="sm" wrap="nowrap">
-                        <Switch checked={isOn} onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)} size="md" />
-                        <Text fw={700} size="sm" c={isOn ? undefined : "dimmed"} style={{ flex: 1 }}>{label}</Text>
-                        {isOn && (
+                        <Tooltip
+                          label="El negocio no abre este día"
+                          disabled={!isBlocked}
+                          withArrow
+                        >
+                          <div>
+                            <Switch
+                              checked={isOn && !isBlocked}
+                              onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)}
+                              size="md"
+                              disabled={isBlocked}
+                            />
+                          </div>
+                        </Tooltip>
+                        <Text fw={700} size="sm" c={isOn && !isBlocked ? undefined : "dimmed"} style={{ flex: 1 }}>
+                          {label}
+                        </Text>
+                        {isBlocked && (
+                          <Group gap={4}>
+                            <IconLock size={12} color="var(--mantine-color-dimmed)" />
+                            <Text size="xs" c="dimmed">Cerrado</Text>
+                          </Group>
+                        )}
+                        {!isBlocked && bizRanges.length > 0 && (
+                          <Text size="xs" c="dimmed">
+                            Negocio: {bizRanges.map((r) => `${formatTime12(r.startTime)}–${formatTime12(r.endTime)}`).join(", ")}
+                          </Text>
+                        )}
+                        {isOn && !isBlocked && (
                           <Button size="xs" variant="subtle" color="blue" leftSection={<IconPlus size={12} />} onClick={() => addSlot(day.dayOfWeek)} px={8}>
                             Agregar rango
                           </Button>
                         )}
                       </Group>
-                      {isOn && (
+                      {isOn && !isBlocked && (
                         <Stack gap={6} px="sm" pb="sm">
                           {day.slots.map((slot, idx) => (
                             <Group key={idx} gap={8} wrap="nowrap">
@@ -309,7 +382,6 @@ export function ResourceAvailabilityModal({
                 })
               )}
 
-              {/* Formulario agregar */}
               <div style={{
                 background: "var(--mantine-color-default-hover)",
                 border: "1px dashed var(--mantine-color-default-border)",

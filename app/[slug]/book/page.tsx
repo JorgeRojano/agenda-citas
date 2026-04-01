@@ -20,6 +20,7 @@ export default async function BookPage({ params }: Props) {
       facebook: true,
       instagram: true,
       website: true,
+      hasStaff: true,
     },
   });
 

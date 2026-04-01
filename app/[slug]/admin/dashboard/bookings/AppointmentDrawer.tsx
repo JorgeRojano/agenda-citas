@@ -14,6 +14,7 @@ interface Props {
   onClose: () => void;
   onResourceUpdated?: (appointmentId: string, assignedToId: string, assignedTo: string) => void;
   onStatusUpdated?: (appointmentId: string, status: string) => void;
+  hasStaff?: boolean;
 }
 
 const statusConfig: Record<string, { label: string; border: string; badgeBg: string; badgeColor: string }> = {
@@ -26,7 +27,7 @@ function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
-export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onStatusUpdated }: Props) {
+export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onStatusUpdated, hasStaff = false }: Props) {
   const router = useRouter();
 
   const [assignedToId, setAssignedToId]     = useState<string | null>(item?.assignedToId ?? null);
@@ -40,13 +41,14 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
     setAssignedTo(item?.assignedTo ?? null);
   }, [item?.id]);
 
+  // Solo fetchear recursos si hasStaff
   useEffect(() => {
-    if (!item) return;
+    if (!item || !hasStaff) return;
     const dateForApi = new Date(item.start).toString();
     fetch(`/api/business/${slug}/staff?serviceId=${item.serviceId}&date=${encodeURIComponent(dateForApi)}`)
       .then((r) => r.json())
       .then(setResources);
-  }, [item?.id, slug]);
+  }, [item?.id, slug, hasStaff]);
 
   if (!item) return null;
 
@@ -120,7 +122,8 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
   };
 
   const handleConfirm = () => {
-    if (!assignedToId) {
+    // Si no tiene staff, no requiere recurso para confirmar
+    if (hasStaff && !assignedToId) {
       notifications.show({ title: "Recurso requerido", message: "Asigna un recurso antes de confirmar.", color: "yellow" });
       return;
     }
@@ -204,7 +207,17 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
             <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.05em" }}>Recurso asignado</Text>
             {savingResource && <Text size="xs" c="dimmed">Guardando...</Text>}
           </div>
-          {item.status !== "CANCELLED" && !isPast ? (
+
+          {!hasStaff ? (
+            // Sin staff — solo mostrar el nombre del admin, sin select
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--mantine-color-default-hover)", borderRadius: 8 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--mantine-color-blue-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "var(--mantine-color-blue-light-color)", flexShrink: 0 }}>
+                {assignedTo ? getInitials(assignedTo) : "—"}
+              </div>
+              <Text size="sm" fw={500}>{assignedTo ?? "Sin asignar"}</Text>
+            </div>
+          ) : item.status !== "CANCELLED" && !isPast ? (
+            // Con staff — mostrar select
             <>
               <div className="resource-select-desktop">
                 <Select
@@ -223,13 +236,10 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
                   disabled={savingResource}
                   onChange={(e) => e.target.value && handleAssignResource(e.target.value)}
                   style={{
-                    width: "100%", padding: "9px 12px",
-                    borderRadius: 8,
+                    width: "100%", padding: "9px 12px", borderRadius: 8,
                     border: "1px solid var(--mantine-color-default-border)",
-                    fontSize: 14,
-                    background: "var(--mantine-color-body)",
-                    color: "var(--mantine-color-text)",
-                    opacity: savingResource ? 0.6 : 1,
+                    fontSize: 14, background: "var(--mantine-color-body)",
+                    color: "var(--mantine-color-text)", opacity: savingResource ? 0.6 : 1,
                   }}
                 >
                   <option value="">Sin asignar</option>
@@ -246,8 +256,8 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
           )}
         </div>
 
-        {/* Alerta sin recurso */}
-        {item.status === "PENDING" && !assignedToId && !isPast && (
+        {/* Alerta sin recurso — solo si hasStaff */}
+        {hasStaff && item.status === "PENDING" && !assignedToId && !isPast && (
           <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
             <Text size="xs" c="yellow.8" fw={600}>⚠️ Asigna un recurso antes de confirmar</Text>
           </div>
@@ -258,7 +268,7 @@ export function AppointmentDrawer({ item, slug, onClose, onResourceUpdated, onSt
       <div style={{ padding: "14px 20px", borderTop: "1px solid var(--mantine-color-default-border)", display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
         {item.status === "PENDING" && !isPast && (
           <Group gap={8}>
-            <Button flex={1} color="green" loading={loadingAction === "CONFIRMED"} disabled={!assignedToId || !!loadingAction} onClick={handleConfirm}>
+            <Button flex={1} color="green" loading={loadingAction === "CONFIRMED"} disabled={!!loadingAction} onClick={handleConfirm}>
               ✓ Confirmar
             </Button>
             <Button flex={1} color="red" variant="light" loading={loadingAction === "CANCELLED"} disabled={!!loadingAction} onClick={() => updateStatus("CANCELLED")}>

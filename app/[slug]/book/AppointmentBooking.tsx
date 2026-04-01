@@ -20,15 +20,12 @@ interface Props {
   business: Business;
 }
 
-// darkenColor eliminado — se usa var(--mantine-color-${name}-8) directamente
-
-const stepLabels = ["Servicio", "Recurso", "Fecha", "Hora", "Tus datos"];
-
 // ── LEFT PANEL ──
 interface LeftPanelProps {
   business: Business;
-  colorName: string; // era primaryColor hex + darkColor hex
+  colorName: string;
   compact: boolean;
+  hasStaff: boolean;
   selectedService: Service | null;
   selectedResource: Resource | null;
   selectedDate: DateValue | null;
@@ -37,13 +34,17 @@ interface LeftPanelProps {
 }
 
 function LeftPanel({
-  business, colorName, compact,
+  business, colorName, compact, hasStaff,
   selectedService, selectedResource, selectedDate, selectedTime, active = 0,
 }: LeftPanelProps) {
+  // Con hasStaff=false el step de recurso no existe, así que los índices de fecha/hora
+  // son uno menos — ajustamos el umbral de visibilidad en el resumen
+  const dateThreshold = hasStaff ? 3 : 2;
+  const timeThreshold = hasStaff ? 4 : 3;
+
   return (
     <div style={{
       width: "100%", height: "100%",
-      // era: linear-gradient(160deg, ${primaryColor}, ${darkColor})
       background: `linear-gradient(160deg, var(--mantine-color-${colorName}-6), var(--mantine-color-${colorName}-8))`,
       display: "flex",
       flexDirection: compact ? "row" : "column",
@@ -103,7 +104,8 @@ function LeftPanel({
             </div>
           )}
 
-          {selectedResource && active >= 2 && (
+          {/* Recurso — solo si hasStaff */}
+          {hasStaff && selectedResource && active >= 2 && (
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -117,7 +119,7 @@ function LeftPanel({
             </>
           )}
 
-          {selectedDate && active >= 3 && (
+          {selectedDate && active >= dateThreshold && (
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -132,7 +134,7 @@ function LeftPanel({
             </>
           )}
 
-          {selectedTime && active >= 4 && (
+          {selectedTime && active >= timeThreshold && (
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -192,10 +194,11 @@ function LeftPanel({
 // ── STEPS HEADER ──
 interface StepsHeaderProps {
   active: number;
-  colorName: string; // era primaryColor hex
+  colorName: string;
+  stepLabels: string[];
 }
 
-function StepsHeader({ active, colorName }: StepsHeaderProps) {
+function StepsHeader({ active, colorName, stepLabels }: StepsHeaderProps) {
   return (
     <div style={{
       background: "var(--mantine-color-body)",
@@ -218,26 +221,22 @@ function StepsHeader({ active, colorName }: StepsHeaderProps) {
             background: i < active
               ? "var(--mantine-color-green-light)"
               : i === active
-                ? `var(--mantine-color-${colorName}-6)` // era primaryColor hex
+                ? `var(--mantine-color-${colorName}-6)`
                 : "var(--mantine-color-default-hover)",
             color: i < active
               ? "var(--mantine-color-green-light-color)"
-              : i === active
-                ? "white"
-                : "var(--mantine-color-dimmed)",
-            // era: 0 0 0 4px ${primaryColor}22
+              : i === active ? "white"
+              : "var(--mantine-color-dimmed)",
             boxShadow: i === active ? `0 0 0 4px var(--mantine-color-${colorName}-light)` : "none",
           }}>
             {i < active ? "✓" : i + 1}
           </div>
           <div style={{
             fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
-            // era: primaryColor hex / "var(--mantine-color-green-6)" / dimmed
             color: i === active
               ? `var(--mantine-color-${colorName}-6)`
-              : i < active
-                ? "var(--mantine-color-green-6)"
-                : "var(--mantine-color-dimmed)",
+              : i < active ? "var(--mantine-color-green-6)"
+              : "var(--mantine-color-dimmed)",
           }}>
             {label}
           </div>
@@ -252,6 +251,19 @@ export default function AppointmentBooking({ business }: Props) {
   const params = useParams();
   const slug   = params.slug as string;
 
+  const hasStaff = business.hasStaff ?? false;
+
+  // stepLabels y totalSteps se derivan de hasStaff
+  const stepLabels = hasStaff
+    ? ["Servicio", "Recurso", "Fecha", "Hora", "Tus datos"]
+    : ["Servicio", "Fecha", "Hora", "Tus datos"];
+  const totalSteps = stepLabels.length;
+
+  // Índices de cada step según hasStaff
+  const STEPS = hasStaff
+    ? { service: 0, resource: 1, date: 2, time: 3, details: 4 }
+    : { service: 0, resource: -1, date: 1, time: 2, details: 3 };
+
   const [active, setActive]                     = useState(0);
   const [selectedService, setSelectedService]   = useState<Service | null>(null);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
@@ -260,38 +272,35 @@ export default function AppointmentBooking({ business }: Props) {
   const [pendingModalOpen, setPendingModalOpen] = useState(false);
   const [submitting, setSubmitting]             = useState(false);
 
-  const totalSteps    = 5;
   const colorName     = business.primaryColor ?? "blue";
   const primaryColor  = `var(--mantine-color-${colorName}-6)`;
   const LIGHT_COLORS  = ["yellow", "lime"];
-  const textOnPrimary = LIGHT_COLORS.includes(colorName)
-    ? `var(--mantine-color-black)`
-    : `var(--mantine-color-white)`;
+  const textOnPrimary = LIGHT_COLORS.includes(colorName) ? `var(--mantine-color-black)` : `var(--mantine-color-white)`;
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     setSelectedResource(null);
     setSelectedDate(null);
     setSelectedTime(null);
-    setActive(1);
+    setActive(hasStaff ? STEPS.resource : STEPS.date);
   };
 
   const handleResourceSelect = (resource: Resource) => {
     setSelectedResource(resource);
     setSelectedDate(null);
     setSelectedTime(null);
-    setActive(2);
+    setActive(STEPS.date);
   };
 
   const handleDateSelect = (date: DateValue) => {
     setSelectedDate(date);
     setSelectedTime(null);
-    setActive(3);
+    setActive(STEPS.time);
   };
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
-    setActive(4);
+    setActive(STEPS.details);
   };
 
   const handleSubmit = async (details: any) => {
@@ -337,22 +346,32 @@ export default function AppointmentBooking({ business }: Props) {
 
       <div className="booking-wrap">
         <div className="booking-left-desktop">
-          <LeftPanel business={business} colorName={colorName} compact={false} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
+          <LeftPanel business={business} colorName={colorName} compact={false} hasStaff={hasStaff} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
         </div>
 
         <div className="booking-right">
           <div className="booking-left-mobile">
-            <LeftPanel business={business} colorName={colorName} compact={active > 0} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
+            <LeftPanel business={business} colorName={colorName} compact={active > 0} hasStaff={hasStaff} selectedService={selectedService} selectedResource={selectedResource} selectedDate={selectedDate} selectedTime={selectedTime} active={active} />
           </div>
 
-          <StepsHeader active={active} colorName={colorName} />
+          <StepsHeader active={active} colorName={colorName} stepLabels={stepLabels} />
 
           <div className="booking-content">
-            {active === 0 && <ServiceStep slug={slug} colorName={colorName} selectedService={selectedService} onNext={handleServiceSelect} />}
-            {active === 1 && <ResourceStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource} onNext={handleResourceSelect} />}
-            {active === 2 && <DateStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} onNext={handleDateSelect} />}
-            {active === 3 && <TimeStep slug={slug} colorName={colorName} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} staffId={selectedResource?.id ?? null} onNext={handleTimeSelect} />}
-            {active === 4 && <DetailsStep colorName={colorName} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} selectedTime={selectedTime} onSubmit={handleSubmit} />}
+            {active === STEPS.service && (
+              <ServiceStep slug={slug} colorName={colorName} selectedService={selectedService} onNext={handleServiceSelect} />
+            )}
+            {hasStaff && active === STEPS.resource && (
+              <ResourceStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource} onNext={handleResourceSelect} />
+            )}
+            {active === STEPS.date && (
+              <DateStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} onNext={handleDateSelect} />
+            )}
+            {active === STEPS.time && (
+              <TimeStep slug={slug} colorName={colorName} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} staffId={selectedResource?.id ?? null} onNext={handleTimeSelect} />
+            )}
+            {active === STEPS.details && (
+              <DetailsStep colorName={colorName} selectedService={selectedService} selectedResource={hasStaff ? selectedResource as Resource : null} selectedDate={selectedDate} selectedTime={selectedTime} onSubmit={handleSubmit} />
+            )}
           </div>
 
           <div className="booking-footer">

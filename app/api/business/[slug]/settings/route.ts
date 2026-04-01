@@ -16,6 +16,7 @@ export async function GET(
       primaryColor: true,
       logoUrl: true,
       bannerUrl: true,
+      hasStaff: true,
       whatsapp: true,
       facebook: true,
       instagram: true,
@@ -48,15 +49,9 @@ export async function PATCH(
   const body = await req.json();
 
   const {
-    name,
-    description,
-    primaryColor,
-    logoUrl,
-    bannerUrl,
-    whatsapp,
-    facebook,
-    instagram,
-    website,
+    name, description, primaryColor,
+    logoUrl, bannerUrl, hasStaff,    // ← nuevo
+    whatsapp, facebook, instagram, website,
   } = body;
 
   const updatedBusiness = await prisma.business.update({
@@ -67,6 +62,7 @@ export async function PATCH(
       ...(primaryColor && { primaryColor }),
       ...(logoUrl !== undefined && { logoUrl }),
       ...(bannerUrl !== undefined && { bannerUrl }),
+      ...(hasStaff !== undefined && { hasStaff }),
       ...(whatsapp !== undefined && { whatsapp }),
       ...(facebook !== undefined && { facebook }),
       ...(instagram !== undefined && { instagram }),

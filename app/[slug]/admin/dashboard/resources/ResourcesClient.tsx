@@ -17,10 +17,12 @@ const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 interface StaffMember {
   id: string; name: string; email: string; specialty: string;
   role: string; activeDays?: number[];
+  activeVacation?: { name: string | null; start: Date; end: Date } | null;
 }
 
 interface Props {
   business: { id: string; name: string };
+  businessSchedule: { dayOfWeek: number; startTime: string; endTime: string }[];
   staff: StaffMember[];
 }
 
@@ -39,7 +41,7 @@ function getAvatarColor(name: string) {
   return colors[name.charCodeAt(0) % colors.length];
 }
 
-export default function ResourcesClient({ business, staff: initialStaff }: Props) {
+export default function ResourcesClient({ business, businessSchedule, staff: initialStaff }: Props) {
   const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [loading, setLoading] = useState(false);
 
@@ -130,9 +132,12 @@ export default function ResourcesClient({ business, staff: initialStaff }: Props
       <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
         {staff.map((member) => {
           const activeDays = member.activeDays ?? [];
+          const onVacation = !!member.activeVacation;
+          const vacationLabel = member.activeVacation?.name ?? "Vacaciones";
+
           return (
             <Card key={member.id} withBorder radius="md" padding={0} shadow="sm" style={{ overflow: "hidden" }}>
-              {/* Body */}
+              {/* Info principal — sin badge de esquina */}
               <Stack align="center" gap="xs" p="md" pb="sm" style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }}>
                 <div style={{
                   width: 52, height: 52, borderRadius: "50%",
@@ -152,37 +157,43 @@ export default function ResourcesClient({ business, staff: initialStaff }: Props
                 </Group>
               </Stack>
 
-              {/* Availability preview */}
+              {/* Disponibilidad — pill de vacaciones inline con el label */}
               <Stack gap={4} px="md" py="xs" style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }}>
-                <Text size="xs" fw={700} c="dimmed" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Disponibilidad
-                </Text>
+                <Group justify="space-between" align="center">
+                  <Text size="xs" fw={700} c="dimmed" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Disponibilidad
+                  </Text>
+                  {onVacation && (
+                    <Badge variant="light" color="orange" size="xs">
+                      🌴 {vacationLabel}
+                    </Badge>
+                  )}
+                </Group>
                 {activeDays.length === 0 ? (
                   <Text size="xs" c="red.4" fs="italic">Sin horario configurado</Text>
                 ) : (
                   <Group gap={4}>
-                    {DAY_LABELS.map((label, dow) => (
-                      <div
-                        key={dow}
-                        style={{
-                          fontSize: 10, fontWeight: 700,
-                          padding: "2px 6px", borderRadius: 6,
-                          background: activeDays.includes(dow)
-                            ? "var(--mantine-color-green-light)"
-                            : "var(--mantine-color-default-hover)",
-                          color: activeDays.includes(dow)
-                            ? "var(--mantine-color-green-light-color)"
-                            : "var(--mantine-color-dimmed)",
-                        }}
-                      >
-                        {label}
-                      </div>
-                    ))}
+                    {DAY_LABELS.map((label, dow) => {
+                      const isActive = activeDays.includes(dow);
+                      return (
+                        <div
+                          key={dow}
+                          style={{
+                            fontSize: 10, fontWeight: 700,
+                            padding: "2px 6px", borderRadius: 6,
+                            background: "var(--mantine-color-green-light)",
+                            color: "var(--mantine-color-green-light-color)",
+                            opacity: isActive ? 1 : 0.45,
+                          }}
+                        >
+                          {label}
+                        </div>
+                      );
+                    })}
                   </Group>
                 )}
               </Stack>
 
-              {/* Footer */}
               <Stack gap={6} p="sm">
                 <Button variant="light" color="green" size="xs" fullWidth leftSection={<IconClock size={13} />} onClick={() => handleOpenAvail(member)}>
                   Disponibilidad
@@ -198,7 +209,6 @@ export default function ResourcesClient({ business, staff: initialStaff }: Props
           );
         })}
 
-        {/* Add card */}
         <Card
           withBorder radius="md" padding="md" shadow="sm" onClick={open}
           style={{
@@ -216,11 +226,14 @@ export default function ResourcesClient({ business, staff: initialStaff }: Props
 
       {availTarget && (
         <ResourceAvailabilityModal
-          opened={availOpened} onClose={closeAvail}
-          profileId={availTarget.id} profileName={availTarget.name}
+          opened={availOpened}
+          onClose={closeAvail}
+          profileId={availTarget.id}
+          profileName={availTarget.name}
           avatarColor={getAvatarColor(availTarget.name)}
           initials={getInitials(availTarget.name)}
           onSaved={handleAvailSaved}
+          businessSchedule={businessSchedule}
         />
       )}
 

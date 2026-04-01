@@ -9,10 +9,12 @@ export async function validateBusinessAccess(businessId: string) {
 
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
-    select: { businessId: true, role: true },
+    select: { id: true, businessId: true, role: true }, // ← id agregado
   });
 
   if (profile?.role !== "SUPER_ADMIN" && profile?.businessId !== businessId) {
     throw new Error("Acceso no autorizado a este negocio");
   }
+
+  return profile; // ← retornamos para que el caller pueda usar el id
 }

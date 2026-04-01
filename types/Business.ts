@@ -4,6 +4,7 @@ export interface Business {
   primaryColor: string | null;
   logoUrl: string | null;
   bannerUrl: string | null;
+  hasStaff: boolean;
   whatsapp: string | null;
   facebook: string | null;
   instagram: string | null;

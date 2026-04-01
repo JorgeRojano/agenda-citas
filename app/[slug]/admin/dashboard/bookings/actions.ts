@@ -20,23 +20,28 @@ export async function createAppointmentByAdmin(
   const business = await prisma.business.findUnique({ where: { slug } });
   if (!business) throw new Error("Negocio no encontrado");
 
-  await validateBusinessAccess(business.id);
+  const adminProfile = await validateBusinessAccess(business.id);
 
   const service = await prisma.service.findFirst({
     where: { id: data.serviceId, businessId: business.id },
   });
   if (!service) throw new Error("Servicio inválido");
 
+  // Si el negocio no tiene staff, asignar automáticamente al admin
+  const assignedToId = !business.hasStaff
+    ? adminProfile.id
+    : (data.assignedToId ?? null);
+
   const startTime = new Date(data.slot);
-  const endTime = new Date(startTime.getTime() + service.duration * 60000);
+  const endTime   = new Date(startTime.getTime() + service.duration * 60000);
 
   const overlapping = await prisma.appointment.findFirst({
     where: {
       businessId: business.id,
       status: { in: ["PENDING", "CONFIRMED"] },
       startTime: { lt: endTime },
-      endTime: { gt: startTime },
-      ...(data.assignedToId ? { assignedToId: data.assignedToId } : {}),
+      endTime:   { gt: startTime },
+      ...(assignedToId ? { assignedToId } : {}),
     },
   });
 
@@ -45,13 +50,13 @@ export async function createAppointmentByAdmin(
   await prisma.appointment.create({
     data: {
       businessId: business.id,
-      serviceId: service.id,
+      serviceId:  service.id,
       clientName: data.clientName,
-      phone: data.phone,
+      phone:      data.phone,
       startTime,
       endTime,
-      status: "CONFIRMED",
-      assignedToId: data.assignedToId ?? null,
+      status:     "CONFIRMED",
+      assignedToId,
     },
   });
 
