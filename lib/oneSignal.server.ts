@@ -3,11 +3,13 @@ export const sendPushNotification = async ({
   message,
   url,
   logoUrl,
+  collapseId,
 }: {
   title: string;
   message: string;
   url?: string;
   logoUrl?: string | null;
+  collapseId?: string;
 }) => {
   const res = await fetch("https://onesignal.com/api/v1/notifications", {
     method: "POST",
@@ -22,6 +24,7 @@ export const sendPushNotification = async ({
       contents: { en: message },
       url,
       ...(logoUrl ? { chrome_web_icon: logoUrl } : {}),
+      ...(collapseId ? { collapse_id: collapseId } : {}),
       web_buttons: [
         {
           id: "ver-cita",

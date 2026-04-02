@@ -47,7 +47,7 @@ export async function createAppointment(
     });
     if (overlapping) throw new Error("Horario ya ocupado");
 
-    await prisma.appointment.create({
+    const appointment = await prisma.appointment.create({
       data: {
         businessId:   business.id,
         serviceId:    service.id,
@@ -66,10 +66,11 @@ export async function createAppointment(
 
     await Promise.all([
       sendPushNotification({
-        title:   "📅 Nueva cita",
-        message: `${clientName} - ${service.name}\n${formattedDate}`,
-        url:     dashboardUrl,
-        logoUrl: business.logoUrl,
+        title:      "📅 Nueva cita",
+        message:    `${clientName} - ${service.name}\n${formattedDate}`,
+        url:        dashboardUrl,
+        logoUrl:    business.logoUrl,
+        collapseId: appointment.id,
       }),
       adminProfile?.email
         ? sendNewAppointmentEmail({
