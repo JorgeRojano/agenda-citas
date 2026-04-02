@@ -25,10 +25,12 @@ export const sendPushNotification = async ({
       url,
       ...(logoUrl ? { chrome_web_icon: logoUrl } : {}),
       ...(collapseId ? { collapse_id: collapseId } : {}),
+      ttl: 86400,
+      priority: 10,
       web_buttons: [
         {
           id: "ver-cita",
-          text: "Ver cita →",
+          text: "Ver dashboard →",
           url,
         },
       ],

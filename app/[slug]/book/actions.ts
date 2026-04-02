@@ -3,7 +3,7 @@
 import { sendPushNotification } from "@/lib/oneSignal.server";
 import { sendNewAppointmentEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
-import { formatDateTimeForInput, formatDateTimetoDisplay } from "@/lib/utils";
+import { formatDateTimetoDisplay } from "@/lib/utils";
 
 export async function createAppointment(
   slug: string,
@@ -22,13 +22,11 @@ export async function createAppointment(
     });
     if (!service) throw new Error("Servicio inválido");
 
-    // Traer admin siempre — lo necesitamos para asignación automática y notificaciones
     const adminProfile = await prisma.profile.findFirst({
       where: { businessId: business.id, role: "ADMIN" },
-      select: { id: true, email: true },
+      select: { id: true, name: true, email: true },  // ← name agregado
     });
 
-    // Si no tiene staff, asignar automáticamente al admin
     const resolvedAssignedToId = !business.hasStaff
       ? (adminProfile?.id ?? null)
       : (assignedToId ?? null);
@@ -47,7 +45,7 @@ export async function createAppointment(
     });
     if (overlapping) throw new Error("Horario ya ocupado");
 
-    const appointment = await prisma.appointment.create({
+    await prisma.appointment.create({
       data: {
         businessId:   business.id,
         serviceId:    service.id,
@@ -60,26 +58,34 @@ export async function createAppointment(
       },
     });
 
-    const date          = formatDateTimeForInput(startTime);
+    const pendingCount = await prisma.appointment.count({
+      where: { businessId: business.id, status: "PENDING" },
+    });
+
+    const dashboardUrl  = `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings`;
     const formattedDate = formatDateTimetoDisplay(startTime);
-    const dashboardUrl  = `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard/bookings?date=${date}`;
 
     await Promise.all([
       sendPushNotification({
-        title:      "📅 Nueva cita",
-        message:    `${clientName} - ${service.name}\n${formattedDate}`,
+        title:      `📅 ${pendingCount} cita${pendingCount !== 1 ? "s" : ""} pendiente${pendingCount !== 1 ? "s" : ""}`,
+        message:    `Última: ${clientName} - ${service.name}\n${formattedDate}`,
         url:        dashboardUrl,
         logoUrl:    business.logoUrl,
-        collapseId: appointment.id,
+        collapseId: `pending-${business.id}`,
       }),
       adminProfile?.email
         ? sendNewAppointmentEmail({
-            adminEmail:   adminProfile.email,
+            adminEmail:    adminProfile.email,
+            adminName:     adminProfile.name ?? undefined,
             clientName,
-            serviceName:  service.name,
-            dateTime:     formattedDate,
-            businessName: business.name,
+            serviceName:   service.name,
+            dateTime:      formattedDate,
+            businessName:  business.name,
             dashboardUrl,
+            phone,
+            duration:      service.duration,
+            price:         service.price,
+            primaryColor:  business.primaryColor,
           })
         : Promise.resolve(),
     ]);
