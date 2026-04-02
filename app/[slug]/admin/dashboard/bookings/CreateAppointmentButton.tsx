@@ -237,6 +237,7 @@ export default function CreateAppointmentButton({
                 placeholder="Selecciona un servicio"
                 data={services.map((s) => ({ value: s.id, label: `${s.name} · ${s.duration} min` }))}
                 required
+                comboboxProps={{ withinPortal: false }}
                 {...form.getInputProps("serviceId")}
               />
             </div>
@@ -256,6 +257,7 @@ export default function CreateAppointmentButton({
                     label="Asignar a (opcional)"
                     placeholder="Sin asignar"
                     clearable
+                    comboboxProps={{ withinPortal: false }}
                     data={resources.map((r) => ({
                       value: r.id as string,
                       label: r.specialty ? `${r.name} · ${r.specialty}` : r.name,
