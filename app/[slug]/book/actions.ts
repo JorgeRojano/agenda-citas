@@ -69,6 +69,7 @@ export async function createAppointment(
         title:   "📅 Nueva cita",
         message: `${clientName} - ${service.name}\n${formattedDate}`,
         url:     dashboardUrl,
+        logoUrl: business.logoUrl,
       }),
       adminProfile?.email
         ? sendNewAppointmentEmail({

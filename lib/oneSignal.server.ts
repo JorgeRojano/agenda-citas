@@ -2,10 +2,12 @@ export const sendPushNotification = async ({
   title,
   message,
   url,
+  logoUrl,
 }: {
   title: string;
   message: string;
   url?: string;
+  logoUrl?: string | null;
 }) => {
   const res = await fetch("https://onesignal.com/api/v1/notifications", {
     method: "POST",
@@ -19,7 +21,7 @@ export const sendPushNotification = async ({
       headings: { en: title },
       contents: { en: message },
       url,
-      collapse_id: `appointment-${Date.now()}`,
+      ...(logoUrl ? { chrome_web_icon: logoUrl } : {}),
       web_buttons: [
         {
           id: "ver-cita",
@@ -30,9 +32,8 @@ export const sendPushNotification = async ({
     }),
   });
 
-  const data = await res.json();
-
   if (!res.ok) {
-    console.error("OneSignal error:", await res.text());
+    const data = await res.json();
+    console.error("OneSignal error:", data);
   }
 };
