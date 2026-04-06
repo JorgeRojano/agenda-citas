@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Text, Stack, Tabs, SegmentedControl } from "@mantine/core";
+import { Badge, Text, Stack, Tabs, SegmentedControl, Loader } from "@mantine/core";
 import { useState, useEffect } from "react";
 import DayPicker from "./DayPicker";
 import CreateAppointmentButton from "./CreateAppointmentButton";
@@ -115,6 +115,8 @@ export default function BookingsClient({ items, slug, business, staff }: Props) 
   const colorName = business.primaryColor ?? "blue";
 
   const [isDayBlocked, setIsDayBlocked]   = useState(false);
+  const [isDayClosed, setIsDayClosed]     = useState(false);
+  const [isLoading, setIsLoading]         = useState(false);
   const [selectedItem, setSelectedItem]   = useState<AppointmentItem | null>(null);
   const [localItems, setLocalItems]       = useState<AppointmentItem[]>(items);
   const [viewMode, setViewMode]           = useState<"all" | "staff">(hasStaff ? "staff" : "all");
@@ -184,19 +186,27 @@ export default function BookingsClient({ items, slug, business, staff }: Props) 
             slug={slug}
             primaryColor={business.primaryColor}
             services={business.services}
-            disabled={isDayBlocked}
+            disabled={isDayBlocked || isDayClosed || isLoading}
             hasStaff={hasStaff}
           />
         </div>
       </div>
 
-      <DayPicker onBlockedChange={setIsDayBlocked} />
+      <DayPicker onBlockedChange={setIsDayBlocked} onClosedDayChange={setIsDayClosed} onLoadingChange={setIsLoading} />
 
       {isDayBlocked && (
         <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, padding: "10px 16px", marginBottom: 12 }}>
           <Text size="sm" c="orange.7" fw={600}>🚫 Este día está marcado como festivo o cierre especial</Text>
         </div>
       )}
+
+      {/* Content area — dimmed while loading */}
+      <div style={{ position: "relative", opacity: isLoading ? 0.45 : 1, pointerEvents: isLoading ? "none" : "auto", transition: "opacity 0.15s" }}>
+        {isLoading && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Loader size="sm" />
+          </div>
+        )}
 
       {/* Avatars de staff — solo en modo "Por staff" */}
       {hasStaff && viewMode === "staff" && staff.length > 0 && (
@@ -320,6 +330,8 @@ export default function BookingsClient({ items, slug, business, staff }: Props) 
           </Tabs.Panel>
         </Tabs>
       </div>
+
+      </div>{/* end loading wrapper */}
 
       {selectedItem && (
         <AppointmentDrawer

@@ -3,7 +3,7 @@
 import { Group, Button } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 interface BlockedTime {
   start: string;
@@ -12,9 +12,11 @@ interface BlockedTime {
 
 interface DayPickerProps {
   onBlockedChange?: (isBlocked: boolean) => void;
+  onClosedDayChange?: (isClosed: boolean) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
-export default function DayPicker({ onBlockedChange }: DayPickerProps) {
+export default function DayPicker({ onBlockedChange, onClosedDayChange, onLoadingChange }: DayPickerProps) {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const params       = useParams();
@@ -23,9 +25,12 @@ export default function DayPicker({ onBlockedChange }: DayPickerProps) {
   const initialDateString =
     searchParams.get("date") ?? new Date().toLocaleDateString("en-CA");
 
+  const [isPending, startTransition] = useTransition();
   const [dateString, setDateString] = useState(initialDateString);
   const [closedDays, setClosedDays] = useState<number[]>([]);
   const [blockedRanges, setBlockedRanges] = useState<BlockedTime[]>([]);
+
+  useEffect(() => { onLoadingChange?.(isPending); }, [isPending, onLoadingChange]);
 
   useEffect(() => {
     setDateString(initialDateString);
@@ -38,9 +43,17 @@ export default function DayPicker({ onBlockedChange }: DayPickerProps) {
       .then((slots) => {
         if (!Array.isArray(slots)) return;
         const openDays = new Set(slots.map((s: any) => s.dayOfWeek));
-        setClosedDays([0, 1, 2, 3, 4, 5, 6].filter((d) => !openDays.has(d)));
+        const closed = [0, 1, 2, 3, 4, 5, 6].filter((d) => !openDays.has(d));
+        setClosedDays(closed);
       });
   }, [slug]);
+
+  // Notificar al padre si el día seleccionado es día cerrado
+  useEffect(() => {
+    if (!onClosedDayChange) return;
+    const dayOfWeek = new Date(dateString + "T12:00:00").getDay();
+    onClosedDayChange(closedDays.includes(dayOfWeek));
+  }, [dateString, closedDays, onClosedDayChange]);
 
   // Fetch festivos del negocio
   useEffect(() => {
@@ -78,7 +91,9 @@ export default function DayPicker({ onBlockedChange }: DayPickerProps) {
   function updateDate(value: string | null) {
     if (!value) return;
     setDateString(value);
-    router.push(`/${slug}/admin/dashboard/bookings?date=${value}`);
+    startTransition(() => {
+      router.push(`/${slug}/admin/dashboard/bookings?date=${value}`);
+    });
   }
 
   return (

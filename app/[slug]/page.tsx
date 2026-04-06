@@ -279,6 +279,18 @@ export default async function BusinessLandingPage({ params }: Props) {
               d.style.background = i === j ? 'var(--mantine-color-${colorName}-6)' : 'var(--mantine-color-default-border)';
             });
           });
+
+          let paused = false;
+          c.addEventListener('pointerdown', () => { paused = true; });
+          c.addEventListener('pointerup',   () => { setTimeout(() => { paused = false; }, 2000); });
+
+          setInterval(() => {
+            if (paused) return;
+            const total = c.querySelectorAll('.carousel-item').length;
+            const current = Math.round(c.scrollLeft / c.offsetWidth);
+            const next = (current + 1) % total;
+            c.scrollTo({ left: next * c.offsetWidth, behavior: 'smooth' });
+          }, 5000);
         }
       `}} />
     </>
