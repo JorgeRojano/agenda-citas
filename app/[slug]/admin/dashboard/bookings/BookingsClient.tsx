@@ -18,6 +18,8 @@ interface Props {
   slug: string;
   business: any;
   staff: StaffMember[];
+  userRole: string;
+  currentUserId: string | null;
 }
 
 const statusConfig: Record<string, { label: string; border: string; bg: string; btnBg: string; btnColor: string }> = {
@@ -110,7 +112,7 @@ function KanbanColumn({ title, count, color, items: colItems, onOpen }: {
   );
 }
 
-export default function BookingsClient({ items, slug, business, staff }: Props) {
+export default function BookingsClient({ items, slug, business, staff, userRole, currentUserId }: Props) {
   const hasStaff = business.hasStaff ?? false;
   const colorName = business.primaryColor ?? "blue";
 
@@ -139,10 +141,14 @@ export default function BookingsClient({ items, slug, business, staff }: Props) 
     setLocalItems((prev) => prev.map((i) => i.id === appointmentId ? { ...i, status } : i));
   };
 
+  const isStaffUser = userRole === "STAFF";
+
   // Items filtrados según vista
-  const visibleItems = viewMode === "staff" && selectedStaffId
-    ? localItems.filter((a) => a.assignedToId === selectedStaffId)
-    : localItems;
+  const visibleItems = isStaffUser
+    ? localItems.filter((a) => a.assignedToId === currentUserId)
+    : viewMode === "staff" && selectedStaffId
+      ? localItems.filter((a) => a.assignedToId === selectedStaffId)
+      : localItems;
 
   const pending   = visibleItems.filter((a) => a.status === "PENDING");
   const confirmed = visibleItems.filter((a) => a.status === "CONFIRMED");
@@ -169,8 +175,8 @@ export default function BookingsClient({ items, slug, business, staff }: Props) 
           <Text size="xs" c="dimmed">{business.name}</Text>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          {/* Toggle solo si hasStaff */}
-          {hasStaff && (
+          {/* Toggle solo si hasStaff y el usuario no es STAFF */}
+          {hasStaff && userRole !== "STAFF" && (
             <SegmentedControl
               size="xs"
               color={colorName}
@@ -208,8 +214,8 @@ export default function BookingsClient({ items, slug, business, staff }: Props) 
           </div>
         )}
 
-      {/* Avatars de staff — solo en modo "Por staff" */}
-      {hasStaff && viewMode === "staff" && staff.length > 0 && (
+      {/* Avatars de staff — solo en modo "Por staff" y para admins */}
+      {hasStaff && !isStaffUser && viewMode === "staff" && staff.length > 0 && (
         <>
           <div className="staff-scroll" style={{ marginBottom: 14 }}>
             {staff.map((s) => {

@@ -41,9 +41,11 @@ const MessageNewAppointment = ({ booking, slug }: { booking: any; slug: string }
 export const AppShellAdmin = ({
   children,
   business,
+  userRole,
 }: {
   children: React.ReactNode;
   business: any; // debe incluir hasStaff: boolean
+  userRole?: string;
 }) => {
   const pathname  = usePathname();
   const router    = useRouter();
@@ -118,25 +120,34 @@ export const AppShellAdmin = ({
       padding="md"
     >
       <AppShell.Header>
-        <Group h="100%" px="md">
+        <Group h="100%" px="md" gap="sm">
           <Burger opened={opened} onClick={(e) => { e.stopPropagation(); toggle(); }} hiddenFrom="sm" size="sm" />
-          Header
+          {business?.logoUrl ? (
+            <img src={business.logoUrl} alt="logo" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
+          ) : (
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: `var(--mantine-color-${business?.primaryColor ?? "blue"}-6)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "white" }}>
+              {business?.name?.slice(0, 2).toUpperCase() ?? "…"}
+            </div>
+          )}
+          <Text fw={600} size="sm">{business?.name}</Text>
         </Group>
       </AppShell.Header>
 
       <AppShell.Navbar>
-        <AppShell.Section p="md">Navbar header</AppShell.Section>
+        <AppShell.Section p="md"><Text fw={600} size="sm">Menú</Text></AppShell.Section>
         <AppShell.Section grow my="md" component={ScrollArea} px="md">
           <Stack gap="xs">
             <NavLink label="Dashboard"      leftSection={<IconLayoutDashboard size={18} />} active={pathname === dashboardPath}    component={Link} href={dashboardPath} />
             <NavLink label="Citas"          leftSection={<IconCalendar size={18} />}        active={pathname === bookingsPath}      component={Link} href={bookingsPath} />
             <NavLink label="Disponibilidad" leftSection={<IconClock size={18} />}           active={pathname === availabilityPath}  component={Link} href={availabilityPath} />
-            <NavLink label="Configuración"  leftSection={<IconSettings size={18} />}        active={pathname === settingsPath}      component={Link} href={settingsPath} />
-            <NavLink label="Servicios"      leftSection={<IconTag size={18} />}             active={pathname === servicesPath}      component={Link} href={servicesPath} />
-
-            {/* Solo visible si el negocio tiene staff */}
-            {business?.hasStaff && (
-              <NavLink label="Recursos" leftSection={<IconUsers size={18} />} active={pathname === resourcesPath} component={Link} href={resourcesPath} />
+            {userRole !== "STAFF" && (
+              <>
+                <NavLink label="Configuración"  leftSection={<IconSettings size={18} />}        active={pathname === settingsPath}      component={Link} href={settingsPath} />
+                <NavLink label="Servicios"      leftSection={<IconTag size={18} />}             active={pathname === servicesPath}      component={Link} href={servicesPath} />
+                {business?.hasStaff && (
+                  <NavLink label="Recursos" leftSection={<IconUsers size={18} />} active={pathname === resourcesPath} component={Link} href={resourcesPath} />
+                )}
+              </>
             )}
           </Stack>
         </AppShell.Section>

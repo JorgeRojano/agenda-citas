@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import DashboardAdmin from "./DashboardAdmin";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
@@ -11,6 +12,14 @@ type Props = {
 
 export default async function AdminDashboardPage({ params }: Props) {
   const { slug } = await params;
+
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const profile = user
+    ? await prisma.profile.findUnique({ where: { id: user.id }, select: { name: true, role: true } })
+    : null;
+
+  const isStaff = profile?.role === "STAFF";
 
   const business = await prisma.business.findUnique({ where: { slug } });
   if (!business) return <div>Negocio no encontrado</div>;
@@ -25,6 +34,9 @@ export default async function AdminDashboardPage({ params }: Props) {
   const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
   const lastWeekEnd   = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
 
+  // Filtro base: staff solo ve sus citas, admin ve todas
+  const staffFilter = isStaff && user ? { assignedToId: user.id } : {};
+
   const [
     todayAppointments,
     weekCount,
@@ -37,34 +49,34 @@ export default async function AdminDashboardPage({ params }: Props) {
   ] = await Promise.all([
     prisma.appointment.groupBy({
       by: ["status"],
-      where: { businessId: business.id, startTime: { gte: todayStart, lte: todayEnd } },
+      where: { businessId: business.id, startTime: { gte: todayStart, lte: todayEnd }, ...staffFilter },
       _count: true,
     }),
     prisma.appointment.count({
-      where: { businessId: business.id, startTime: { gte: weekStart, lte: weekEnd }, status: { not: "CANCELLED" } },
+      where: { businessId: business.id, startTime: { gte: weekStart, lte: weekEnd }, status: { not: "CANCELLED" }, ...staffFilter },
     }),
     prisma.appointment.count({
-      where: { businessId: business.id, startTime: { gte: lastWeekStart, lte: lastWeekEnd }, status: { not: "CANCELLED" } },
+      where: { businessId: business.id, startTime: { gte: lastWeekStart, lte: lastWeekEnd }, status: { not: "CANCELLED" }, ...staffFilter },
     }),
     prisma.appointment.count({
-      where: { businessId: business.id, startTime: { gte: monthStart, lte: monthEnd }, status: "CONFIRMED" },
+      where: { businessId: business.id, startTime: { gte: monthStart, lte: monthEnd }, status: "CONFIRMED", ...staffFilter },
     }),
     prisma.appointment.count({
-      where: { businessId: business.id, startTime: { gte: monthStart, lte: monthEnd }, status: "CANCELLED" },
+      where: { businessId: business.id, startTime: { gte: monthStart, lte: monthEnd }, status: "CANCELLED", ...staffFilter },
     }),
     prisma.appointment.findMany({
-      where: { businessId: business.id, startTime: { gte: now, lte: todayEnd }, status: { in: ["PENDING", "CONFIRMED"] } },
+      where: { businessId: business.id, startTime: { gte: now, lte: todayEnd }, status: { in: ["PENDING", "CONFIRMED"] }, ...staffFilter },
       include: { service: true },
       orderBy: { startTime: "asc" },
       take: 5,
     }),
     prisma.appointment.findMany({
-      where: { businessId: business.id, startTime: { gte: weekStart, lte: weekEnd }, status: { not: "CANCELLED" } },
+      where: { businessId: business.id, startTime: { gte: weekStart, lte: weekEnd }, status: { not: "CANCELLED" }, ...staffFilter },
       select: { startTime: true },
     }),
-    // Todas las citas PENDING desde hoy en adelante
+    // Citas PENDING desde hoy: staff solo ve las suyas, admin ve todas
     prisma.appointment.findMany({
-      where: { businessId: business.id, startTime: { gte: todayStart }, status: "PENDING" },
+      where: { businessId: business.id, startTime: { gte: todayStart }, status: "PENDING", ...staffFilter },
       include: { service: true },
       orderBy: { startTime: "asc" },
     }),
@@ -99,6 +111,7 @@ export default async function AdminDashboardPage({ params }: Props) {
   return (
     <DashboardAdmin
       business={{ id: business.id, name: business.name, slug }}
+      staffName={profile?.name ?? null}
       stats={{ todayTotal, todayPending, todayConfirmed, weekCount, weekGrowth, monthCompleted, monthCancelled }}
       upcomingToday={upcomingToday.map((a) => ({
         id: a.id,

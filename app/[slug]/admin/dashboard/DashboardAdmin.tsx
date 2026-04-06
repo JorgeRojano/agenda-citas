@@ -7,6 +7,7 @@ import { useState } from "react";
 
 interface Props {
   business: { id: string; name: string; slug: string };
+  staffName?: string | null;
   stats: {
     todayTotal: number;
     todayPending: number;
@@ -37,7 +38,7 @@ function formatDayLabel(dateKey: string): { prefix: string; label: string } {
   return { prefix: "Próximo", label: new Date(dateKey + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" }) };
 }
 
-export default function DashboardAdmin({ business, stats, upcomingToday, weekDayCounts, pendingByDay }: Props) {
+export default function DashboardAdmin({ business, staffName, stats, upcomingToday, weekDayCounts, pendingByDay }: Props) {
   const router = useRouter();
   const { slug } = useParams();
   const [accordionOpen, setAccordionOpen] = useState(false);
@@ -63,7 +64,7 @@ export default function DashboardAdmin({ business, stats, upcomingToday, weekDay
       {/* Header */}
       <Group justify="space-between" align="flex-start">
         <div>
-          <Text fw={700} size="xl">{greeting}, {business.name} 👋</Text>
+          <Text fw={700} size="xl">{greeting}, {staffName ?? business.name} 👋</Text>
           <Text size="xs" c="dimmed" mt={4} style={{ textTransform: "capitalize" }}>{dateLabel}</Text>
         </div>
       </Group>

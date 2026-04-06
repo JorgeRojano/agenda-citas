@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { getAppointmentsByDay } from "@/lib/appointments";
 import BookingsClient from "./BookingsClient";
 
@@ -12,6 +13,14 @@ type Props = {
 export default async function AdminBookingsPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const { date } = await searchParams;
+
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const profile = user
+    ? await prisma.profile.findUnique({ where: { id: user.id }, select: { role: true } })
+    : null;
+  const userRole = profile?.role ?? "STAFF";
+  const currentUserId = user?.id ?? null;
 
   const business = await prisma.business.findUnique({
     where: { slug },
@@ -82,6 +91,8 @@ export default async function AdminBookingsPage({ params, searchParams }: Props)
       slug={slug}
       business={business}
       staff={staff}
+      userRole={userRole}
+      currentUserId={currentUserId}
     />
   );
 }

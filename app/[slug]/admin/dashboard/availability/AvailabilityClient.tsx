@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  Stack, Title, Group, Button, Text, Switch, Divider, Modal, TextInput,
+  Stack, Title, Group, Button, Text, Switch, Divider, Modal, TextInput, Tooltip,
 } from "@mantine/core";
 import { TimeInput, DatePickerInput } from "@mantine/dates";
 import { useState, useMemo } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
-import { IconDeviceFloppy, IconX, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconX, IconPlus, IconTrash, IconLock } from "@tabler/icons-react";
 import { showNotification } from "@mantine/notifications";
 
 const weekDays = [
@@ -56,12 +56,30 @@ function blockedStatus(start: string, end: string) {
 
 interface Props {
   slug: string;
+  userRole: string;
+  currentUserId: string | null;
   initialSchedule: { dayOfWeek: number; startTime: string; endTime: string }[];
+  businessSchedule: { dayOfWeek: number; startTime: string; endTime: string }[];
   initialBlockedTimes: BlockedTime[];
 }
 
-export default function AvailabilityClient({ slug, initialSchedule, initialBlockedTimes }: Props) {
+export default function AvailabilityClient({ slug, userRole, currentUserId, initialSchedule, businessSchedule, initialBlockedTimes }: Props) {
+  const isStaff = userRole === "STAFF";
   const router = useRouter();
+
+  const businessOpenDays = useMemo(
+    () => [...new Set(businessSchedule.map((s) => s.dayOfWeek))],
+    [businessSchedule],
+  );
+
+  const businessRangesByDay = useMemo(() => {
+    const map: Record<number, { startTime: string; endTime: string }[]> = {};
+    businessSchedule.forEach((s) => {
+      if (!map[s.dayOfWeek]) map[s.dayOfWeek] = [];
+      map[s.dayOfWeek].push({ startTime: s.startTime, endTime: s.endTime });
+    });
+    return map;
+  }, [businessSchedule]);
 
   const buildAvailability = (data: typeof initialSchedule): Availability => {
     const grouped = createEmptyAvailability();
@@ -134,6 +152,19 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
           showNotification({ title: "Rango inválido", message: `${label}: el cierre debe ser mayor a la apertura`, color: "red" });
           setSaving(false); return;
         }
+        if (isStaff) {
+          const bizRanges = businessRangesByDay[day.dayOfWeek] ?? [];
+          const fits = bizRanges.some(
+            (r) => toMin(slot.start) >= toMin(r.startTime) && toMin(slot.end) <= toMin(r.endTime),
+          );
+          if (!fits) {
+            const ref = bizRanges.length
+              ? bizRanges.map((r) => `${formatTime(r.startTime)}–${formatTime(r.endTime)}`).join(", ")
+              : "el negocio no abre este día";
+            showNotification({ title: "Fuera del horario del negocio", message: `${label}: el rango debe estar dentro de ${ref}`, color: "red" });
+            setSaving(false); return;
+          }
+        }
       }
       for (let i = 0; i < day.slots.length; i++) {
         for (let j = i + 1; j < day.slots.length; j++) {
@@ -148,7 +179,10 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
     const flatSlots = availability.days.flatMap((day) =>
       day.slots.map((slot) => ({ dayOfWeek: day.dayOfWeek, startTime: slot.start, endTime: slot.end })),
     );
-    const res = await fetch(`/api/business/${slug}/schedule`, {
+    const scheduleUrl = isStaff
+      ? `/api/business/${slug}/resources/${currentUserId}/schedule`
+      : `/api/business/${slug}/schedule`;
+    const res = await fetch(scheduleUrl, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slots: flatSlots }),
     });
@@ -172,7 +206,10 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
       const dt = new Date(d);
       return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
     };
-    const res = await fetch(`/api/business/${slug}/blocked-times`, {
+    const blockedUrl = isStaff
+      ? `/api/business/${slug}/resources/${currentUserId}/vacations`
+      : `/api/business/${slug}/blocked-times`;
+    const res = await fetch(blockedUrl, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: newBlocked.name || null,
@@ -195,7 +232,10 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
 
   const handleDeleteBlocked = async (id: string) => {
     setDeletingId(id);
-    await fetch(`/api/business/${slug}/blocked-times?id=${id}`, { method: "DELETE" });
+    const deleteUrl = isStaff
+      ? `/api/business/${slug}/resources/${currentUserId}/vacations?id=${id}`
+      : `/api/business/${slug}/blocked-times?id=${id}`;
+    await fetch(deleteUrl, { method: "DELETE" });
     setBlockedTimes((prev) => prev.filter((b) => b.id !== id));
     setDeletingId(null);
     showNotification({ title: "Eliminado", message: "Cierre especial eliminado", color: "red" });
@@ -266,28 +306,59 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
         <Group justify="space-between">
           <div>
             <Title order={3}>Disponibilidad</Title>
-            <Text size="sm" c="dimmed" mt={2}>Horario semanal y cierres especiales del negocio</Text>
+            <Text size="sm" c="dimmed" mt={2}>
+              {isStaff ? "Tu horario personal de atención" : "Horario semanal y cierres especiales del negocio"}
+            </Text>
           </div>
           <Button leftSection={<IconDeviceFloppy size={18} />} onClick={handleSaveSchedule} disabled={!hasChanges} loading={saving}>
             {hasChanges ? "Guardar horario" : "Guardado"}
           </Button>
         </Group>
 
-        <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.06em" }}>Horario semanal</Text>
+        {/* Referencia del negocio — lista por día */}
+        {isStaff && (
+          <div style={{ background: "var(--mantine-color-blue-light)", border: "1px solid var(--mantine-color-blue-light-hover)", borderRadius: 10, padding: "12px 16px" }}>
+            <Text size="xs" fw={700} c="blue" tt="uppercase" mb={8} style={{ letterSpacing: "0.06em" }}>Horario del negocio (referencia)</Text>
+            <Stack gap={4}>
+              {weekDays.map((d) => {
+                const slots = businessSchedule.filter((s) => s.dayOfWeek === d.value);
+                return (
+                  <Group key={d.value} gap={8}>
+                    <Text size="xs" fw={600} c="blue.7" style={{ width: 80, flexShrink: 0 }}>{d.label}</Text>
+                    {slots.length === 0
+                      ? <Text size="xs" c="dimmed" fs="italic">Cerrado</Text>
+                      : <Text size="xs" c="blue.7">{slots.map((s) => `${formatTime(s.startTime)} – ${formatTime(s.endTime)}`).join(", ")}</Text>
+                    }
+                  </Group>
+                );
+              })}
+            </Stack>
+          </div>
+        )}
+
+        <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.06em" }}>
+          {isStaff ? "Mi horario" : "Horario semanal"}
+        </Text>
 
         <Stack gap="xs">
           {availability.days.map((day) => {
-            const dayLabel = weekDays.find((d) => d.value === day.dayOfWeek)?.label ?? "";
-            const isOpen   = day.slots.length > 0;
+            const dayLabel    = weekDays.find((d) => d.value === day.dayOfWeek)?.label ?? "";
+            const isOpen      = day.slots.length > 0;
+            const isBlocked   = isStaff && !businessOpenDays.includes(day.dayOfWeek);
             return (
-              <div key={day.dayOfWeek} className="day-row">
+              <div key={day.dayOfWeek} className="day-row" style={{ opacity: isBlocked ? 0.5 : 1 }}>
                 <div className="day-col-left">
-                  <Switch checked={isOpen} onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)} size="md" />
-                  <Text fw={600} c={isOpen ? undefined : "dimmed"} size="sm">{dayLabel}</Text>
+                  <Tooltip label="El negocio no abre este día" disabled={!isBlocked} withArrow>
+                    <div>
+                      <Switch checked={isOpen && !isBlocked} onChange={(e) => toggleDay(day.dayOfWeek, e.currentTarget.checked)} size="md" disabled={isBlocked} />
+                    </div>
+                  </Tooltip>
+                  <Text fw={600} c={isOpen && !isBlocked ? undefined : "dimmed"} size="sm">{dayLabel}</Text>
+                  {isBlocked && <Group gap={4}><IconLock size={12} color="var(--mantine-color-dimmed)" /><Text size="xs" c="dimmed">Cerrado</Text></Group>}
                 </div>
                 <div className="day-col-right">
-                  {!isOpen ? (
-                    <Text size="sm" c="dimmed" fs="italic">Cerrado</Text>
+                  {!isOpen || isBlocked ? (
+                    <Text size="sm" c="dimmed" fs="italic">{isBlocked ? "" : "Cerrado"}</Text>
                   ) : (
                     <>
                       {day.slots.map((slot, index) => (
@@ -333,14 +404,14 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
 
         <Group justify="space-between">
           <div>
-            <Text fw={600} size="sm">Festivos y cierres especiales</Text>
-            <Text size="xs" c="dimmed" mt={2}>El negocio no atiende en estas fechas</Text>
+            <Text fw={600} size="sm">{isStaff ? "Mis ausencias y vacaciones" : "Festivos y cierres especiales"}</Text>
+            <Text size="xs" c="dimmed" mt={2}>{isStaff ? "Fechas en las que no estarás disponible" : "El negocio no atiende en estas fechas"}</Text>
           </div>
-          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={openModal}>Agregar festivo</Button>
+          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={openModal}>{isStaff ? "Agregar ausencia" : "Agregar festivo"}</Button>
         </Group>
 
         {blockedTimes.length === 0 ? (
-          <Text size="sm" c="dimmed" fs="italic">Sin cierres especiales registrados</Text>
+          <Text size="sm" c="dimmed" fs="italic">{isStaff ? "Sin ausencias registradas" : "Sin cierres especiales registrados"}</Text>
         ) : (
           <Stack gap="xs">
             {blockedTimes.map((b) => {
@@ -375,7 +446,7 @@ export default function AvailabilityClient({ slug, initialSchedule, initialBlock
         )}
       </Stack>
 
-      <Modal opened={modalOpened} onClose={closeModal} title="Agregar cierre especial" centered size="sm">
+      <Modal opened={modalOpened} onClose={closeModal} title={isStaff ? "Agregar ausencia" : "Agregar cierre especial"} centered size="sm">
         <Stack gap="md">
           <TextInput
             label="Nombre" placeholder="Ej: Semana Santa, Año Nuevo..."
