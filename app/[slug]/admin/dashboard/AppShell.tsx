@@ -1,16 +1,17 @@
 "use client";
 
 import {
-  AppShell, Burger, Button, Group,
-  NavLink, ScrollArea, Stack, Text,
+  AppShell, Burger, Button, Divider, Group, Modal,
+  NavLink, PasswordInput, ScrollArea, Stack, Text,
 } from "@mantine/core";
 import {
   IconCalendar, IconClock, IconExternalLink,
-  IconLayoutDashboard, IconLogout, IconSettings,
+  IconLayoutDashboard, IconLock, IconLogout, IconSettings,
   IconTag, IconUsers,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useDisclosure } from "@mantine/hooks";
+import { useForm } from "@mantine/form";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import { useRealtimeAppointments } from "@/lib/hooks/useRealTimeAppointments";
 import { notifications } from "@mantine/notifications";
@@ -52,7 +53,33 @@ export const AppShellAdmin = ({
   const [mounted, setMounted]   = useState(false);
   const [opened, { toggle, close }] = useDisclosure();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [changingPwd, setChangingPwd] = useState(false);
+  const [pwdOpened, { open: openPwd, close: closePwd }] = useDisclosure(false);
   const { slug } = useParams();
+
+  const pwdForm = useForm({
+    initialValues: { password: "", confirm: "" },
+    validate: {
+      password: (v) => (v.length < 6 ? "Mínimo 6 caracteres" : null),
+      confirm:  (v, values) => (v !== values.password ? "Las contraseñas no coinciden" : null),
+    },
+  });
+
+  const handleChangePwd = async (values: typeof pwdForm.values) => {
+    setChangingPwd(true);
+    try {
+      const browserSupabase = createBrowserSupabaseClient();
+      const { error } = await browserSupabase.auth.updateUser({ password: values.password });
+      if (error) throw new Error(error.message);
+      notifications.show({ title: "Contraseña actualizada", message: "Tu contraseña fue cambiada exitosamente", color: "green" });
+      pwdForm.reset();
+      closePwd();
+    } catch (e: any) {
+      notifications.show({ title: "Error", message: e.message, color: "red" });
+    } finally {
+      setChangingPwd(false);
+    }
+  };
 
   const base            = `/${slug}/admin/dashboard`;
   const dashboardPath   = base;
@@ -155,12 +182,34 @@ export const AppShellAdmin = ({
         <AppShell.Section p="md">
           <NavLink label="Ver página de citas" leftSection={<IconExternalLink size={18} />} component="a" href={`/${slug}/book`} target="_blank" />
         </AppShell.Section>
-        <AppShell.Section p="md">
-          <Button variant="subtle" color="red" fullWidth leftSection={<IconLogout size={18} />} onClick={handleLogout} loading={loggingOut}>
-            Cerrar sesión
-          </Button>
+        <AppShell.Section>
+          <Divider />
+          <Stack gap={0} p="xs">
+            <NavLink
+              label="Cambiar contraseña"
+              leftSection={<IconLock size={16} />}
+              color="gray"
+              onClick={() => { pwdForm.reset(); openPwd(); }}
+            />
+            <NavLink
+              label={loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+              leftSection={<IconLogout size={16} />}
+              color="red"
+              onClick={handleLogout}
+            />
+          </Stack>
         </AppShell.Section>
       </AppShell.Navbar>
+
+      <Modal opened={pwdOpened} onClose={closePwd} title="Cambiar contraseña" centered size="sm">
+        <form onSubmit={pwdForm.onSubmit(handleChangePwd)}>
+          <Stack gap="md">
+            <PasswordInput label="Nueva contraseña" placeholder="Mínimo 6 caracteres" required {...pwdForm.getInputProps("password")} />
+            <PasswordInput label="Confirmar contraseña" placeholder="Repite la contraseña" required {...pwdForm.getInputProps("confirm")} />
+            <Button type="submit" loading={changingPwd} fullWidth>Guardar contraseña</Button>
+          </Stack>
+        </form>
+      </Modal>
 
       <AppShell.Main>
         <div style={{ padding: "var(--mantine-spacing-md)", paddingBottom: 80 }}>

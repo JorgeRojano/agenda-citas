@@ -74,6 +74,19 @@ export async function updateStaffMember(
   revalidatePath(`/[slug]/admin/dashboard/resources`);
 }
 
+export async function changeStaffPassword(
+  businessId: string,
+  profileId: string,
+  newPassword: string,
+) {
+  await validateBusinessAccess(businessId);
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(profileId, {
+    password: newPassword,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function deleteStaffMember(businessId: string, profileId: string) {
   await validateBusinessAccess(businessId);
 

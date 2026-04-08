@@ -6,10 +6,10 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { IconPlus, IconEdit, IconTrash, IconClock } from "@tabler/icons-react";
+import { IconPlus, IconEdit, IconTrash, IconClock, IconKey } from "@tabler/icons-react";
 import { useState } from "react";
 import { showNotification } from "@mantine/notifications";
-import { createStaffMember, updateStaffMember, deleteStaffMember } from "./actions";
+import { createStaffMember, updateStaffMember, deleteStaffMember, changeStaffPassword } from "./actions";
 import { ResourceAvailabilityModal } from "./ResourceAvailabilityModal";
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -76,6 +76,30 @@ export default function ResourcesClient({ business, businessSchedule, staff: ini
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
+
+  const [pwdTarget, setPwdTarget] = useState<StaffMember | null>(null);
+  const [pwdOpened, { open: openPwd, close: closePwd }] = useDisclosure(false);
+  const pwdForm = useForm({
+    initialValues: { password: "", confirm: "" },
+    validate: {
+      password: (v) => (v.length < 6 ? "Mínimo 6 caracteres" : null),
+      confirm:  (v, values) => (v !== values.password ? "Las contraseñas no coinciden" : null),
+    },
+  });
+
+  const handleOpenPwd = (member: StaffMember) => { setPwdTarget(member); pwdForm.reset(); openPwd(); };
+
+  const handleChangePwd = async (values: typeof pwdForm.values) => {
+    if (!pwdTarget) return;
+    setLoading(true);
+    try {
+      await changeStaffPassword(business.id, pwdTarget.id, values.password);
+      showNotification({ title: "Contraseña actualizada", message: `La contraseña de ${pwdTarget.name} fue cambiada`, color: "green" });
+      closePwd();
+    } catch (error: any) {
+      showNotification({ title: "Error", message: error.message, color: "red" });
+    } finally { setLoading(false); }
+  };
 
   const handleOpenEdit = (member: StaffMember) => {
     setEditingMember(member);
@@ -201,6 +225,7 @@ export default function ResourcesClient({ business, businessSchedule, staff: ini
                 {member.role !== "ADMIN" && (
                   <Group gap="xs">
                     <Button variant="light" color="blue" size="xs" flex={1} leftSection={<IconEdit size={13} />} onClick={() => handleOpenEdit(member)}>Editar</Button>
+                    <Button variant="light" color="yellow" size="xs" flex={1} leftSection={<IconKey size={13} />} onClick={() => handleOpenPwd(member)}>Contraseña</Button>
                     <Button variant="light" color="red" size="xs" flex={1} leftSection={<IconTrash size={13} />} onClick={() => { setDeleteId(member.id); openDelete(); }}>Eliminar</Button>
                   </Group>
                 )}
@@ -266,6 +291,17 @@ export default function ResourcesClient({ business, businessSchedule, staff: ini
             <TextInput label="Email" required {...editForm.getInputProps("email")} />
             <TextInput label="Especialidad (opcional)" placeholder="Ej: Terapeuta de lenguaje" {...editForm.getInputProps("specialty")} />
             <Button type="submit" loading={loading} fullWidth>Guardar cambios</Button>
+          </Stack>
+        </form>
+      </Modal>
+
+      {/* Modal cambiar contraseña */}
+      <Modal opened={pwdOpened} onClose={closePwd} title={`Cambiar contraseña — ${pwdTarget?.name}`} centered size="sm">
+        <form onSubmit={pwdForm.onSubmit(handleChangePwd)}>
+          <Stack gap="md">
+            <PasswordInput label="Nueva contraseña" placeholder="Mínimo 6 caracteres" required {...pwdForm.getInputProps("password")} />
+            <PasswordInput label="Confirmar contraseña" placeholder="Repite la contraseña" required {...pwdForm.getInputProps("confirm")} />
+            <Button type="submit" loading={loading} fullWidth>Cambiar contraseña</Button>
           </Stack>
         </form>
       </Modal>
