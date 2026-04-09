@@ -54,6 +54,14 @@ function blockedStatus(start: string, end: string) {
   return { label: "Futuro", color: "blue" } as const;
 }
 
+type WeekCoverageDay = {
+  dateKey:   string;
+  dayLabel:  string;
+  dayOfWeek: number;
+  status:    "closed" | "covered" | "partial_coverage" | "no_coverage";
+  slots:     string[];
+};
+
 interface Props {
   slug: string;
   userRole: string;
@@ -61,9 +69,10 @@ interface Props {
   initialSchedule: { dayOfWeek: number; startTime: string; endTime: string }[];
   businessSchedule: { dayOfWeek: number; startTime: string; endTime: string }[];
   initialBlockedTimes: BlockedTime[];
+  weekCoverage: WeekCoverageDay[];
 }
 
-export default function AvailabilityClient({ slug, userRole, currentUserId, initialSchedule, businessSchedule, initialBlockedTimes }: Props) {
+export default function AvailabilityClient({ slug, userRole, currentUserId, initialSchedule, businessSchedule, initialBlockedTimes, weekCoverage }: Props) {
   const isStaff = userRole === "STAFF";
   const router = useRouter();
 
@@ -314,6 +323,99 @@ export default function AvailabilityClient({ slug, userRole, currentUserId, init
             {hasChanges ? "Guardar horario" : "Guardado"}
           </Button>
         </Group>
+
+        {/* Panel de cobertura de recursos — semana actual (solo admin) */}
+        {!isStaff && weekCoverage.length > 0 && (
+          <div style={{
+            border: "1px solid var(--mantine-color-default-border)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: "12px 16px",
+              background: "var(--mantine-color-default-hover)",
+              borderBottom: "1px solid var(--mantine-color-default-border)",
+            }}>
+              <Text size="sm" fw={700}>Cobertura de recursos — semana actual</Text>
+              <Text size="xs" c="dimmed" mt={2}>Días donde ningún recurso cubre el horario del negocio</Text>
+            </div>
+
+            {/* 7-day cards */}
+            <div style={{ padding: "12px 16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+                {weekCoverage.map((day) => {
+                  const cfg = {
+                    closed:           { bg: "var(--mantine-color-default-hover)",    border: "var(--mantine-color-default-border)",          text: "dimmed",   icon: "—"  },
+                    covered:          { bg: "var(--mantine-color-green-light)",       border: "var(--mantine-color-green-light-hover)",         text: "green.8",  icon: "✓"  },
+                    partial_coverage: { bg: "var(--mantine-color-yellow-light)",      border: "var(--mantine-color-yellow-light-hover)",        text: "yellow.8", icon: "⚠"  },
+                    no_coverage:      { bg: "var(--mantine-color-red-light)",         border: "var(--mantine-color-red-light-hover)",           text: "red.8",    icon: "✕"  },
+                  }[day.status];
+
+                  const shortDayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+                  const dayNum = day.dateKey.split("-")[2];
+
+                  return (
+                    <div
+                      key={day.dateKey}
+                      style={{
+                        background: cfg.bg,
+                        border: `1px solid ${cfg.border}`,
+                        borderRadius: 8,
+                        padding: "8px 4px",
+                        textAlign: "center",
+                        minWidth: 0,
+                      }}
+                    >
+                      <Text size="xs" fw={600} c={cfg.text as any} tt="uppercase" style={{ letterSpacing: "0.03em" }}>
+                        {shortDayNames[day.dayOfWeek]}
+                      </Text>
+                      <Text size="sm" fw={700} c={cfg.text as any}>{dayNum}</Text>
+                      <Text size="xs" fw={700} c={cfg.text as any}>{cfg.icon}</Text>
+                      {day.status === "partial_coverage" && (
+                        <Text size="xs" c="yellow.7">{day.slots.length} slots</Text>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Problematic days detail — solo cuando hay alertas */}
+            {weekCoverage.some((d) => d.status === "no_coverage" || d.status === "partial_coverage") && (
+            <div style={{ padding: "0 16px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+              {weekCoverage
+                .filter((d) => d.status === "no_coverage" || d.status === "partial_coverage")
+                .map((day) => (
+                  <div
+                    key={day.dateKey}
+                    style={{
+                      display: "flex", alignItems: "flex-start", gap: 10,
+                      padding: "10px 14px",
+                      background: day.status === "no_coverage"
+                        ? "var(--mantine-color-red-light)"
+                        : "var(--mantine-color-yellow-light)",
+                      border: `1px solid ${day.status === "no_coverage"
+                        ? "var(--mantine-color-red-light-hover)"
+                        : "var(--mantine-color-yellow-light-hover)"}`,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text size="lg">{day.status === "no_coverage" ? "🚫" : "⚠️"}</Text>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Text size="sm" fw={700} c={day.status === "no_coverage" ? "red.8" : "yellow.8"}>
+                        {day.dayLabel}
+                      </Text>
+                      <Text size="xs" c={day.status === "no_coverage" ? "red.7" : "yellow.7"} mt={2}>
+                        Sin cobertura: {day.slots.join(", ")}
+                      </Text>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            )}
+          </div>
+        )}
 
         {/* Referencia del negocio — lista por día */}
         {isStaff && (

@@ -2,6 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { notFound } from "next/navigation";
 import AvailabilityClient from "./AvailabilityClient";
+import { getCoverageAlerts } from "@/lib/coverageAlerts";
+import { startOfWeek, startOfDay, addDays } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+
+const TIME_ZONE = "America/Mexico_City";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -32,10 +37,36 @@ export default async function AvailabilityPage({ params }: Props) {
   }));
 
   if (userRole !== "STAFF" || !currentUserId) {
-    // Admin: horario del negocio + cierres especiales
-    const blockedTimes = await prisma.blockedTime.findMany({
-      where: { businessId: business.id },
-      orderBy: { start: "asc" },
+    // Admin: horario del negocio + cierres especiales + cobertura de recursos
+    const nowMexico = toZonedTime(new Date(), TIME_ZONE);
+    const weekStart = startOfWeek(nowMexico, { weekStartsOn: 1 });
+    const weekDates = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(weekStart), i));
+
+    const [blockedTimes, rawCoverageAlerts] = await Promise.all([
+      prisma.blockedTime.findMany({
+        where: { businessId: business.id },
+        orderBy: { start: "asc" },
+      }),
+      getCoverageAlerts(business.id, weekStart),
+    ]);
+
+    // Construir snapshot de los 7 días con estado de cobertura
+    const weekCoverage = weekDates.map((date) => {
+      const mexicoDate = toZonedTime(date, TIME_ZONE);
+      const dayOfWeek  = mexicoDate.getDay();
+      const dateKey    = mexicoDate.toLocaleDateString("en-CA");
+      const dayLabel   = mexicoDate.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "short" });
+
+      const isOpen = businessSlots.some((s) => s.dayOfWeek === dayOfWeek);
+      if (!isOpen) return { dateKey, dayLabel, dayOfWeek, status: "closed" as const, slots: [] as string[] };
+
+      const alert = rawCoverageAlerts.find((a) => {
+        const alertMexico = toZonedTime(a.date, TIME_ZONE);
+        return alertMexico.toLocaleDateString("en-CA") === dateKey;
+      });
+      if (!alert) return { dateKey, dayLabel, dayOfWeek, status: "covered" as const, slots: [] as string[] };
+
+      return { dateKey, dayLabel, dayOfWeek, status: alert.type, slots: alert.slots };
     });
 
     return (
@@ -51,6 +82,7 @@ export default async function AvailabilityPage({ params }: Props) {
           start: b.start.toISOString(),
           end:   b.end.toISOString(),
         }))}
+        weekCoverage={weekCoverage}
       />
     );
   }
@@ -84,6 +116,7 @@ export default async function AvailabilityPage({ params }: Props) {
         start: v.start.toISOString(),
         end:   v.end.toISOString(),
       }))}
+      weekCoverage={[]}
     />
   );
 }

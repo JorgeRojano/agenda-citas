@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import DashboardAdmin from "./DashboardAdmin";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
+import { getCoverageAlerts } from "@/lib/coverageAlerts";
 
 const TIME_ZONE = "America/Mexico_City";
 
@@ -36,6 +37,21 @@ export default async function AdminDashboardPage({ params }: Props) {
 
   // Filtro base: staff solo ve sus citas, admin ve todas
   const staffFilter = isStaff && user ? { assignedToId: user.id } : {};
+
+  const rawCoverageAlerts = !isStaff
+    ? await getCoverageAlerts(business.id, weekStart)
+    : [];
+
+  const coverageAlerts = rawCoverageAlerts.map((a) => {
+    const mexicoDate = toZonedTime(a.date, TIME_ZONE);
+    return {
+      type: a.type,
+      dateKey: mexicoDate.toLocaleDateString("en-CA"),
+      dayLabel: mexicoDate.toLocaleDateString("es-MX", { weekday: "long" }),
+      slots: a.slots,
+      message: a.message,
+    };
+  });
 
   const [
     todayAppointments,
@@ -122,6 +138,7 @@ export default async function AdminDashboardPage({ params }: Props) {
       }))}
       weekDayCounts={dayCountMap}
       pendingByDay={pendingByDay}
+      coverageAlerts={coverageAlerts}
     />
   );
 }

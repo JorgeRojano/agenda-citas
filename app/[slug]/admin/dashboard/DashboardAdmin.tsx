@@ -26,6 +26,13 @@ interface Props {
   }[];
   weekDayCounts: Record<number, number>;
   pendingByDay: Record<string, { clientName: string; service: string; time: string }[]>;
+  coverageAlerts: {
+    type: "no_coverage" | "partial_coverage";
+    dateKey: string;
+    dayLabel: string;
+    slots: string[];
+    message: string;
+  }[];
 }
 
 const dayLabels: Record<number, string> = { 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie" };
@@ -38,7 +45,7 @@ function formatDayLabel(dateKey: string): { prefix: string; label: string } {
   return { prefix: "Próximo", label: new Date(dateKey + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" }) };
 }
 
-export default function DashboardAdmin({ business, staffName, stats, upcomingToday, weekDayCounts, pendingByDay }: Props) {
+export default function DashboardAdmin({ business, staffName, stats, upcomingToday, weekDayCounts, pendingByDay, coverageAlerts }: Props) {
   const router = useRouter();
   const { slug } = useParams();
   const [accordionOpen, setAccordionOpen] = useState(false);
@@ -149,6 +156,43 @@ export default function DashboardAdmin({ business, staffName, stats, upcomingTod
           )}
         </div>
       )}
+
+      {/* Coverage alerts */}
+      {coverageAlerts.map((alert, i) => (
+        <div
+          key={i}
+          style={{
+            background: alert.type === "no_coverage"
+              ? "var(--mantine-color-orange-light)"
+              : "var(--mantine-color-yellow-light)",
+            border: `1px solid ${alert.type === "no_coverage"
+              ? "var(--mantine-color-orange-light-hover)"
+              : "var(--mantine-color-yellow-light-hover)"}`,
+            borderRadius: 12,
+            padding: "14px 18px",
+            display: "flex", alignItems: "center", gap: 12,
+          }}
+        >
+          <Text size="xl">{alert.type === "no_coverage" ? "🚫" : "⚠️"}</Text>
+          <div style={{ flex: 1 }}>
+            <Text size="sm" fw={700} c={alert.type === "no_coverage" ? "orange.8" : "yellow.8"}>
+              {alert.message}
+            </Text>
+            <Text size="xs" c={alert.type === "no_coverage" ? "orange.7" : "yellow.7"} mt={2}>
+              Sin cobertura: {alert.slots.join(", ")}
+            </Text>
+          </div>
+          <Button
+            size="xs"
+            color={alert.type === "no_coverage" ? "orange" : "yellow"}
+            variant="light"
+            onClick={() => router.push(`/${slug}/admin/dashboard/availability`)}
+            style={{ flexShrink: 0 }}
+          >
+            Ver disponibilidad →
+          </Button>
+        </div>
+      ))}
 
       {/* Stats */}
       <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
