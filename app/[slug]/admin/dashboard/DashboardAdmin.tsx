@@ -33,6 +33,7 @@ interface Props {
     slots: string[];
     message: string;
   }[];
+  servicesWithoutResources: { id: string; name: string }[];
 }
 
 const dayLabels: Record<number, string> = { 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie" };
@@ -45,7 +46,7 @@ function formatDayLabel(dateKey: string): { prefix: string; label: string } {
   return { prefix: "Próximo", label: new Date(dateKey + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" }) };
 }
 
-export default function DashboardAdmin({ business, staffName, stats, upcomingToday, weekDayCounts, pendingByDay, coverageAlerts }: Props) {
+export default function DashboardAdmin({ business, staffName, stats, upcomingToday, weekDayCounts, pendingByDay, coverageAlerts, servicesWithoutResources }: Props) {
   const router = useRouter();
   const { slug } = useParams();
   const [accordionOpen, setAccordionOpen] = useState(false);
@@ -75,6 +76,36 @@ export default function DashboardAdmin({ business, staffName, stats, upcomingTod
           <Text size="xs" c="dimmed" mt={4} style={{ textTransform: "capitalize" }}>{dateLabel}</Text>
         </div>
       </Group>
+
+      {/* Servicios sin recursos */}
+      {servicesWithoutResources.length > 0 && (
+        <div
+          onClick={() => router.push(`/${slug}/admin/dashboard/services`)}
+          style={{
+            display: "flex", alignItems: "center", gap: 12,
+            background: "var(--mantine-color-orange-light)",
+            border: "1px solid var(--mantine-color-orange-light-hover)",
+            borderRadius: 12, padding: "14px 18px", cursor: "pointer",
+          }}
+        >
+          <Text size="xl">⚠️</Text>
+          <div style={{ flex: 1 }}>
+            <Text size="sm" fw={700} c="orange.8">
+              {servicesWithoutResources.length === 1
+                ? `"${servicesWithoutResources[0].name}" no tiene recursos asignados`
+                : `${servicesWithoutResources.length} servicios sin recursos asignados`}
+            </Text>
+            <Text size="xs" c="orange.7" mt={2}>
+              {servicesWithoutResources.length > 1
+                ? servicesWithoutResources.map((s) => s.name).join(", ")
+                : "Los clientes no podrán reservar este servicio"}
+            </Text>
+          </div>
+          <Text size="xs" fw={600} c="orange.8" style={{ whiteSpace: "nowrap" }}>
+            Ir a Servicios →
+          </Text>
+        </div>
+      )}
 
       {/* Pending accordion */}
       {totalPending > 0 && (

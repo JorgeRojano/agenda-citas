@@ -145,6 +145,11 @@ export default async function BusinessLandingPage({ params }: Props) {
                 <div className="biz-desc">{business.description}</div>
               )}
 
+              {/* CTA — mobile only, encima del horario */}
+              <Link href={`/${slug}/book`} className="cta cta-mobile" style={{ marginBottom: 16 }}>
+                Agendar cita
+              </Link>
+
               <div className="divider" />
 
               {/* Horario + Redes — grid en desktop */}
@@ -252,10 +257,6 @@ export default async function BusinessLandingPage({ params }: Props) {
                 </>
               )}
 
-              {/* CTA — mobile only */}
-              <Link href={`/${slug}/book`} className="cta cta-mobile">
-                Agendar cita
-              </Link>
             </div>
 
             {/* Sidebar — desktop only */}

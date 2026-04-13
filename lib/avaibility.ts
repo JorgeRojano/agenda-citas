@@ -46,6 +46,7 @@ export async function getAvailableSlots(
   serviceDuration: number,
   staffId?: string | null,
 ) {
+  const nowUTC     = new Date();
   const mexicoDate = toZonedTime(new Date(date), TIME_ZONE);
   const dayOfWeek  = mexicoDate.getDay();
 
@@ -81,7 +82,8 @@ export async function getAvailableSlots(
     const slots = generateSlotsFromTimeRanges(mexicoDate, timeRanges, serviceDuration);
     return slots.filter((slotUTC) => {
       const slotEndUTC = addMinutes(slotUTC, serviceDuration);
-      return !appointments.some((a) => isOverlapping(slotUTC, slotEndUTC, a.startTime, a.endTime))
+      return slotUTC >= nowUTC
+          && !appointments.some((a) => isOverlapping(slotUTC, slotEndUTC, a.startTime, a.endTime))
           && !blocked.some((b) => isOverlapping(slotUTC, slotEndUTC, b.start, b.end));
     });
   }
@@ -134,6 +136,6 @@ export async function getAvailableSlots(
     const overlapsBlocked = blocked.some((b) =>
       isOverlapping(slotUTC, slotEndUTC, b.start, b.end),
     );
-    return !overlapsAppointment && !overlapsBlocked;
+    return slotUTC >= nowUTC && !overlapsAppointment && !overlapsBlocked;
   });
 }

@@ -42,6 +42,13 @@ export default async function AdminDashboardPage({ params }: Props) {
     ? await getCoverageAlerts(business.id, weekStart)
     : [];
 
+  const servicesWithoutResources = (!isStaff && business.hasStaff)
+    ? await prisma.service.findMany({
+        where: { businessId: business.id, resources: { none: {} } },
+        select: { id: true, name: true },
+      })
+    : [];
+
   const coverageAlerts = rawCoverageAlerts.map((a) => {
     const mexicoDate = toZonedTime(a.date, TIME_ZONE);
     return {
@@ -139,6 +146,7 @@ export default async function AdminDashboardPage({ params }: Props) {
       weekDayCounts={dayCountMap}
       pendingByDay={pendingByDay}
       coverageAlerts={coverageAlerts}
+      servicesWithoutResources={servicesWithoutResources}
     />
   );
 }
