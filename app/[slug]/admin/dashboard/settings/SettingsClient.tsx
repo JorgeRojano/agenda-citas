@@ -13,6 +13,7 @@ import { LocationSection } from "./LocationSection";
 import { GallerySection } from "./GallerySection";
 
 type BusinessSettings = {
+  slug: string;
   name: string;
   description: string;
   primaryColor: string;
@@ -28,11 +29,14 @@ type BusinessSettings = {
 };
 
 const defaultSettings: BusinessSettings = {
-  name: "", description: "", primaryColor: "blue",
+  slug: "", name: "", description: "", primaryColor: "blue",
   logoUrl: "", bannerUrl: "", hasStaff: false,
   address: "", mapsUrl: "",
   whatsapp: "", instagram: "", facebook: "", website: "",
 };
+
+const formatSlug = (value: string) =>
+  value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
 const MANTINE_COLORS = [
   { name: "red",    label: "Rojo"     },
@@ -86,6 +90,7 @@ export default function SettingsClient({ initialImages }: Props) {
       if (res.ok) {
         const data = await res.json();
         const loaded: BusinessSettings = {
+          slug:         data.slug          ?? "",
           name:         data.name         ?? "",
           description:  data.description  ?? "",
           primaryColor: data.primaryColor  ?? "blue",
@@ -129,9 +134,14 @@ export default function SettingsClient({ initialImages }: Props) {
     });
     if (!res.ok) {
       setLoading(false);
-      showNotification({ title: "Error", message: "No se pudo guardar", color: "red" });
+      const data = await res.json().catch(() => ({}));
+      const message = data.error ?? "No se pudo guardar";
+      showNotification({ title: "Error", message, color: "red" });
       return;
     }
+
+    const { slug: savedSlug } = await res.json();
+    const slugChanged = savedSlug && savedSlug !== slug;
     setSavedSettings(settings);
 
     if (
@@ -154,7 +164,11 @@ export default function SettingsClient({ initialImages }: Props) {
 
     setLoading(false);
     showNotification({ title: "Guardado", message: "Configuración guardada", color: "green" });
-    router.refresh();
+    if (slugChanged) {
+      router.push(`/${savedSlug}/admin/dashboard/settings`);
+    } else {
+      router.refresh();
+    }
   };
 
   const update = (field: keyof BusinessSettings, value: string | boolean) =>
@@ -211,6 +225,22 @@ export default function SettingsClient({ initialImages }: Props) {
           <Text fw={600}>Información general</Text>
           <TextInput label="Nombre del negocio" value={settings.name} onChange={(e) => update("name", e.target.value)} />
           <Textarea label="Descripción" value={settings.description} onChange={(e) => update("description", e.target.value)} autosize minRows={2} />
+          <TextInput
+            label="Enlace de tu negocio (slug)"
+            description="Solo minúsculas, números y guiones. Cambiar esto modifica la URL pública."
+            placeholder="mi-negocio"
+            value={settings.slug}
+            onChange={(e) => update("slug", formatSlug(e.target.value))}
+            leftSection={<Text size="xs" c="dimmed">/</Text>}
+            rightSection={
+              settings.slug !== savedSettings.slug ? (
+                <Alert variant="filled" color="orange" p={4} radius="sm" style={{ fontSize: 10, lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                  URL cambiará
+                </Alert>
+              ) : null
+            }
+            rightSectionWidth={100}
+          />
         </Stack>
       </Paper>
 

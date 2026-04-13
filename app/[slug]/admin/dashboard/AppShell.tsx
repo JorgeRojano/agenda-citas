@@ -169,11 +169,11 @@ export const AppShellAdmin = ({
             <NavLink label="Disponibilidad" leftSection={<IconClock size={18} />}           active={pathname === availabilityPath}  component={Link} href={availabilityPath} />
             {userRole !== "STAFF" && (
               <>
-                <NavLink label="Configuración"  leftSection={<IconSettings size={18} />}        active={pathname === settingsPath}      component={Link} href={settingsPath} />
                 <NavLink label="Servicios"      leftSection={<IconTag size={18} />}             active={pathname === servicesPath}      component={Link} href={servicesPath} />
                 {business?.hasStaff && (
                   <NavLink label="Recursos" leftSection={<IconUsers size={18} />} active={pathname === resourcesPath} component={Link} href={resourcesPath} />
                 )}
+                <NavLink label="Configuración"  leftSection={<IconSettings size={18} />}        active={pathname === settingsPath}      component={Link} href={settingsPath} />
               </>
             )}
           </Stack>

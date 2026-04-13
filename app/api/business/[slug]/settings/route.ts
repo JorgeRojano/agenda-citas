@@ -11,6 +11,7 @@ export async function GET(
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
+      slug: true,
       name: true,
       description: true,
       primaryColor: true,
@@ -55,7 +56,21 @@ export async function PATCH(
     logoUrl, bannerUrl, hasStaff,
     address, mapsUrl,
     whatsapp, facebook, instagram, website,
+    slug: newSlug,
   } = body;
+
+  if (newSlug !== undefined && newSlug !== slug) {
+    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(newSlug)) {
+      return NextResponse.json(
+        { error: "Slug inválido. Solo letras minúsculas, números y guiones (sin empezar ni terminar con guión)." },
+        { status: 400 },
+      );
+    }
+    const existing = await prisma.business.findUnique({ where: { slug: newSlug } });
+    if (existing) {
+      return NextResponse.json({ error: "Este enlace ya está en uso." }, { status: 409 });
+    }
+  }
 
   const updatedBusiness = await prisma.business.update({
     where: { slug },
@@ -72,8 +87,9 @@ export async function PATCH(
       ...(facebook !== undefined && { facebook }),
       ...(instagram !== undefined && { instagram }),
       ...(website !== undefined && { website }),
+      ...(newSlug !== undefined && newSlug !== slug && { slug: newSlug }),
     },
   });
 
-  return NextResponse.json(updatedBusiness);
+  return NextResponse.json({ slug: updatedBusiness.slug });
 }

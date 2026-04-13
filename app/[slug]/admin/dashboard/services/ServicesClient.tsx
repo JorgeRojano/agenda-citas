@@ -13,7 +13,7 @@ import { showNotification } from "@mantine/notifications";
 import { Service } from "@/types/Service";
 import { Resource } from "@/types/Resource";
 
-interface Business { id: string; name: string; slug: string }
+interface Business { id: string; name: string; slug: string; hasStaff: boolean }
 
 interface ServiceWithResources extends Service {
   resources: { profileId: string; profile: { id: string; name: string | null } }[];
@@ -49,6 +49,7 @@ export default function ServicesClient({ business, services: initialServices }: 
   const [allResources, setAllResources]         = useState<Resource[]>([]);
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
   const [savingResources, setSavingResources]   = useState(false);
+  const [adminName, setAdminName]               = useState<string>("");
 
   const form = useForm({
     initialValues: { name: "", duration: 60, price: 0, showPrice: true },
@@ -60,10 +61,16 @@ export default function ServicesClient({ business, services: initialServices }: 
   });
 
   useEffect(() => {
-    fetch(`/api/business/${business.slug}/staff`)
-      .then((r) => r.json())
-      .then(setAllResources);
-  }, [business.slug]);
+    if (business.hasStaff) {
+      fetch(`/api/business/${business.slug}/staff`)
+        .then((r) => r.json())
+        .then(setAllResources);
+    } else {
+      fetch(`/api/business/${business.slug}/profile/me`)
+        .then((r) => r.json())
+        .then((d) => setAdminName(d.name ?? "Admin"));
+    }
+  }, [business.slug, business.hasStaff]);
 
   const handleOpen = (service?: Service) => {
     if (service) {
@@ -168,42 +175,69 @@ export default function ServicesClient({ business, services: initialServices }: 
 
             {/* Resources section */}
             <div style={{ padding: "10px 18px 12px", borderTop: "1px solid var(--mantine-color-default-border)" }}>
-              <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: "0.06em" }}>
-                Recursos asignados
-              </Text>
-              {service.resources.length === 0 ? (
-                <Text size="xs" c="dimmed" fs="italic">Sin recursos asignados</Text>
+              {business.hasStaff ? (
+                <>
+                  <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: "0.06em" }}>
+                    Recursos asignados
+                  </Text>
+                  {service.resources.length === 0 ? (
+                    <Text size="xs" c="dimmed" fs="italic">Sin recursos asignados</Text>
+                  ) : (
+                    <Group gap={6} style={{ flexWrap: "wrap" }}>
+                      {service.resources.map((r) => (
+                        <div
+                          key={r.profileId}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            background: "var(--mantine-color-violet-light)",
+                            borderRadius: 99, padding: "3px 8px",
+                          }}
+                        >
+                          <div style={{
+                            width: 20, height: 20, borderRadius: "50%",
+                            background: getAvatarColor(r.profile.name ?? "?"),
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 8, fontWeight: 700, color: "white", flexShrink: 0,
+                          }}>
+                            {getInitials(r.profile.name ?? "?")}
+                          </div>
+                          <Text size="xs" fw={600} c="violet">{r.profile.name}</Text>
+                        </div>
+                      ))}
+                    </Group>
+                  )}
+                </>
               ) : (
-                <Group gap={6} style={{ flexWrap: "wrap" }}>
-                  {service.resources.map((r) => (
-                    <div
-                      key={r.profileId}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 5,
-                        background: "var(--mantine-color-violet-light)",
-                        borderRadius: 99, padding: "3px 8px",
-                      }}
-                    >
-                      <div style={{
-                        width: 20, height: 20, borderRadius: "50%",
-                        background: getAvatarColor(r.profile.name ?? "?"),
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 8, fontWeight: 700, color: "white", flexShrink: 0,
-                      }}>
-                        {getInitials(r.profile.name ?? "?")}
-                      </div>
-                      <Text size="xs" fw={600} c="violet">{r.profile.name}</Text>
+                <>
+                  <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: "0.06em" }}>
+                    Atendido por
+                  </Text>
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    background: "var(--mantine-color-blue-light)",
+                    borderRadius: 99, padding: "3px 8px",
+                  }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: "50%",
+                      background: getAvatarColor(adminName || "A"),
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 8, fontWeight: 700, color: "white", flexShrink: 0,
+                    }}>
+                      {getInitials(adminName || "Admin")}
                     </div>
-                  ))}
-                </Group>
+                    <Text size="xs" fw={600} c="blue">{adminName || "Admin"}</Text>
+                  </div>
+                </>
               )}
             </div>
 
             {/* Footer */}
             <Stack gap={6} p="sm" style={{ paddingTop: 10 }}>
-              <Button variant="light" color="violet" size="xs" fullWidth leftSection={<IconUsers size={14} />} onClick={() => handleOpenResources(service)}>
-                Recursos
-              </Button>
+              {business.hasStaff && (
+                <Button variant="light" color="violet" size="xs" fullWidth leftSection={<IconUsers size={14} />} onClick={() => handleOpenResources(service)}>
+                  Recursos
+                </Button>
+              )}
               <Group gap="xs">
                 <Button variant="light" color="blue" size="xs" flex={1} leftSection={<IconEdit size={14} />} onClick={() => handleOpen(service)}>Editar</Button>
                 <Button variant="light" color="red" size="xs" flex={1} leftSection={<IconTrash size={14} />} onClick={() => { setDeleteId(service.id); openDelete(); }}>Eliminar</Button>

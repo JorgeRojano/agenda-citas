@@ -82,7 +82,7 @@ export default async function AvailabilityPage({ params }: Props) {
           start: b.start.toISOString(),
           end:   b.end.toISOString(),
         }))}
-        weekCoverage={weekCoverage}
+        weekCoverage={business.hasStaff ? weekCoverage : []}
       />
     );
   }
