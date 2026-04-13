@@ -36,10 +36,11 @@ function LeftPanel({
   business, colorName, compact, hasStaff,
   selectedService, selectedResource, selectedDate, selectedTime, active = 0,
 }: LeftPanelProps) {
-  // Con hasStaff=false el step de recurso no existe, así que los índices de fecha/hora
-  // son uno menos — ajustamos el umbral de visibilidad en el resumen
-  const dateThreshold = hasStaff ? 3 : 2;
-  const timeThreshold = hasStaff ? 4 : 3;
+  // Con hasStaff=true: Servicio(0) → Fecha(1) → Hora(2) → Recurso(3) → Datos(4)
+  // Con hasStaff=false: Servicio(0) → Fecha(1) → Hora(2) → Datos(3)
+  const dateThreshold     = 2;
+  const timeThreshold     = hasStaff ? 3 : 3;
+  const resourceThreshold = hasStaff ? 4 : -1;
 
   return (
     <div style={{
@@ -98,21 +99,6 @@ function LeftPanel({
             </div>
           )}
 
-          {/* Recurso — solo si hasStaff */}
-          {hasStaff && selectedResource && active >= 2 && (
-            <>
-              <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👤</div>
-                <div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>Recurso</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{selectedResource.name}</div>
-                  {selectedResource.specialty && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{selectedResource.specialty}</div>}
-                </div>
-              </div>
-            </>
-          )}
-
           {selectedDate && active >= dateThreshold && (
             <>
               <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
@@ -138,6 +124,21 @@ function LeftPanel({
                   <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>
                     {new Date(selectedTime).toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Mexico_City" })}
                   </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Recurso — solo si hasStaff, aparece después de fecha y hora */}
+          {hasStaff && selectedResource && active >= resourceThreshold && (
+            <>
+              <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👤</div>
+                <div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>Recurso</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{selectedResource.name}</div>
+                  {selectedResource.specialty && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{selectedResource.specialty}</div>}
                 </div>
               </div>
             </>
@@ -223,13 +224,13 @@ export default function AppointmentBooking({ business }: Props) {
 
   // stepLabels y totalSteps se derivan de hasStaff
   const stepLabels = hasStaff
-    ? ["Servicio", "Recurso", "Fecha", "Hora", "Tus datos"]
+    ? ["Servicio", "Fecha", "Hora", "Recurso", "Tus datos"]
     : ["Servicio", "Fecha", "Hora", "Tus datos"];
   const totalSteps = stepLabels.length;
 
   // Índices de cada step según hasStaff
   const STEPS = hasStaff
-    ? { service: 0, resource: 1, date: 2, time: 3, details: 4 }
+    ? { service: 0, date: 1, time: 2, resource: 3, details: 4 }
     : { service: 0, resource: -1, date: 1, time: 2, details: 3 };
 
   const [active, setActive]                     = useState(0);
@@ -250,24 +251,24 @@ export default function AppointmentBooking({ business }: Props) {
     setSelectedResource(null);
     setSelectedDate(null);
     setSelectedTime(null);
-    setActive(hasStaff ? STEPS.resource : STEPS.date);
-  };
-
-  const handleResourceSelect = (resource: Resource) => {
-    setSelectedResource(resource);
-    setSelectedDate(null);
-    setSelectedTime(null);
     setActive(STEPS.date);
   };
 
   const handleDateSelect = (date: DateValue) => {
     setSelectedDate(date);
     setSelectedTime(null);
+    setSelectedResource(null);
     setActive(STEPS.time);
   };
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
+    setSelectedResource(null);
+    setActive(hasStaff ? STEPS.resource : STEPS.details);
+  };
+
+  const handleResourceSelect = (resource: Resource) => {
+    setSelectedResource(resource);
     setActive(STEPS.details);
   };
 
@@ -328,14 +329,14 @@ export default function AppointmentBooking({ business }: Props) {
             {active === STEPS.service && (
               <ServiceStep slug={slug} colorName={colorName} selectedService={selectedService} onNext={handleServiceSelect} />
             )}
-            {hasStaff && active === STEPS.resource && (
-              <ResourceStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource} onNext={handleResourceSelect} />
-            )}
             {active === STEPS.date && (
-              <DateStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={selectedResource as Resource} selectedDate={selectedDate} onNext={handleDateSelect} />
+              <DateStep slug={slug} colorName={colorName} selectedService={selectedService} selectedResource={null} selectedDate={selectedDate} onNext={handleDateSelect} />
             )}
             {active === STEPS.time && (
-              <TimeStep slug={slug} colorName={colorName} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} staffId={selectedResource?.id ?? null} onNext={handleTimeSelect} />
+              <TimeStep slug={slug} colorName={colorName} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} staffId={null} onNext={handleTimeSelect} />
+            )}
+            {hasStaff && active === STEPS.resource && (
+              <ResourceStep slug={slug} colorName={colorName} selectedService={selectedService} selectedDate={selectedDate} selectedTime={selectedTime} selectedResource={selectedResource} onNext={handleResourceSelect} />
             )}
             {active === STEPS.details && (
               <DetailsStep colorName={colorName} selectedService={selectedService} selectedResource={hasStaff ? selectedResource as Resource : null} selectedDate={selectedDate} selectedTime={selectedTime} onSubmit={handleSubmit} />

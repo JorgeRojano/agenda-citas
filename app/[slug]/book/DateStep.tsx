@@ -18,7 +18,7 @@ function getAvailableDays(count: number, closedDays: number[]): Date[] {
 interface Props {
   onNext: (date: Date) => void;
   selectedService: any;
-  selectedResource: Resource;
+  selectedResource: Resource | null;
   selectedDate: any;
   slug: string;
   colorName?: string;

@@ -56,9 +56,10 @@ export default async function ResourcesPage({ params }: Props) {
         activeDays: [...new Set(u.resourceTimeSlots.map((t) => t.dayOfWeek))],
         activeVacation: (() => {
           const now = new Date();
-          return u.resourceVacations.find(
+          const v = u.resourceVacations.find(
             (v) => new Date(v.start) <= now && new Date(v.end) >= now
-          ) ?? null;
+          );
+          return v ? { name: v.name, start: v.start.toISOString(), end: v.end.toISOString() } : null;
         })(),
       }))}
     />

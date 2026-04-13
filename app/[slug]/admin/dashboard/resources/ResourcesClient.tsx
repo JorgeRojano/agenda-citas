@@ -17,7 +17,7 @@ const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 interface StaffMember {
   id: string; name: string; email: string; specialty: string;
   role: string; activeDays?: number[];
-  activeVacation?: { name: string | null; start: Date; end: Date } | null;
+  activeVacation?: { name: string | null; start: string; end: string } | null;
 }
 
 interface Props {
@@ -52,6 +52,10 @@ export default function ResourcesClient({ business, businessSchedule, staff: ini
   const handleAvailSaved = (activeDays: number[]) => {
     if (!availTarget) return;
     setStaff((prev) => prev.map((s) => s.id === availTarget.id ? { ...s, activeDays } : s));
+  };
+  const handleVacationChanged = (activeVacation: { name: string | null; start: string; end: string } | null) => {
+    if (!availTarget) return;
+    setStaff((prev) => prev.map((s) => s.id === availTarget.id ? { ...s, activeVacation } : s));
   };
 
   const [opened, { open, close }] = useDisclosure(false);
@@ -258,6 +262,7 @@ export default function ResourcesClient({ business, businessSchedule, staff: ini
           avatarColor={getAvatarColor(availTarget.name)}
           initials={getInitials(availTarget.name)}
           onSaved={handleAvailSaved}
+          onVacationChanged={handleVacationChanged}
           businessSchedule={businessSchedule}
         />
       )}

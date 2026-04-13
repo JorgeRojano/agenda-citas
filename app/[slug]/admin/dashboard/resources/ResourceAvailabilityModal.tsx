@@ -58,6 +58,13 @@ function vacationStatus(start: string, end: string) {
   return { label: "Futuro", color: "blue" } as const;
 }
 
+type ActiveVacation = { name: string | null; start: string; end: string };
+
+function computeActiveVacation(vacs: Vacation[]): ActiveVacation | null {
+  const now = new Date();
+  return vacs.find((v) => new Date(v.start) <= now && new Date(v.end) >= now) ?? null;
+}
+
 interface Props {
   opened: boolean;
   onClose: () => void;
@@ -66,11 +73,12 @@ interface Props {
   avatarColor: string;
   initials: string;
   onSaved: (activeDays: number[]) => void;
+  onVacationChanged: (activeVacation: ActiveVacation | null) => void;
   businessSchedule: { dayOfWeek: number; startTime: string; endTime: string }[];
 }
 
 export function ResourceAvailabilityModal({
-  opened, onClose, profileId, profileName, avatarColor, initials, onSaved, businessSchedule,
+  opened, onClose, profileId, profileName, avatarColor, initials, onSaved, onVacationChanged, businessSchedule,
 }: Props) {
   const { slug } = useParams<{ slug: string }>();
 
@@ -219,7 +227,9 @@ export function ResourceAvailabilityModal({
       return;
     }
     const created = await res.json();
-    setVacations((prev) => [...prev, created].sort((a, b) => a.start.localeCompare(b.start)));
+    const updated = [...vacations, created].sort((a, b) => a.start.localeCompare(b.start));
+    setVacations(updated);
+    onVacationChanged(computeActiveVacation(updated));
     setNewVac({ name: "", start: null, end: null });
     showNotification({ title: "Guardado", message: "Período de ausencia agregado", color: "green" });
   };
@@ -227,7 +237,9 @@ export function ResourceAvailabilityModal({
   const handleDeleteVacation = async (id: string) => {
     setDeletingId(id);
     await fetch(`/api/business/${slug}/resources/${profileId}/vacations?id=${id}`, { method: "DELETE" });
-    setVacations((prev) => prev.filter((v) => v.id !== id));
+    const updated = vacations.filter((v) => v.id !== id);
+    setVacations(updated);
+    onVacationChanged(computeActiveVacation(updated));
     setDeletingId(null);
     showNotification({ title: "Eliminado", message: "Período de ausencia eliminado", color: "red" });
   };

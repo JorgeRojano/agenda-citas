@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 interface Props {
   slug: string;
   selectedService: any;
+  selectedDate: any;
+  selectedTime: string | null;
   selectedResource: Resource | null;
   onNext: (resource: Resource) => void;
   colorName?: string;
@@ -29,7 +31,7 @@ function getAvatarColor(name: string) {
 }
 
 export function ResourceStep({
-  slug, selectedService, selectedResource, onNext, colorName = "blue",
+  slug, selectedService, selectedDate, selectedTime, selectedResource, onNext, colorName = "blue",
 }: Props) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading]     = useState(false);
@@ -37,11 +39,13 @@ export function ResourceStep({
   useEffect(() => {
     if (!selectedService?.id) return;
     setLoading(true);
-    fetch(`/api/business/${slug}/staff?serviceId=${selectedService.id}`)
+    const dateParam = selectedDate ? `&date=${selectedDate}` : "";
+    const timeParam = selectedTime ? `&time=${encodeURIComponent(selectedTime)}` : "";
+    fetch(`/api/business/${slug}/staff?serviceId=${selectedService.id}${dateParam}${timeParam}`)
       .then((r) => r.json())
       .then((data: Resource[]) => setResources(data))
       .finally(() => setLoading(false));
-  }, [slug, selectedService?.id]);
+  }, [slug, selectedService?.id, selectedDate, selectedTime]);
 
   return (
     <Stack gap="md">
@@ -59,7 +63,7 @@ export function ResourceStep({
         </Center>
       ) : (
         <Stack gap="xs">
-          {[{ id: null, name: "Sin preferencia", specialty: "Cualquier colaborador disponible" }, ...resources].map((resource) => {
+          {[...(resources.length >= 2 ? [{ id: null, name: "Sin preferencia", specialty: "Cualquier colaborador disponible" }] : []), ...resources].map((resource) => {
             const isSelected = selectedResource?.id === resource.id;
             const isAny      = resource.id === null;
             return (

@@ -15,8 +15,9 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { searchParams } = new URL(req.url);
-  const dateParam  = searchParams.get("date");   // opcional
+  const dateParam  = searchParams.get("date");      // opcional
   const serviceId  = searchParams.get("serviceId"); // opcional
+  const timeParam  = searchParams.get("time");      // opcional — ISO string del slot elegido
 
   // Calcular dayOfWeek en zona México si viene date
   let dayOfWeek: number | null = null;
@@ -38,6 +39,20 @@ export async function GET(
     dayEndUTC   = fromZonedTime(endOfDay, TIME_ZONE);
   }
 
+  // Calcular rango exacto del slot para filtrar citas solapadas
+  let slotStart: Date | undefined;
+  let slotEnd:   Date | undefined;
+  if (timeParam && serviceId) {
+    const service = await prisma.service.findFirst({
+      where: { id: serviceId, businessId: business.id },
+      select: { duration: true },
+    });
+    if (service) {
+      slotStart = new Date(timeParam);
+      slotEnd   = new Date(slotStart.getTime() + service.duration * 60000);
+    }
+  }
+
   const staff = await prisma.profile.findMany({
     where: {
       businessId: business.id,
@@ -55,6 +70,18 @@ export async function GET(
               none: {
                 start: { lte: dayEndUTC },
                 end:   { gte: dayStartUTC },
+              },
+            },
+          }
+        : {}),
+      // Excluir recursos con cita solapada en el slot exacto
+      ...(slotStart && slotEnd
+        ? {
+            appointments: {
+              none: {
+                status:    { in: ["PENDING", "CONFIRMED"] },
+                startTime: { lt: slotEnd },
+                endTime:   { gt: slotStart },
               },
             },
           }

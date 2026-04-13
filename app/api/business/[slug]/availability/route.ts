@@ -45,12 +45,42 @@ export async function GET(req: Request, context: { params: Promise<Params> }) {
     );
   }
 
-  const slots = await getAvailableSlots(
-    business.id,
-    date,
-    service.duration,
-    staffId ?? null,
-  );
+  let slots: Date[];
+
+  if (staffId) {
+    // Recurso específico elegido → comportamiento original
+    slots = await getAvailableSlots(business.id, date, service.duration, staffId);
+  } else {
+    // Sin preferencia → unión de slots libres de todos los recursos del servicio
+    const resourceLinks = await prisma.serviceResource.findMany({
+      where: { serviceId: service.id },
+      select: { profileId: true },
+    });
+
+    if (resourceLinks.length > 0) {
+      const perResource = await Promise.all(
+        resourceLinks.map((r) =>
+          getAvailableSlots(business.id, date, service.duration, r.profileId),
+        ),
+      );
+      // Unión deduplicada por ISO string, ordenada cronológicamente
+      const seen = new Set<string>();
+      const union: Date[] = [];
+      for (const resourceSlots of perResource) {
+        for (const slot of resourceSlots) {
+          const iso = slot.toISOString();
+          if (!seen.has(iso)) {
+            seen.add(iso);
+            union.push(slot);
+          }
+        }
+      }
+      slots = union.sort((a, b) => a.getTime() - b.getTime());
+    } else {
+      // Sin recursos asignados al servicio → fallback al horario del negocio
+      slots = await getAvailableSlots(business.id, date, service.duration, null);
+    }
+  }
 
   return NextResponse.json(slots);
 }

@@ -27,12 +27,59 @@ export async function createAppointment(
       select: { id: true, name: true, email: true },  // ← name agregado
     });
 
-    const resolvedAssignedToId = !business.hasStaff
+    const startTime = new Date(slot);
+    const endTime   = new Date(startTime.getTime() + service.duration * 60000);
+
+    let resolvedAssignedToId: string | null = !business.hasStaff
       ? (adminProfile?.id ?? null)
       : (assignedToId ?? null);
 
-    const startTime = new Date(slot);
-    const endTime   = new Date(startTime.getTime() + service.duration * 60000);
+    // Auto-asignar cuando hasStaff y el cliente eligió "Sin preferencia"
+    if (business.hasStaff && !resolvedAssignedToId) {
+      const dateStr  = startTime.toISOString().slice(0, 10);
+      const dayStart = new Date(`${dateStr}T00:00:00.000Z`);
+      const dayEnd   = new Date(`${dateStr}T23:59:59.999Z`);
+
+      const candidates = await prisma.profile.findMany({
+        where: {
+          businessId: business.id,
+          OR: [{ role: "STAFF" }, { role: "ADMIN", isResource: true }],
+          // Asignado al servicio solicitado
+          services: { some: { serviceId: service.id } },
+          // Sin vacaciones activas durante el slot
+          resourceVacations: {
+            none: { start: { lte: endTime }, end: { gte: startTime } },
+          },
+          // Sin cita que se traslape
+          appointments: {
+            none: {
+              status:    { in: ["PENDING", "CONFIRMED"] },
+              startTime: { lt: endTime },
+              endTime:   { gt: startTime },
+            },
+          },
+        },
+        select: {
+          id: true,
+          _count: {
+            select: {
+              appointments: {
+                where: {
+                  status:    { in: ["PENDING", "CONFIRMED"] },
+                  startTime: { gte: dayStart, lt: dayEnd },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (candidates.length === 0) throw new Error("Sin disponibilidad para este horario");
+
+      // Elegir el recurso con menos citas hoy (reparto de carga)
+      candidates.sort((a, b) => a._count.appointments - b._count.appointments);
+      resolvedAssignedToId = candidates[0].id;
+    }
 
     const overlapping = await prisma.appointment.findFirst({
       where: {
@@ -40,7 +87,7 @@ export async function createAppointment(
         status:    { in: ["PENDING", "CONFIRMED"] },
         startTime: { lt: endTime },
         endTime:   { gt: startTime },
-        ...(resolvedAssignedToId ? { assignedToId: resolvedAssignedToId } : {}),
+        assignedToId: resolvedAssignedToId,
       },
     });
     if (overlapping) throw new Error("Horario ya ocupado");
