@@ -178,7 +178,7 @@ export default function QRClient({
         }
       `}</style>
 
-      <Stack gap="lg" maw={520}>
+      <Stack gap="lg">
         <Group gap="xs">
           <IconQrcode size={22} />
           <Text fw={700} size="lg">Código QR</Text>
