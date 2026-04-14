@@ -6,7 +6,7 @@ import {
 } from "@mantine/core";
 import {
   IconCalendar, IconClock, IconExternalLink,
-  IconLayoutDashboard, IconLock, IconLogout, IconSettings,
+  IconLayoutDashboard, IconLock, IconLogout, IconQrcode, IconSettings,
   IconTag, IconUsers,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -88,6 +88,7 @@ export const AppShellAdmin = ({
   const settingsPath    = `${base}/settings`;
   const servicesPath    = `${base}/services`;
   const resourcesPath   = `${base}/resources`;
+  const qrPath          = `${base}/qr`;
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (opened) close(); }, [pathname]);
@@ -173,6 +174,7 @@ export const AppShellAdmin = ({
                 {business?.hasStaff && (
                   <NavLink label="Recursos" leftSection={<IconUsers size={18} />} active={pathname === resourcesPath} component={Link} href={resourcesPath} />
                 )}
+                <NavLink label="Código QR"      leftSection={<IconQrcode size={18} />}          active={pathname === qrPath}            component={Link} href={qrPath} />
                 <NavLink label="Configuración"  leftSection={<IconSettings size={18} />}        active={pathname === settingsPath}      component={Link} href={settingsPath} />
               </>
             )}
