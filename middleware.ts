@@ -87,7 +87,7 @@ export async function middleware(request: NextRequest) {
     if (isLoginRoute) {
       if (ownsThisBusiness) {
         const dashUrl = request.nextUrl.clone();
-        dashUrl.pathname = `/${slugInUrl}/admin/dashboard`;
+        dashUrl.pathname = `/${slugInUrl}/admin/appointments/dashboard`;
         return NextResponse.redirect(dashUrl);
       }
       return supabaseResponse;

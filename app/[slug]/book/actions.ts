@@ -109,7 +109,7 @@ export async function createAppointment(
       where: { businessId: business.id, status: "PENDING" },
     });
 
-    const dashboardUrl  = `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/dashboard`;
+    const dashboardUrl  = `${process.env.NEXT_PUBLIC_APP_URL}/${slug}/admin/appointments/dashboard`;
     const formattedDate = formatDateTimetoDisplay(startTime);
 
     await Promise.all([

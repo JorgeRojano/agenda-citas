@@ -92,7 +92,7 @@ export default function DayPicker({ onBlockedChange, onClosedDayChange, onLoadin
     if (!value) return;
     setDateString(value);
     startTransition(() => {
-      router.push(`/${slug}/admin/dashboard/bookings?date=${value}`);
+      router.push(`/${slug}/admin/appointments/bookings?date=${value}`);
     });
   }
 

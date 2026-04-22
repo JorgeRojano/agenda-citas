@@ -165,7 +165,7 @@ export default function SettingsClient({ initialImages }: Props) {
     setLoading(false);
     showNotification({ title: "Guardado", message: "Configuración guardada", color: "green" });
     if (slugChanged) {
-      router.push(`/${savedSlug}/admin/dashboard/settings`);
+      router.push(`/${savedSlug}/admin/settings`);
     } else {
       router.refresh();
     }

@@ -80,7 +80,7 @@ export default function DashboardAdmin({ business, staffName, stats, upcomingTod
       {/* Servicios sin recursos */}
       {servicesWithoutResources.length > 0 && (
         <div
-          onClick={() => router.push(`/${slug}/admin/dashboard/services`)}
+          onClick={() => router.push(`/${slug}/admin/appointments/services`)}
           style={{
             display: "flex", alignItems: "center", gap: 12,
             background: "var(--mantine-color-orange-light)",
@@ -175,7 +175,7 @@ export default function DashboardAdmin({ business, staffName, stats, upcomingTod
                     </div>
                     <Button
                       size="xs" color="yellow" variant="light"
-                      onClick={() => router.push(`/${slug}/admin/dashboard/bookings?date=${dateKey}`)}
+                      onClick={() => router.push(`/${slug}/admin/appointments/bookings?date=${dateKey}`)}
                       style={{ flexShrink: 0 }}
                     >
                       Ver →
@@ -217,7 +217,7 @@ export default function DashboardAdmin({ business, staffName, stats, upcomingTod
             size="xs"
             color={alert.type === "no_coverage" ? "orange" : "yellow"}
             variant="light"
-            onClick={() => router.push(`/${slug}/admin/dashboard/availability`)}
+            onClick={() => router.push(`/${slug}/admin/appointments/availability`)}
             style={{ flexShrink: 0 }}
           >
             Ver disponibilidad →
@@ -270,7 +270,7 @@ export default function DashboardAdmin({ business, staffName, stats, upcomingTod
         <Card withBorder radius="md" padding={0}>
           <Group px="md" py="sm" justify="space-between" style={{ borderBottom: "1px solid var(--mantine-color-default-border)" }}>
             <Text fw={700} size="sm">Próximas citas hoy</Text>
-            <Text size="xs" c="blue" fw={600} style={{ cursor: "pointer" }} onClick={() => router.push(`/${slug}/admin/dashboard/bookings`)}>
+            <Text size="xs" c="blue" fw={600} style={{ cursor: "pointer" }} onClick={() => router.push(`/${slug}/admin/appointments/bookings`)}>
               Ver todas →
             </Text>
           </Group>
@@ -313,10 +313,10 @@ export default function DashboardAdmin({ business, staffName, stats, upcomingTod
             <Text fw={700} size="sm" mb="md">Accesos rápidos</Text>
             <SimpleGrid cols={2} spacing="sm">
               {[
-                { icon: "📅", label: "Ver citas",      action: () => router.push(`/${slug}/admin/dashboard/bookings`) },
-                { icon: "🏷️", label: "Servicios",      action: () => router.push(`/${slug}/admin/dashboard/services`) },
-                { icon: "🕐", label: "Disponibilidad", action: () => router.push(`/${slug}/admin/dashboard/availability`) },
-                { icon: "⚙️", label: "Configuración",  action: () => router.push(`/${slug}/admin/dashboard/settings`) },
+                { icon: "📅", label: "Ver citas",      action: () => router.push(`/${slug}/admin/appointments/bookings`) },
+                { icon: "🏷️", label: "Servicios",      action: () => router.push(`/${slug}/admin/appointments/services`) },
+                { icon: "🕐", label: "Disponibilidad", action: () => router.push(`/${slug}/admin/appointments/availability`) },
+                { icon: "⚙️", label: "Configuración",  action: () => router.push(`/${slug}/admin/settings`) },
               ].map((item) => (
                 <div
                   key={item.label}

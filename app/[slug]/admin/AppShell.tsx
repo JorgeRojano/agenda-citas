@@ -7,7 +7,7 @@ import {
 import {
   IconCalendar, IconClock, IconExternalLink,
   IconLayoutDashboard, IconLock, IconLogout, IconQrcode, IconSettings,
-  IconTag, IconUsers,
+  IconTag, IconUsers, IconToolsKitchen2,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useDisclosure } from "@mantine/hooks";
@@ -31,7 +31,7 @@ const MessageNewAppointment = ({ booking, slug }: { booking: any; slug: string }
       Nueva cita: {booking.clientName} - {booking.service.name}
       <span
         style={{ color: "blue", cursor: "pointer", fontWeight: 600 }}
-        onClick={() => { router.push(`/${slug}/admin/dashboard/bookings?date=${date}`); notifications.hide(booking.id); }}
+        onClick={() => { router.push(`/${slug}/admin/appointments/bookings?date=${date}`); notifications.hide(booking.id); }}
       >
         Ver cita →
       </span>
@@ -43,10 +43,13 @@ export const AppShellAdmin = ({
   children,
   business,
   userRole,
+  activeModules = [],
 }: {
   children: React.ReactNode;
-  business: any; // debe incluir hasStaff: boolean
+  business: any;
   userRole?: string;
+  // La gestión de módulos la hace el SUPER_ADMIN en Supabase → tabla BusinessModule
+  activeModules?: string[];
 }) => {
   const pathname  = usePathname();
   const router    = useRouter();
@@ -81,20 +84,21 @@ export const AppShellAdmin = ({
     }
   };
 
-  const base            = `/${slug}/admin/dashboard`;
-  const dashboardPath   = base;
-  const bookingsPath    = `${base}/bookings`;
-  const availabilityPath = `${base}/availability`;
-  const settingsPath    = `${base}/settings`;
-  const servicesPath    = `${base}/services`;
-  const resourcesPath   = `${base}/resources`;
-  const qrPath          = `${base}/qr`;
+  const base             = `/${slug}/admin`;
+  const dashboardPath    = `${base}/appointments/dashboard`;
+  const bookingsPath     = `${base}/appointments/bookings`;
+  const availabilityPath = `${base}/appointments/availability`;
+  const settingsPath     = `${base}/settings`;
+  const servicesPath     = `${base}/appointments/services`;
+  const resourcesPath    = `${base}/appointments/resources`;
+  const qrPath           = `${base}/qr`;
+  const menuDashboardPath = `${base}/menu/dashboard`;
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (opened) close(); }, [pathname]);
   useEffect(() => { initOneSignal(); }, []);
 
-  const { newAppointmentAlert } = useRealtimeAppointments(
+  useRealtimeAppointments(
     business?.id,
     (booking) => {
       notifications.show({
@@ -164,25 +168,63 @@ export const AppShellAdmin = ({
       <AppShell.Navbar>
         <AppShell.Section p="md"><Text fw={600} size="sm">Menú</Text></AppShell.Section>
         <AppShell.Section grow my="md" component={ScrollArea} px="md">
-          <Stack gap="xs">
-            <NavLink label="Dashboard"      leftSection={<IconLayoutDashboard size={18} />} active={pathname === dashboardPath}    component={Link} href={dashboardPath} />
-            <NavLink label="Citas"          leftSection={<IconCalendar size={18} />}        active={pathname === bookingsPath}      component={Link} href={bookingsPath} />
-            <NavLink label="Disponibilidad" leftSection={<IconClock size={18} />}           active={pathname === availabilityPath}  component={Link} href={availabilityPath} />
+          <Stack gap={4}>
+
+            {/* Grupo Citas — visible solo si el módulo appointments está activo */}
+            {activeModules.includes("appointments") && (
+              <NavLink
+                label="Citas"
+                leftSection={<IconCalendar size={18} />}
+                defaultOpened={pathname.startsWith(`${base}/appointments`)}
+                active={pathname.startsWith(`${base}/appointments`)}
+              >
+                <NavLink label="Dashboard"      leftSection={<IconLayoutDashboard size={16} />} active={pathname === dashboardPath}    component={Link} href={dashboardPath} />
+                <NavLink label="Calendario"     leftSection={<IconCalendar size={16} />}        active={pathname === bookingsPath}      component={Link} href={bookingsPath} />
+                <NavLink label="Disponibilidad" leftSection={<IconClock size={16} />}           active={pathname === availabilityPath}  component={Link} href={availabilityPath} />
+                {userRole !== "STAFF" && (
+                  <>
+                    <NavLink label="Servicios" leftSection={<IconTag size={16} />}    active={pathname === servicesPath}  component={Link} href={servicesPath} />
+                    {business?.hasStaff && (
+                      <NavLink label="Recursos" leftSection={<IconUsers size={16} />} active={pathname === resourcesPath} component={Link} href={resourcesPath} />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            )}
+
+            {/* Grupo Menú Digital — visible solo si el módulo digital-menu está activo */}
+            {activeModules.includes("digital-menu") && userRole !== "STAFF" && (
+              <NavLink
+                label="Menú Digital"
+                leftSection={<IconToolsKitchen2 size={18} />}
+                defaultOpened={pathname.startsWith(`${base}/menu`)}
+                active={pathname.startsWith(`${base}/menu`)}
+              >
+                <NavLink label="Dashboard"     leftSection={<IconLayoutDashboard size={16} />} active={pathname === menuDashboardPath}                   component={Link} href={menuDashboardPath} />
+                <NavLink label="Platillos"     leftSection={<IconTag size={16} />}             active={pathname.startsWith(`${base}/menu/items`)}       component={Link} href={`${base}/menu/items`} />
+                <NavLink label="Categorías"    leftSection={<IconLayoutDashboard size={16} />} active={pathname.startsWith(`${base}/menu/categories`)}  component={Link} href={`${base}/menu/categories`} />
+                <NavLink label="Modificadores" leftSection={<IconSettings size={16} />}        active={pathname.startsWith(`${base}/menu/modifiers`)}   component={Link} href={`${base}/menu/modifiers`} />
+                <NavLink label="Promociones"   leftSection={<IconQrcode size={16} />}          active={pathname.startsWith(`${base}/menu/promotions`)}  component={Link} href={`${base}/menu/promotions`} />
+              </NavLink>
+            )}
+
+            {/* Sección compartida — siempre visible para ADMIN */}
             {userRole !== "STAFF" && (
               <>
-                <NavLink label="Servicios"      leftSection={<IconTag size={18} />}             active={pathname === servicesPath}      component={Link} href={servicesPath} />
-                {business?.hasStaff && (
-                  <NavLink label="Recursos" leftSection={<IconUsers size={18} />} active={pathname === resourcesPath} component={Link} href={resourcesPath} />
-                )}
-                <NavLink label="Código QR"      leftSection={<IconQrcode size={18} />}          active={pathname === qrPath}            component={Link} href={qrPath} />
-                <NavLink label="Configuración"  leftSection={<IconSettings size={18} />}        active={pathname === settingsPath}      component={Link} href={settingsPath} />
+                <NavLink label="Código QR"     leftSection={<IconQrcode size={18} />}  active={pathname === qrPath}       component={Link} href={qrPath} />
+                <NavLink label="Configuración" leftSection={<IconSettings size={18} />} active={pathname === settingsPath} component={Link} href={settingsPath} />
               </>
             )}
           </Stack>
         </AppShell.Section>
 
         <AppShell.Section p="md">
-          <NavLink label="Ver página de citas" leftSection={<IconExternalLink size={18} />} component="a" href={`/${slug}/book`} target="_blank" />
+          {activeModules.includes("appointments") && (
+            <NavLink label="Ver página de citas" leftSection={<IconExternalLink size={18} />} component="a" href={`/${slug}/book`} target="_blank" />
+          )}
+          {activeModules.includes("digital-menu") && (
+            <NavLink label="Ver menú" leftSection={<IconExternalLink size={18} />} component="a" href={`/${slug}/menu`} target="_blank" />
+          )}
         </AppShell.Section>
         <AppShell.Section>
           <Divider />

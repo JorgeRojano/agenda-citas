@@ -20,7 +20,7 @@ export async function createService(
     },
   });
 
-  revalidatePath(`/[slug]/admin/dashboard/services`);
+  revalidatePath(`/[slug]/admin/appointments/services`);
 }
 
 export async function updateService(
@@ -40,7 +40,7 @@ export async function updateService(
     },
   });
 
-  revalidatePath(`/[slug]/admin/dashboard/services`);
+  revalidatePath(`/[slug]/admin/appointments/services`);
 }
 
 export async function deleteService(businessId: string, serviceId: string) {
@@ -50,7 +50,7 @@ export async function deleteService(businessId: string, serviceId: string) {
     where: { id: serviceId },
   });
 
-  revalidatePath(`/[slug]/admin/dashboard/services`);
+  revalidatePath(`/[slug]/admin/appointments/services`);
 }
 
 export async function assignResourcesToService(
@@ -69,5 +69,5 @@ export async function assignResourcesToService(
       : []),
   ]);
 
-  revalidatePath(`/[slug]/admin/dashboard/services`);
+  revalidatePath(`/[slug]/admin/appointments/services`);
 }

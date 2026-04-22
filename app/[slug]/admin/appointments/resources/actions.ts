@@ -45,7 +45,7 @@ export async function createStaffMember(
     },
   });
 
-  revalidatePath(`/[slug]/admin/dashboard/resources`);
+  revalidatePath(`/[slug]/admin/appointments/resources`);
 }
 
 export async function updateStaffMember(
@@ -71,7 +71,7 @@ export async function updateStaffMember(
     },
   });
 
-  revalidatePath(`/[slug]/admin/dashboard/resources`);
+  revalidatePath(`/[slug]/admin/appointments/resources`);
 }
 
 export async function changeStaffPassword(
@@ -93,5 +93,5 @@ export async function deleteStaffMember(businessId: string, profileId: string) {
   await supabaseAdmin.auth.admin.deleteUser(profileId);
   await prisma.profile.delete({ where: { id: profileId } });
 
-  revalidatePath(`/[slug]/admin/dashboard/resources`);
+  revalidatePath(`/[slug]/admin/appointments/resources`);
 }

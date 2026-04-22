@@ -60,5 +60,5 @@ export async function createAppointmentByAdmin(
     },
   });
 
-  revalidatePath(`/${slug}/admin/dashboard/bookings`);
+  revalidatePath(`/${slug}/admin/appointments/bookings`);
 }
