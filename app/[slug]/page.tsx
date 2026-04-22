@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isModuleActive } from "@/lib/modules";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -56,6 +57,11 @@ export default async function BusinessLandingPage({ params }: Props) {
     },
   });
   if (!business) notFound();
+
+  const [hasAppointments, hasMenu] = await Promise.all([
+    isModuleActive(business.id, "appointments"),
+    isModuleActive(business.id, "digital-menu"),
+  ]);
 
   const colorName    = business.primaryColor ?? "blue";
   const schedule     = groupSchedule(business.timeSlots);
@@ -146,9 +152,16 @@ export default async function BusinessLandingPage({ params }: Props) {
               )}
 
               {/* CTA — mobile only, encima del horario */}
-              <Link href={`/${slug}/book`} className="cta cta-mobile" style={{ marginBottom: 16 }}>
-                Agendar cita
-              </Link>
+              {hasAppointments && (
+                <Link href={`/${slug}/book`} className="cta cta-mobile" style={{ marginBottom: hasMenu ? 8 : 16 }}>
+                  Agendar cita
+                </Link>
+              )}
+              {hasMenu && (
+                <Link href={`/${slug}/menu`} className="cta cta-mobile" style={{ marginBottom: 16 }}>
+                  Ver menú
+                </Link>
+              )}
 
               <div className="divider" />
 
@@ -261,9 +274,16 @@ export default async function BusinessLandingPage({ params }: Props) {
 
             {/* Sidebar — desktop only */}
             <div className="body-sidebar">
-              <Link href={`/${slug}/book`} className="cta">
-                Agendar cita
-              </Link>
+              {hasAppointments && (
+                <Link href={`/${slug}/book`} className="cta" style={{ marginBottom: hasMenu ? 8 : 0 }}>
+                  Agendar cita
+                </Link>
+              )}
+              {hasMenu && (
+                <Link href={`/${slug}/menu`} className="cta">
+                  Ver menú
+                </Link>
+              )}
             </div>
           </div>
         </div>

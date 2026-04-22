@@ -84,6 +84,7 @@ model Business {
   users        Profile[]
   timeSlots    BusinessTimeSlot[]
   images       BusinessImage[]
+  modules      BusinessModule[]
 
   @@index([slug])
 }
@@ -220,6 +221,37 @@ model Appointment {
   @@index([businessId])
   @@index([startTime])
   @@index([status])
+}
+
+//////////////////////
+// MODULES
+//////////////////////
+
+model Module {
+  id          String         @id @default(uuid())
+  key         String         @unique
+  name        String
+  description String
+  icon        String
+  isAvailable Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  businesses  BusinessModule[]
+}
+
+// La asignación de módulos por negocio la gestiona el SUPER_ADMIN
+// directamente en Supabase Table Editor → tabla BusinessModule
+model BusinessModule {
+  id          String   @id @default(uuid())
+  businessId  String
+  moduleKey   String
+  isActive    Boolean  @default(true)
+  settings    Json?
+  activatedAt DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  module      Module   @relation(fields: [moduleKey], references: [key])
+
+  @@unique([businessId, moduleKey])
+  @@index([businessId])
 }
 
 //////////////////////
