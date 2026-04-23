@@ -1,31 +1,3 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
-
-//////////////////////
-// ENUMS
-//////////////////////
-
-enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  STAFF
-  USER
-}
-
-enum AppointmentStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
-}
-
 //////////////////////
 // USER / PROFILE
 //////////////////////
@@ -49,44 +21,6 @@ model Profile {
   createdAt DateTime @default(now())
 
   @@map("profiles")
-}
-
-//////////////////////
-// BUSINESS (TENANT)
-//////////////////////
-
-model Business {
-  id          String  @id @default(uuid())
-  name        String
-  slug        String  @unique
-  phone       String?
-  description String?
-
-  primaryColor String? @default("blue")
-  logoUrl      String?
-  bannerUrl    String?
-
-  hasStaff Boolean @default(false)
-
-  address String?
-  mapsUrl String?
-
-  whatsapp  String?
-  facebook  String?
-  instagram String?
-  website   String?
-
-  createdAt DateTime @default(now())
-
-  services     Service[]
-  appointments Appointment[]
-  blockedTimes BlockedTime[]
-  users        Profile[]
-  timeSlots    BusinessTimeSlot[]
-  images       BusinessImage[]
-  modules      BusinessModule[]
-
-  @@index([slug])
 }
 
 //////////////////////
@@ -116,8 +50,8 @@ model BusinessTimeSlot {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   dayOfWeek Int
-  startTime String // "09:00"
-  endTime   String // "12:00"
+  startTime String
+  endTime   String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -167,8 +101,8 @@ model Service {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   name      String
-  duration  Int     // minutos
-  price     Int     // en centavos para evitar floats
+  duration  Int
+  price     Int
   showPrice Boolean @default(true)
 
   appointments Appointment[]
@@ -221,37 +155,6 @@ model Appointment {
   @@index([businessId])
   @@index([startTime])
   @@index([status])
-}
-
-//////////////////////
-// MODULES
-//////////////////////
-
-model Module {
-  id          String         @id @default(uuid())
-  key         String         @unique
-  name        String
-  description String
-  icon        String
-  isAvailable Boolean        @default(true)
-  createdAt   DateTime       @default(now())
-  businesses  BusinessModule[]
-}
-
-// La asignación de módulos por negocio la gestiona el SUPER_ADMIN
-// directamente en Supabase Table Editor → tabla BusinessModule
-model BusinessModule {
-  id          String   @id @default(uuid())
-  businessId  String
-  moduleKey   String
-  isActive    Boolean  @default(true)
-  settings    Json?
-  activatedAt DateTime @default(now())
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  module      Module   @relation(fields: [moduleKey], references: [key])
-
-  @@unique([businessId, moduleKey])
-  @@index([businessId])
 }
 
 //////////////////////

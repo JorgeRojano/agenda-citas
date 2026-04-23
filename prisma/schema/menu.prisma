@@ -1,0 +1,94 @@
+//////////////////////
+// MENU
+//////////////////////
+
+model MenuCategory {
+  id           String     @id @default(uuid())
+  businessId   String
+  business     Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name         String
+  emoji        String
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  items        MenuItem[]
+
+  @@index([businessId])
+}
+
+model MenuItem {
+  id            String         @id @default(uuid())
+  businessId    String
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      MenuCategory   @relation(fields: [categoryId], references: [id])
+  name          String
+  description   String?
+  price         Decimal        @db.Decimal(10, 2)
+  originalPrice Decimal?       @db.Decimal(10, 2)
+  emoji         String?
+  imageUrl      String?
+  isActive      Boolean        @default(true)
+  isAvailable   Boolean        @default(true)
+  isPopular     Boolean        @default(false)
+  isVegetarian  Boolean        @default(false)
+  isGlutenFree  Boolean        @default(false)
+  spiceLevel    Int            @default(0) // 0-3
+  allergens     String[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  itemModifiers ItemModifier[]
+
+  @@index([businessId])
+  @@index([categoryId])
+}
+
+model MenuModifier {
+  id            String           @id @default(uuid())
+  businessId    String
+  business      Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name          String
+  selectionType String           @default("single") // "single" | "multiple"
+  isRequired    Boolean          @default(false)
+  options       ModifierOption[]
+  itemModifiers ItemModifier[]
+
+  @@index([businessId])
+}
+
+model ModifierOption {
+  id           String       @id @default(uuid())
+  modifierId   String
+  modifier     MenuModifier @relation(fields: [modifierId], references: [id], onDelete: Cascade)
+  name         String
+  extraPrice   Decimal      @default(0) @db.Decimal(10, 2)
+  displayOrder Int          @default(0)
+}
+
+model ItemModifier {
+  itemId     String
+  modifierId String
+  item       MenuItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  modifier   MenuModifier @relation(fields: [modifierId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, modifierId])
+}
+
+model MenuPromotion {
+  id             String   @id @default(uuid())
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name           String
+  type           String   // "combo" | "discount" | "special"
+  description    String?
+  discountAmount Decimal? @db.Decimal(10, 2)
+  validDays      String[] // ["mon","tue","wed","thu","fri","sat","sun"]
+  startTime      String?  // "HH:mm"
+  endTime        String?  // "HH:mm"
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([businessId])
+}

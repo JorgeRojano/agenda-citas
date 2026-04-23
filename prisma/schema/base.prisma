@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+//////////////////////
+// ENUMS
+//////////////////////
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  USER
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+//////////////////////
+// BUSINESS (TENANT)
+//////////////////////
+
+model Business {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  phone       String?
+  description String?
+
+  primaryColor String? @default("blue")
+  logoUrl      String?
+  bannerUrl    String?
+
+  hasStaff Boolean @default(false)
+
+  address String?
+  mapsUrl String?
+
+  whatsapp  String?
+  facebook  String?
+  instagram String?
+  website   String?
+
+  createdAt DateTime @default(now())
+
+  // ── Appointments ──
+  services     Service[]
+  appointments Appointment[]
+  blockedTimes BlockedTime[]
+  users        Profile[]
+  timeSlots    BusinessTimeSlot[]
+  images       BusinessImage[]
+
+  // ── Modules ──
+  modules BusinessModule[]
+
+  // ── Menu ──
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  menuModifiers  MenuModifier[]
+  menuPromotions MenuPromotion[]
+
+  @@index([slug])
+}
