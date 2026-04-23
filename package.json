@@ -32,7 +32,8 @@
     "react-dom": "19.2.3",
     "react-onesignal": "^3.5.1",
     "react-phone-number-input": "^3.4.16",
-    "resend": "^6.9.3"
+    "resend": "^6.9.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
