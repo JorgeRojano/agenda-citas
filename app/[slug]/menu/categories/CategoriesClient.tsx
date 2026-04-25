@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { IconSearch, IconX, IconToolsKitchen2, IconStar, IconBell } from "@tabler/icons-react";
+import { IconSearch, IconX, IconToolsKitchen2, IconStar, IconBell, IconShoppingBag } from "@tabler/icons-react";
+import { useMenuList } from "../components/MenuListContext";
 
 type Category = {
   id:           string;
@@ -28,6 +29,7 @@ type Props = {
 
 export default function CategoriesClient({ slug, color, tableNum, categories, promotions }: Props) {
   const [search, setSearch] = useState("");
+  const { totalItems } = useMenuList();
 
   const filtered = categories.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
@@ -63,6 +65,7 @@ export default function CategoriesClient({ slug, color, tableNum, categories, pr
         .bottom-nav  { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--mantine-color-body); border-top: 1px solid var(--mantine-color-default-border); display: flex; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
         .nav-btn     { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border: none; background: transparent; cursor: pointer; font-size: 11px; color: var(--mantine-color-dimmed); text-decoration: none; }
         .nav-btn.active { color: var(--mantine-color-${color}-6); }
+        .nav-badge   { position: absolute; top: -5px; right: -8px; background: var(--mantine-color-${color}-6); color: white; border-radius: 99px; font-size: 9px; font-weight: 700; padding: 1px 5px; min-width: 15px; text-align: center; line-height: 1.5; }
       `}</style>
 
       <div className="cat-page">
@@ -134,6 +137,13 @@ export default function CategoriesClient({ slug, color, tableNum, categories, pr
           <Link href={`/${slug}/menu/promotions`} className="nav-btn">
             <IconStar size={20} />
             Especiales
+          </Link>
+          <Link href={`/${slug}/menu/list`} className="nav-btn">
+            <div style={{ position: "relative" }}>
+              <IconShoppingBag size={20} />
+              {totalItems > 0 && <span className="nav-badge">{totalItems}</span>}
+            </div>
+            Mi lista
           </Link>
           <button className="nav-btn" onClick={() => alert("Llama a tu mesero o levanta la mano 👋")}>
             <IconBell size={20} />
