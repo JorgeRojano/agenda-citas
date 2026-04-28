@@ -34,12 +34,19 @@ export default async function CategoriesPage({ params, searchParams }: Props) {
     }),
   ]);
 
-  const promotions = allPromotions.filter((p) => {
-    if (!p.startTime && !p.endTime) return true;
-    if (p.startTime && currentTime < p.startTime) return false;
-    if (p.endTime   && currentTime > p.endTime)   return false;
-    return true;
-  });
+  const promotions = allPromotions
+    .filter((p) => {
+      if (!p.startTime && !p.endTime) return true;
+      if (p.startTime && currentTime < p.startTime) return false;
+      if (p.endTime   && currentTime > p.endTime)   return false;
+      return true;
+    })
+    .map((p) => ({
+      id:          p.id,
+      name:        p.name,
+      type:        p.type,
+      description: p.description,
+    }));
 
   return (
     <CategoriesClient
