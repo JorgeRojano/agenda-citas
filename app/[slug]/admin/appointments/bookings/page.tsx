@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { getAppointmentsByDay } from "@/lib/appointments";
 import BookingsClient from "./BookingsClient";
+import { fromZonedTime } from "date-fns-tz";
+
+const TIME_ZONE = "America/Mexico_City";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +43,8 @@ export default async function AdminBookingsPage({ params, searchParams }: Props)
   if (!business) return <div>Negocio no encontrado</div>;
 
   const dateString = date ?? new Date().toLocaleDateString("en-CA");
-  const startOfDay = new Date(`${dateString}T00:00:00`);
-  const endOfDay   = new Date(`${dateString}T23:59:59`);
+  const startOfDay = fromZonedTime(`${dateString}T00:00:00`, TIME_ZONE);
+  const endOfDay   = fromZonedTime(`${dateString}T23:59:59.999`, TIME_ZONE);
 
   const appointments = await getAppointmentsByDay(business.id, startOfDay, endOfDay);
 
