@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { resolveAdminMenu, isStaff } from "../../_admin";
@@ -34,6 +35,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<Params
     data:  body.data,
   });
   if (!updated.count) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  revalidatePath(`/${slug}/menu/promotions`);
+  revalidatePath(`/${slug}/menu/categories`);
   return NextResponse.json({ ok: true });
 }
 
@@ -46,5 +49,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<Pa
   }
 
   await prisma.menuPromotion.deleteMany({ where: { id, businessId: resolved.business.id } });
+  revalidatePath(`/${slug}/menu/promotions`);
+  revalidatePath(`/${slug}/menu/categories`);
   return NextResponse.json({ ok: true });
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { resolveAdminMenu, isStaff } from "../_admin";
@@ -39,5 +40,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<Param
   const category = await prisma.menuCategory.create({
     data: { businessId: resolved.business.id, ...body.data },
   });
+  revalidatePath(`/${slug}/menu/categories`);
   return NextResponse.json(category, { status: 201 });
 }
