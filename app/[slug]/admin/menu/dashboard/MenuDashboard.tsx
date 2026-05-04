@@ -1,6 +1,6 @@
 "use client";
 
-import { SimpleGrid, Card, Text, Group, Badge, ThemeIcon, Stack, Button, Divider } from "@mantine/core";
+import { SimpleGrid, Card, Text, Group, ThemeIcon, Stack, Button, Divider } from "@mantine/core";
 import {
   IconLayoutDashboard,
   IconTag,
@@ -10,7 +10,6 @@ import {
   IconExternalLink,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 
 type Props = {
   slug: string;
@@ -128,10 +127,11 @@ export default function MenuDashboard({ slug, stats }: Props) {
         </Text>
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm">
           {[
-            { label: "Nueva categoría", href: `${base}/categories` },
-            { label: "Nuevo platillo",  href: `${base}/items` },
+            { label: "Nueva categoría",   href: `${base}/categories` },
+            { label: "Nuevo platillo",    href: `${base}/items` },
             { label: "Nuevo modificador", href: `${base}/modifiers` },
-            { label: "Nueva promoción", href: `${base}/promotions` },
+            { label: "Nueva promoción",   href: `${base}/promotions` },
+            { label: "Configuración",     href: `${base}/settings` },
           ].map((q) => (
             <Button key={q.label} component={Link} href={q.href} variant="default" size="sm" fullWidth>
               {q.label}
