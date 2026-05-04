@@ -15,16 +15,24 @@ export default async function AdminItemsPage({ params }: Props) {
   });
   if (!business) notFound();
 
-  const [items, categories] = await Promise.all([
+  const [items, categories, modifiers] = await Promise.all([
     prisma.menuItem.findMany({
       where:   { businessId: business.id },
       orderBy: [{ categoryId: "asc" }, { name: "asc" }],
-      include: { category: { select: { id: true, name: true, emoji: true } } },
+      include: {
+        category:      { select: { id: true, name: true, emoji: true } },
+        itemModifiers: { select: { modifierId: true } },
+      },
     }),
     prisma.menuCategory.findMany({
       where:   { businessId: business.id, isActive: true },
       orderBy: { displayOrder: "asc" },
       select:  { id: true, name: true, emoji: true },
+    }),
+    prisma.menuModifier.findMany({
+      where:   { businessId: business.id },
+      orderBy: { name: "asc" },
+      select:  { id: true, name: true, selectionType: true, isRequired: true },
     }),
   ]);
 
@@ -32,6 +40,7 @@ export default async function AdminItemsPage({ params }: Props) {
     <ItemsAdmin
       slug={slug}
       categories={categories}
+      modifiers={modifiers}
       items={items.map((i) => ({
         id:           i.id,
         categoryId:   i.categoryId,
@@ -49,6 +58,7 @@ export default async function AdminItemsPage({ params }: Props) {
         isGlutenFree: i.isGlutenFree,
         spiceLevel:   i.spiceLevel,
         allergens:    i.allergens,
+        modifierIds:  i.itemModifiers.map((im) => im.modifierId),
       }))}
     />
   );

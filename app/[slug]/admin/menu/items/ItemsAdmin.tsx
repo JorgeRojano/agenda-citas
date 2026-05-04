@@ -3,7 +3,7 @@
 import {
   Stack, Group, Text, Button, Badge, ActionIcon, Modal, TextInput,
   NumberInput, Switch, Select, Textarea, MultiSelect, SegmentedControl,
-  Table, ScrollArea,
+  Table, ScrollArea, Checkbox, Divider,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
@@ -12,6 +12,8 @@ import { IconPlus, IconEdit, IconTrash, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 
 type Category = { id: string; name: string; emoji: string };
+
+type AvailableModifier = { id: string; name: string; selectionType: string; isRequired: boolean };
 
 type Item = {
   id:            string;
@@ -30,11 +32,13 @@ type Item = {
   isGlutenFree:  boolean;
   spiceLevel:    number;
   allergens:     string[];
+  modifierIds:   string[];
 };
 
 type Props = {
   slug:       string;
   categories: Category[];
+  modifiers:  AvailableModifier[];
   items:      Item[];
 };
 
@@ -66,13 +70,14 @@ const emptyForm = {
   allergens:    [] as string[],
 };
 
-export default function ItemsAdmin({ slug, categories, items: initial }: Props) {
-  const [items, setItems]           = useState<Item[]>(initial);
-  const [editing, setEditing]       = useState<Item | null>(null);
+export default function ItemsAdmin({ slug, categories, modifiers, items: initial }: Props) {
+  const [items, setItems]               = useState<Item[]>(initial);
+  const [editing, setEditing]           = useState<Item | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Item | null>(null);
-  const [search, setSearch]         = useState("");
-  const [filterCat, setFilterCat]   = useState<string>("all");
-  const [loading, setLoading]       = useState(false);
+  const [selectedModifierIds, setSelectedModifierIds] = useState<string[]>([]);
+  const [search, setSearch]             = useState("");
+  const [filterCat, setFilterCat]       = useState<string>("all");
+  const [loading, setLoading]           = useState(false);
 
   const [formOpened,   { open: openForm,   close: closeForm }]   = useDisclosure(false);
   const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
@@ -90,12 +95,14 @@ export default function ItemsAdmin({ slug, categories, items: initial }: Props) 
 
   function openCreate() {
     setEditing(null);
+    setSelectedModifierIds([]);
     form.setValues({ ...emptyForm, categoryId: categories[0]?.id ?? "" });
     openForm();
   }
 
   function openEdit(item: Item) {
     setEditing(item);
+    setSelectedModifierIds(item.modifierIds);
     form.setValues({
       categoryId:    item.categoryId,
       name:          item.name,
@@ -131,9 +138,14 @@ export default function ItemsAdmin({ slug, categories, items: initial }: Props) 
           body:    JSON.stringify(payload),
         });
         if (!res.ok) throw new Error();
+        await fetch(`${base}/${editing.id}/modifiers`, {
+          method:  "PUT",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ modifierIds: selectedModifierIds }),
+        });
         const cat = categories.find((c) => c.id === values.categoryId)!;
         setItems((prev) => prev.map((i) => i.id === editing.id
-          ? { ...i, ...payload, price: String(payload.price), originalPrice: payload.originalPrice ? String(payload.originalPrice) : null, categoryName: cat.name, categoryEmoji: cat.emoji }
+          ? { ...i, ...payload, price: String(payload.price), originalPrice: payload.originalPrice ? String(payload.originalPrice) : null, categoryName: cat.name, categoryEmoji: cat.emoji, modifierIds: selectedModifierIds }
           : i
         ));
         showNotification({ message: "Platillo actualizado", color: "teal" });
@@ -145,6 +157,13 @@ export default function ItemsAdmin({ slug, categories, items: initial }: Props) 
         });
         if (!res.ok) throw new Error();
         const created = await res.json();
+        if (selectedModifierIds.length > 0) {
+          await fetch(`${base}/${created.id}/modifiers`, {
+            method:  "PUT",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ modifierIds: selectedModifierIds }),
+          });
+        }
         const cat = categories.find((c) => c.id === values.categoryId)!;
         setItems((prev) => [...prev, {
           ...created,
@@ -152,6 +171,7 @@ export default function ItemsAdmin({ slug, categories, items: initial }: Props) 
           originalPrice: created.originalPrice ? String(created.originalPrice) : null,
           categoryName:  cat.name,
           categoryEmoji: cat.emoji,
+          modifierIds:   selectedModifierIds,
         }]);
         showNotification({ message: "Platillo creado", color: "teal" });
       }
@@ -339,6 +359,34 @@ export default function ItemsAdmin({ slug, categories, items: initial }: Props) 
               <Switch label="🌿 Vegetariano"      checked={form.values.isVegetarian} onChange={(e) => form.setFieldValue("isVegetarian", e.currentTarget.checked)} />
               <Switch label="🌾 Sin gluten"       checked={form.values.isGlutenFree} onChange={(e) => form.setFieldValue("isGlutenFree", e.currentTarget.checked)} />
             </Group>
+            {modifiers.length > 0 && (
+              <>
+                <Divider label="Modificadores" labelPosition="left" />
+                <Stack gap="xs">
+                  {modifiers.map((mod) => (
+                    <Checkbox
+                      key={mod.id}
+                      label={
+                        <Group gap="xs">
+                          <Text size="sm">{mod.name}</Text>
+                          <Badge size="xs" variant="light" color="blue">
+                            {mod.selectionType === "single" ? "Única" : "Múltiple"}
+                          </Badge>
+                          {mod.isRequired && <Badge size="xs" variant="light" color="red">Req.</Badge>}
+                        </Group>
+                      }
+                      checked={selectedModifierIds.includes(mod.id)}
+                      onChange={(e) => {
+                        const checked = e.currentTarget.checked;
+                        setSelectedModifierIds((prev) =>
+                          checked ? [...prev, mod.id] : prev.filter((id) => id !== mod.id)
+                        );
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </>
+            )}
             <Group justify="flex-end" mt="sm">
               <Button variant="default" onClick={closeForm}>Cancelar</Button>
               <Button type="submit" loading={loading}>{editing ? "Guardar" : "Crear"}</Button>
