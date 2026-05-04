@@ -47,6 +47,7 @@ type Props = {
 export default function ItemDetailClient({ slug, color, item, categoryId }: Props) {
   const { dispatch } = useMenuList();
   const [selections, setSelections] = useState<Record<string, string | string[]>>({});
+  const [quantity, setQuantity]     = useState(1);
   const [showSheet, setShowSheet]   = useState(false);
   const [saved, setSaved]           = useState(false);
 
@@ -102,6 +103,7 @@ export default function ItemDetailClient({ slug, color, item, categoryId }: Prop
         emoji:      item.emoji,
         basePrice:  Number(item.price),
         totalPrice,
+        quantity,
         modifiers: modifiers
           .filter((mod) => selections[mod.id])
           .map((mod) => {
@@ -164,7 +166,11 @@ export default function ItemDetailClient({ slug, color, item, categoryId }: Prop
         .mod-opt-price { font-size: 13px; color: var(--mantine-color-dimmed); }
         .allergen-box  { background: var(--mantine-color-yellow-0); border: 1px solid var(--mantine-color-yellow-3); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--mantine-color-yellow-8); }
         .footer        { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--mantine-color-body); border-top: 1px solid var(--mantine-color-default-border); }
-        .save-btn      { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--mantine-color-${color}-6); color: white; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .qty-row       { display: flex; align-items: center; gap: 12px; }
+        .qty-btn       { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--mantine-color-${color}-6); background: transparent; color: var(--mantine-color-${color}-6); font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .qty-btn:disabled { opacity: .35; cursor: default; }
+        .qty-value     { font-size: 18px; font-weight: 700; min-width: 24px; text-align: center; color: var(--mantine-color-text); }
+        .save-btn      { flex: 1; padding: 14px; border-radius: 12px; border: none; background: var(--mantine-color-${color}-6); color: white; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
         .save-btn.saved { background: var(--mantine-color-green-6); }
         /* Sheet */
         .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
@@ -273,14 +279,26 @@ export default function ItemDetailClient({ slug, color, item, categoryId }: Prop
 
         {/* Footer fijo */}
         <div className="footer">
-          <button
-            className={`save-btn ${saved ? "saved" : ""}`}
-            onClick={saved ? undefined : handleSave}
-            disabled={!item.isAvailable}
-          >
-            <span>{saved ? "✓ Guardado en tu lista" : item.isAvailable ? "Guardar en mi lista" : "No disponible"}</span>
-            <span>${totalPrice.toFixed(2)}</span>
-          </button>
+          <div className="qty-row">
+            <button
+              className="qty-btn"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              disabled={quantity <= 1}
+            >−</button>
+            <span className="qty-value">{quantity}</span>
+            <button
+              className="qty-btn"
+              onClick={() => setQuantity((q) => q + 1)}
+            >+</button>
+            <button
+              className={`save-btn ${saved ? "saved" : ""}`}
+              onClick={saved ? undefined : handleSave}
+              disabled={!item.isAvailable}
+            >
+              <span>{saved ? "✓ Guardado en tu lista" : item.isAvailable ? "Guardar en mi lista" : "No disponible"}</span>
+              <span>${(totalPrice * quantity).toFixed(2)}</span>
+            </button>
+          </div>
         </div>
 
         {/* Sheet de confirmación */}
@@ -295,7 +313,10 @@ export default function ItemDetailClient({ slug, color, item, categoryId }: Prop
               {selectedSummary.map((s, i) => (
                 <div key={i} className="sheet-row">• {s}</div>
               ))}
-              <div className="sheet-total">${totalPrice.toFixed(2)}</div>
+              {quantity > 1 && (
+                <div className="sheet-row">Cantidad: {quantity}</div>
+              )}
+              <div className="sheet-total">${(totalPrice * quantity).toFixed(2)}</div>
               <button className="sheet-btn" onClick={confirmSave}>
                 Sí, guardar
               </button>

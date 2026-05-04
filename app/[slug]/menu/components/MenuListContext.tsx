@@ -16,6 +16,7 @@ export type ListItem = {
   emoji:      string | null;
   basePrice:  number;
   totalPrice: number;
+  quantity:   number;
   modifiers:  SelectedModifier[];
   note:       string;
 };
@@ -23,9 +24,10 @@ export type ListItem = {
 type State = { items: ListItem[] };
 
 type Action =
-  | { type: "ADD_ITEM";    payload: Omit<ListItem, "key"> }
-  | { type: "REMOVE_ITEM"; payload: { key: string } }
-  | { type: "UPDATE_NOTE"; payload: { key: string; note: string } }
+  | { type: "ADD_ITEM";        payload: Omit<ListItem, "key"> }
+  | { type: "REMOVE_ITEM";     payload: { key: string } }
+  | { type: "UPDATE_NOTE";     payload: { key: string; note: string } }
+  | { type: "UPDATE_QUANTITY"; payload: { key: string; quantity: number } }
   | { type: "CLEAR_LIST" };
 
 function reducer(state: State, action: Action): State {
@@ -42,6 +44,14 @@ function reducer(state: State, action: Action): State {
           i.key === action.payload.key ? { ...i, note: action.payload.note } : i
         ),
       };
+    case "UPDATE_QUANTITY": {
+      const qty = Math.max(1, action.payload.quantity);
+      return {
+        items: state.items.map((i) =>
+          i.key === action.payload.key ? { ...i, quantity: qty } : i
+        ),
+      };
+    }
     case "CLEAR_LIST":
       return { items: [] };
   }
@@ -64,8 +74,8 @@ export function MenuListProvider({ children }: { children: ReactNode }) {
       value={{
         items:      state.items,
         dispatch,
-        totalItems: state.items.length,
-        subtotal:   state.items.reduce((sum, i) => sum + i.totalPrice, 0),
+        totalItems: state.items.reduce((sum, i) => sum + i.quantity, 0),
+        subtotal:   state.items.reduce((sum, i) => sum + i.totalPrice * i.quantity, 0),
       }}
     >
       {children}

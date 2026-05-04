@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function WaiterClient({ slug, color }: Props) {
-  const { items, dispatch, subtotal } = useMenuList();
+  const { items, dispatch, subtotal, totalItems } = useMenuList();
   const router = useRouter();
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function WaiterClient({ slug, color }: Props) {
           <div className="waiter-top">
             <div className="waiter-label">Pedido del cliente</div>
             <div className="waiter-title">
-              {items.length} {items.length === 1 ? "platillo" : "platillos"}
+              {totalItems} {totalItems === 1 ? "platillo" : "platillos"}
             </div>
           </div>
 
@@ -67,8 +67,9 @@ export default function WaiterClient({ slug, color }: Props) {
                 <div className="item-row">
                   <div className="item-name">
                     {idx + 1}. {item.emoji ?? "🍽️"} {item.name}
+                    {item.quantity > 1 && <span style={{ fontWeight: 600, opacity: 0.75 }}> × {item.quantity}</span>}
                   </div>
-                  <div className="item-price">${item.totalPrice.toFixed(2)}</div>
+                  <div className="item-price">${(item.totalPrice * item.quantity).toFixed(2)}</div>
                 </div>
 
                 {item.modifiers.length > 0 && (
