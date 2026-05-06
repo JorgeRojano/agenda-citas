@@ -18,27 +18,28 @@ model MenuCategory {
 }
 
 model MenuItem {
-  id            String         @id @default(uuid())
-  businessId    String
-  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  categoryId    String
-  category      MenuCategory   @relation(fields: [categoryId], references: [id])
-  name          String
-  description   String?
-  price         Decimal        @db.Decimal(10, 2)
-  originalPrice Decimal?       @db.Decimal(10, 2)
-  emoji         String?
-  imageUrl      String?
-  isActive      Boolean        @default(true)
-  isAvailable   Boolean        @default(true)
-  isPopular     Boolean        @default(false)
-  isVegetarian  Boolean        @default(false)
-  isGlutenFree  Boolean        @default(false)
-  spiceLevel    Int            @default(0) // 0-3
-  allergens     String[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  itemModifiers ItemModifier[]
+  id             String               @id @default(uuid())
+  businessId     String
+  business       Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  categoryId     String
+  category       MenuCategory         @relation(fields: [categoryId], references: [id])
+  name           String
+  description    String?
+  price          Decimal              @db.Decimal(10, 2)
+  originalPrice  Decimal?             @db.Decimal(10, 2)
+  emoji          String?
+  imageUrl       String?
+  isActive       Boolean              @default(true)
+  isAvailable    Boolean              @default(true)
+  isPopular      Boolean              @default(false)
+  isVegetarian   Boolean              @default(false)
+  isGlutenFree   Boolean              @default(false)
+  spiceLevel     Int                  @default(0) // 0-3
+  allergens      String[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  itemModifiers  ItemModifier[]
+  promotionItems MenuPromotionItem[]
 
   @@index([businessId])
   @@index([categoryId])
@@ -76,19 +77,33 @@ model ItemModifier {
 }
 
 model MenuPromotion {
-  id             String   @id @default(uuid())
-  businessId     String
-  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name           String
-  type           String   // "combo" | "discount" | "special"
-  description    String?
-  discountAmount Decimal? @db.Decimal(10, 2)
-  validDays      String[] // ["mon","tue","wed","thu","fri","sat","sun"]
-  startTime      String?  // "HH:mm"
-  endTime        String?  // "HH:mm"
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String               @id @default(uuid())
+  businessId      String
+  business        Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name            String
+  type            String               // "combo" | "discount" | "special"
+  description     String?
+  discountAmount  Decimal?             @db.Decimal(10, 2)
+  discountPercent Decimal?             @db.Decimal(5, 2)  // e.g. 15.00 = 15%
+  validDays       String[]             // ["mon","tue","wed","thu","fri","sat","sun"]
+  startTime       String?              // "HH:mm"
+  endTime         String?              // "HH:mm"
+  isActive        Boolean              @default(true)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  items           MenuPromotionItem[]
 
   @@index([businessId])
+}
+
+model MenuPromotionItem {
+  id          String        @id @default(uuid())
+  promotionId String
+  itemId      String
+  quantity    Int           @default(1)
+  promotion   MenuPromotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  item        MenuItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, itemId])
+  @@index([promotionId])
 }
