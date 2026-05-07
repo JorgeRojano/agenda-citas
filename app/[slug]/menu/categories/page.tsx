@@ -9,6 +9,8 @@ type Props = {
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
+type DayHours = { open: string; close: string } | null;
+
 export default async function CategoriesPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const query    = await searchParams;
@@ -19,11 +21,11 @@ export default async function CategoriesPage({ params, searchParams }: Props) {
   });
   if (!business) notFound();
 
-  const now       = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
-  const todayKey  = DAY_KEYS[now.getDay()];
+  const now         = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
+  const todayKey    = DAY_KEYS[now.getDay()];
   const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const [categories, allPromotions] = await Promise.all([
+  const [categories, allPromotions, mod] = await Promise.all([
     prisma.menuCategory.findMany({
       where:   { businessId: business.id, isActive: true },
       orderBy: { displayOrder: "asc" },
@@ -31,6 +33,10 @@ export default async function CategoriesPage({ params, searchParams }: Props) {
     }),
     prisma.menuPromotion.findMany({
       where: { businessId: business.id, isActive: true, validDays: { has: todayKey } },
+    }),
+    prisma.businessModule.findUnique({
+      where:  { businessId_moduleKey: { businessId: business.id, moduleKey: "digital-menu" } },
+      select: { settings: true },
     }),
   ]);
 
@@ -48,13 +54,25 @@ export default async function CategoriesPage({ params, searchParams }: Props) {
       description: p.description,
     }));
 
+  const settings = (mod?.settings ?? {}) as Record<string, unknown>;
+  const tableParam     = (settings.tableParam as string) ?? "mesa";
+  const welcomeMessage = (settings.welcomeMessage as string) ?? null;
+  const wifiName       = (settings.wifiName as string) ?? null;
+  const wifiPassword   = (settings.wifiPassword as string) ?? null;
+  const savedHours = settings.hours as Record<string, DayHours> | undefined;
+  const todayHours = savedHours !== undefined ? (savedHours[todayKey] ?? null) : undefined;
+
   return (
     <CategoriesClient
       slug={slug}
       color={business.primaryColor ?? "blue"}
-      tableNum={query.mesa ?? query.table}
+      tableNum={query[tableParam] ?? query.mesa ?? query.table}
       categories={categories}
       promotions={promotions}
+      welcomeMessage={welcomeMessage}
+      wifiName={wifiName}
+      wifiPassword={wifiPassword}
+      todayHours={todayHours}
     />
   );
 }

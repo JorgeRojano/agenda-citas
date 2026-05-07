@@ -45,6 +45,11 @@ export default function ListClient({ slug, color }: Props) {
         .note-input   { flex: 1; border: none; background: var(--mantine-color-default-hover); border-radius: 8px; padding: 7px 10px; font-size: 13px; color: var(--mantine-color-text); outline: none; }
         .note-input::placeholder { color: var(--mantine-color-dimmed); }
         .remove-btn   { background: var(--mantine-color-red-0); border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .item-right   { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+        .qty-row      { display: flex; align-items: center; gap: 5px; }
+        .qty-btn      { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--mantine-color-${color}-6); background: transparent; color: var(--mantine-color-${color}-6); font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .qty-btn:disabled { opacity: .35; cursor: default; }
+        .qty-value    { font-size: 14px; font-weight: 700; min-width: 18px; text-align: center; color: var(--mantine-color-text); }
         .empty-state  { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .empty-icon   { font-size: 48px; }
         .empty-title  { font-size: 17px; font-weight: 700; color: var(--mantine-color-text); }
@@ -107,7 +112,21 @@ export default function ListClient({ slug, color }: Props) {
                           </div>
                         )}
                       </div>
-                      <span className="item-price">${item.totalPrice.toFixed(2)}</span>
+                      <div className="item-right">
+                        <span className="item-price">${(item.totalPrice * item.quantity).toFixed(2)}</span>
+                        <div className="qty-row">
+                          <button
+                            className="qty-btn"
+                            disabled={item.quantity <= 1}
+                            onClick={() => dispatch({ type: "UPDATE_QUANTITY", payload: { key: item.key, quantity: item.quantity - 1 } })}
+                          >−</button>
+                          <span className="qty-value">{item.quantity}</span>
+                          <button
+                            className="qty-btn"
+                            onClick={() => dispatch({ type: "UPDATE_QUANTITY", payload: { key: item.key, quantity: item.quantity + 1 } })}
+                          >+</button>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="item-actions">

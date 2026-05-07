@@ -30,6 +30,11 @@ export default async function PromotionsPage({ params }: Props) {
   const allPromotions = await prisma.menuPromotion.findMany({
     where:   { businessId: business.id, isActive: true, validDays: { has: todayKey } },
     orderBy: { name: "asc" },
+    include: {
+      items: {
+        include: { item: { select: { id: true, name: true, emoji: true, price: true } } },
+      },
+    },
   });
 
   const promotions = allPromotions
@@ -40,14 +45,21 @@ export default async function PromotionsPage({ params }: Props) {
       return true;
     })
     .map((p) => ({
-      id:             p.id,
-      name:           p.name,
-      type:           p.type,
-      typeLabel:      TYPE_LABELS[p.type] ?? p.type,
-      description:    p.description,
-      discountAmount: p.discountAmount?.toString() ?? null,
-      startTime:      p.startTime,
-      endTime:        p.endTime,
+      id:              p.id,
+      name:            p.name,
+      type:            p.type,
+      typeLabel:       TYPE_LABELS[p.type] ?? p.type,
+      description:     p.description,
+      discountPercent: p.discountPercent?.toString() ?? null,
+      startTime:       p.startTime,
+      endTime:         p.endTime,
+      items: p.items.map((pi) => ({
+        itemId:   pi.itemId,
+        quantity: pi.quantity,
+        name:     pi.item.name,
+        emoji:    pi.item.emoji,
+        price:    pi.item.price.toString(),
+      })),
     }));
 
   return (

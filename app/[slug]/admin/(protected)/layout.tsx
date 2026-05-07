@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getTenantModules } from "@/lib/modules";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
-import { AppShellAdmin } from "./AppShell";
+import { AppShellAdmin } from "../AppShell";
+
 
 export default async function AdminLayout({
   children,
