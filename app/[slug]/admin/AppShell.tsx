@@ -5,7 +5,7 @@ import {
   NavLink, PasswordInput, ScrollArea, Stack, Text,
 } from "@mantine/core";
 import {
-  IconCalendar, IconClock, IconExternalLink,
+  IconCalendar, IconChartBar, IconClock, IconExternalLink,
   IconLayoutDashboard, IconLock, IconLogout, IconQrcode, IconSettings,
   IconTag, IconUsers, IconToolsKitchen2,
 } from "@tabler/icons-react";
@@ -91,6 +91,7 @@ export const AppShellAdmin = ({
   const settingsPath     = `${base}/settings`;
   const servicesPath     = `${base}/appointments/services`;
   const resourcesPath    = `${base}/appointments/resources`;
+  const reportsPath      = `${base}/appointments/reports`;
   const qrPath           = `${base}/qr`;
   const menuDashboardPath = `${base}/menu/dashboard`;
 
@@ -187,6 +188,7 @@ export const AppShellAdmin = ({
                     {business?.hasStaff && (
                       <NavLink label="Recursos" leftSection={<IconUsers size={16} />} active={pathname === resourcesPath} component={Link} href={resourcesPath} />
                     )}
+                    <NavLink label="Reportes" leftSection={<IconChartBar size={16} />} active={pathname === reportsPath} component={Link} href={reportsPath} />
                   </>
                 )}
               </NavLink>
