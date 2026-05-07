@@ -1,16 +1,19 @@
 "use client";
 
-import { Alert, Button, Group, Paper, Select, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert, Button, Group, Paper, Select,
+  SimpleGrid, Stack, Text, Title,
+} from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
+import { useMediaQuery } from "@mantine/hooks";
 import { useEffect, useState } from "react";
-import { IconAlertCircle, IconCircleCheck, IconDownload, IconEye, IconRefresh } from "@tabler/icons-react";
+import {
+  IconAlertCircle, IconCircleCheck,
+  IconDownload, IconEye, IconRefresh,
+} from "@tabler/icons-react";
 
-interface Service      { id: string; name: string; }
-interface StaffMember  { id: string; name: string; specialty: string | null; }
-
-// ─── design tokens ────────────────────────────────────────────────────────────
-const SECTION_BG     = "#f0ede6";
-const SECTION_BORDER = "#e0dbd1";
+interface Service     { id: string; name: string; }
+interface StaffMember { id: string; name: string; specialty: string | null; }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -48,11 +51,14 @@ function formatPeriodShort(from: string | null, to: string | null): string | nul
 function SectionHeader({ label, first = false }: { label: string; first?: boolean }) {
   return (
     <div style={{
-      background: SECTION_BG, padding: "6px 16px",
-      borderTop:    first ? undefined : `1px solid ${SECTION_BORDER}`,
-      borderBottom: `1px solid ${SECTION_BORDER}`,
+      background:   "var(--mantine-color-default-hover)",
+      padding:      "6px 16px",
+      borderTop:    first ? undefined : "1px solid var(--mantine-color-default-border)",
+      borderBottom: "1px solid var(--mantine-color-default-border)",
     }}>
-      <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.07em" }}>{label}</Text>
+      <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.07em" }}>
+        {label}
+      </Text>
     </div>
   );
 }
@@ -62,7 +68,7 @@ function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }
     <div style={{
       display: "inline-flex", alignItems: "center", gap: 6,
       background: "var(--mantine-color-blue-light)",
-      color: "var(--mantine-color-blue-light-color)",
+      color:      "var(--mantine-color-blue-light-color)",
       borderRadius: 99, padding: "3px 8px 3px 10px",
       fontSize: 12, fontWeight: 500,
     }}>
@@ -79,9 +85,9 @@ function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }
 // ─── PDF format preview ───────────────────────────────────────────────────────
 
 const SAMPLE_ROWS = [
-  { time: "9:00 a.m.",  sub: "Consulta · Dr. Ramírez · 45 min",     price: "$120", status: "Pagado",    statusBg: "#f0fdf4", statusFg: "#15803d" },
-  { time: "11:30 a.m.", sub: "Seguimiento · Dr. Torres · 30 min",   price: "$80",  status: "Pendiente", statusBg: "#fff7ed", statusFg: "#c2410c" },
-  { time: "3:00 p.m.",  sub: "Procedimiento · Dr. Vega · 90 min",   price: "$340", status: "Cancelado", statusBg: "#fef2f2", statusFg: "#b91c1c" },
+  { time: "9:00 a.m.",  sub: "Consulta · Dr. Ramírez · 45 min",   price: "$120", status: "Pagado",    statusBg: "#f0fdf4", statusFg: "#15803d" },
+  { time: "11:30 a.m.", sub: "Seguimiento · Dr. Torres · 30 min", price: "$80",  status: "Pendiente", statusBg: "#fff7ed", statusFg: "#c2410c" },
+  { time: "3:00 p.m.",  sub: "Procedimiento · Dr. Vega · 90 min", price: "$340", status: "Cancelado", statusBg: "#fef2f2", statusFg: "#b91c1c" },
 ];
 
 function PdfFormatPreview({ from, to, staffName, statusName }: {
@@ -91,95 +97,109 @@ function PdfFormatPreview({ from, to, staffName, statusName }: {
   const period = formatPeriod(from, to) ?? "Todas las fechas";
 
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.07)" }}>
+    <div style={{
+      border:       "1px solid var(--mantine-color-default-border)",
+      borderRadius: 10, overflow: "hidden",
+      boxShadow:    "0 2px 16px rgba(0,0,0,0.07)",
+    }}>
 
-      {/* Preview header */}
+      {/* Preview card header */}
       <div style={{
         display: "flex", alignItems: "center", gap: 12,
         padding: "10px 16px",
-        background: "#f8f9fa",
-        borderBottom: "1px solid #e5e7eb",
+        background:   "var(--mantine-color-default-hover)",
+        borderBottom: "1px solid var(--mantine-color-default-border)",
       }}>
         <div style={{
           width: 34, height: 34, borderRadius: "50%",
-          background: "#fff", border: "1px solid #e5e7eb",
+          background: "var(--mantine-color-body)",
+          border:     "1px solid var(--mantine-color-default-border)",
           display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
         }}>
-          <IconEye size={16} color="#6b7280" />
+          <IconEye size={16} />
         </div>
         <div>
           <Text fw={700} size="sm">Vista previa del diseño</Text>
-          <Text size="xs" c="dimmed">Estructura de muestra — tus datos reales aparecerán en el PDF descargado</Text>
+          <Text size="xs" c="dimmed">
+            Estructura de muestra — tus datos reales aparecerán en el PDF descargado
+          </Text>
         </div>
       </div>
 
-      {/* PDF content mockup */}
-      <div style={{
-        background: "#fff", padding: "20px 24px",
-        fontFamily: "system-ui, -apple-system, sans-serif", color: "#111827", fontSize: 12,
-      }}>
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2 }}>Nombre del negocio</div>
-            <div style={{ fontSize: 8, color: "#9ca3af" }}>sistema de gestión de citas</div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", marginBottom: 3 }}>REPORTE DE CITAS</div>
-            <div style={{ fontSize: 7.5, color: "#9ca3af", lineHeight: 1.6 }}>
-              Generado 6 may. 2026 · 9:14 a.m.<br />Preparado por Admin
+      {/* PDF mockup — white/fixed colors intentionally to simulate a printed document */}
+      <div style={{ overflowX: "auto" }}>
+        <div style={{
+          minWidth: 480, background: "#fff", padding: "20px 24px",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          color: "#111827", fontSize: 12,
+        }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2 }}>Nombre del negocio</div>
+              <div style={{ fontSize: 8, color: "#9ca3af" }}>sistema de gestión de citas</div>
             </div>
-          </div>
-        </div>
-
-        <div style={{ borderTop: "1px solid #d1d5db", marginBottom: 10 }} />
-
-        {/* Filter band */}
-        <div style={{ display: "flex", background: "#f3f4f6", borderRadius: 6, padding: "8px 12px", marginBottom: 12 }}>
-          {[
-            { label: "Período",           value: period     },
-            { label: "Filtro de personal", value: staffName  },
-            { label: "Filtro de estado",   value: statusName },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ flex: 1 }}>
-              <div style={{ fontSize: 6.5, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
-              <div style={{ fontSize: 9, fontWeight: 700 }}>{value}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          {[["12", "Citas"], ["$1,480", "Ingresos totales"], ["$123", "Prom. por cita"]].map(([num, lbl]) => (
-            <div key={lbl} style={{ flex: 1, border: "1px solid #e5e7eb", borderRadius: 6, padding: "8px 10px" }}>
-              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>{num}</div>
-              <div style={{ fontSize: 6.5, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase" }}>{lbl}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Day label */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <div style={{ fontSize: 7, fontWeight: 700, color: "#9ca3af", flexShrink: 0 }}>LUNES, 5 DE MAYO</div>
-          <div style={{ flex: 1, borderTop: "0.5px solid #d1d5db" }} />
-        </div>
-
-        {/* Sample rows */}
-        {SAMPLE_ROWS.map((row, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "6px 0", borderBottom: "0.5px solid #f3f4f6" }}>
-            <div style={{ width: 48, fontSize: 8, color: "#9ca3af", flexShrink: 0, paddingTop: 1 }}>{row.time}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Nombre del cliente</div>
-              <div style={{ fontSize: 8, color: "#9ca3af" }}>{row.sub}</div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700 }}>{row.price}</div>
-              <div style={{ background: row.statusBg, color: row.statusFg, borderRadius: 4, padding: "2px 6px", fontSize: 7, fontWeight: 700 }}>
-                {row.status}
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", marginBottom: 3 }}>
+                REPORTE DE CITAS
+              </div>
+              <div style={{ fontSize: 7.5, color: "#9ca3af", lineHeight: 1.6 }}>
+                Generado 6 may. 2026 · 9:14 a.m.<br />Preparado por Admin
               </div>
             </div>
           </div>
-        ))}
+
+          <div style={{ borderTop: "1px solid #d1d5db", marginBottom: 10 }} />
+
+          {/* Filter band */}
+          <div style={{ display: "flex", background: "#f3f4f6", borderRadius: 6, padding: "8px 12px", marginBottom: 12 }}>
+            {[
+              { label: "Período",            value: period     },
+              { label: "Filtro de personal", value: staffName  },
+              { label: "Filtro de estado",   value: statusName },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ flex: 1 }}>
+                <div style={{ fontSize: 6.5, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: 3 }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: 9, fontWeight: 700 }}>{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+            {[["12", "Citas"], ["$1,480", "Ingresos totales"], ["$123", "Prom. por cita"]].map(([num, lbl]) => (
+              <div key={lbl} style={{ flex: 1, border: "1px solid #e5e7eb", borderRadius: 6, padding: "8px 10px" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>{num}</div>
+                <div style={{ fontSize: 6.5, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase" }}>{lbl}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Day label */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <div style={{ fontSize: 7, fontWeight: 700, color: "#9ca3af", flexShrink: 0 }}>LUNES, 5 DE MAYO</div>
+            <div style={{ flex: 1, borderTop: "0.5px solid #d1d5db" }} />
+          </div>
+
+          {/* Sample rows */}
+          {SAMPLE_ROWS.map((row, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "6px 0", borderBottom: "0.5px solid #f3f4f6" }}>
+              <div style={{ width: 48, fontSize: 8, color: "#9ca3af", flexShrink: 0, paddingTop: 1 }}>{row.time}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Nombre del cliente</div>
+                <div style={{ fontSize: 8, color: "#9ca3af" }}>{row.sub}</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700 }}>{row.price}</div>
+                <div style={{ background: row.statusBg, color: row.statusFg, borderRadius: 4, padding: "2px 6px", fontSize: 7, fontWeight: 700 }}>
+                  {row.status}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -190,6 +210,7 @@ function PdfFormatPreview({ from, to, staffName, statusName }: {
 interface Props { slug: string; }
 
 export default function ReportsClient({ slug }: Props) {
+  const isMobile  = useMediaQuery("(max-width: 640px)");
   const today     = new Date();
   const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -322,17 +343,17 @@ export default function ReportsClient({ slug }: Props) {
       )}
 
       {/* ── Tarjeta de filtros ──────────────────────────────────── */}
-      <Paper withBorder radius="md" style={{ overflow: "hidden", borderColor: SECTION_BORDER }}>
+      <Paper withBorder radius="md" style={{ overflow: "hidden" }}>
 
         <SectionHeader label="Rango de fechas" first />
-        <div style={{ padding: "16px 16px 12px", background: "#fff" }}>
-          <Group align="flex-end" gap="md">
+        <div style={{ padding: "16px 16px 12px" }}>
+          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
             <DatePickerInput
               label="Desde" placeholder="Fecha de inicio"
               value={from} onChange={setFrom}
               valueFormat="DD/MM/YYYY"
               maxDate={to ? new Date(to) : undefined}
-              clearable style={{ flex: 1 }}
+              clearable
             />
             <DatePickerInput
               label="Hasta" placeholder="Fecha fin"
@@ -340,18 +361,18 @@ export default function ReportsClient({ slug }: Props) {
               valueFormat="DD/MM/YYYY"
               minDate={from ? new Date(from) : undefined}
               maxDate={today}
-              clearable style={{ flex: 1 }}
+              clearable
             />
-            <div style={{ flex: 1, paddingBottom: 2 }}>
+            <div>
               <Text size="xs" c="dimmed" mb={4}>Período seleccionado</Text>
               <Text fw={600} size="sm">{formatPeriod(from, to) ?? "—"}</Text>
             </div>
-          </Group>
+          </SimpleGrid>
         </div>
 
         <SectionHeader label="Filtros" />
-        <div style={{ padding: "16px 16px 12px", background: "#fff" }}>
-          <Group grow gap="md">
+        <div style={{ padding: "16px 16px 12px" }}>
+          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
             <Select
               label="Tipo de servicio"
               placeholder={loadingServices ? "Cargando..." : "Todos los servicios"}
@@ -371,15 +392,20 @@ export default function ReportsClient({ slug }: Props) {
               data={statusOptions} value={status}
               onChange={(v) => setStatus(v ?? "all")}
             />
-          </Group>
+          </SimpleGrid>
         </div>
 
+        {/* ── Barra de acciones ───────────────────────────────────── */}
         <div style={{
-          background: SECTION_BG, borderTop: `1px solid ${SECTION_BORDER}`,
-          padding: "10px 16px",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          background:   "var(--mantine-color-default-hover)",
+          borderTop:    "1px solid var(--mantine-color-default-border)",
+          padding:      "10px 16px",
+          display:      "flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems:   isMobile ? "stretch" : "center",
+          gap:          10,
         }}>
-          <Group gap="xs" wrap="wrap">
+          <Group gap="xs" wrap="wrap" style={{ flex: 1 }}>
             <Text size="sm" c="dimmed">Filtros activos:</Text>
             {periodLabel && (
               <FilterPill label={periodLabel} onRemove={() => { setFrom(null); setTo(null); }} />
@@ -394,7 +420,7 @@ export default function ReportsClient({ slug }: Props) {
               <FilterPill label={resolvedStatusName} onRemove={() => setStatus("all")} />
             )}
           </Group>
-          <Group gap="sm" style={{ flexShrink: 0 }}>
+          <Group gap="sm" grow={isMobile} style={isMobile ? undefined : { flexShrink: 0 }}>
             <Button variant="default" leftSection={<IconRefresh size={15} />} onClick={handleReset}>
               Restablecer
             </Button>
