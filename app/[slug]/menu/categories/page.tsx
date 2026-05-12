@@ -9,7 +9,7 @@ type Props = {
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
-type DayHours = { open: string; close: string } | null;
+type TimeSlot = { start: string; end: string };
 
 export default async function CategoriesPage({ params, searchParams }: Props) {
   const { slug } = await params;
@@ -54,25 +54,31 @@ export default async function CategoriesPage({ params, searchParams }: Props) {
       description: p.description,
     }));
 
-  const settings = (mod?.settings ?? {}) as Record<string, unknown>;
-  const tableParam     = (settings.tableParam as string) ?? "mesa";
-  const welcomeMessage = (settings.welcomeMessage as string) ?? null;
-  const wifiName       = (settings.wifiName as string) ?? null;
-  const wifiPassword   = (settings.wifiPassword as string) ?? null;
-  const savedHours = settings.hours as Record<string, DayHours> | undefined;
-  const todayHours = savedHours !== undefined ? (savedHours[todayKey] ?? null) : undefined;
+  const settings   = (mod?.settings ?? {}) as Record<string, unknown>;
+  const savedHours = settings.hours as Record<string, unknown> | undefined;
+
+  // Acepta el shape nuevo (TimeSlot[]) y también el viejo ({ open, close } | null)
+  let todaySlots: TimeSlot[] | undefined;
+  if (savedHours !== undefined) {
+    const raw = savedHours[todayKey];
+    if (Array.isArray(raw)) {
+      todaySlots = raw as TimeSlot[];
+    } else if (raw && typeof raw === "object" && "open" in raw && "close" in raw) {
+      const obj = raw as { open: string; close: string };
+      todaySlots = [{ start: obj.open, end: obj.close }];
+    } else {
+      todaySlots = [];
+    }
+  }
 
   return (
     <CategoriesClient
       slug={slug}
       color={business.primaryColor ?? "blue"}
-      tableNum={query[tableParam] ?? query.mesa ?? query.table}
+      tableNum={query.mesa ?? query.table}
       categories={categories}
       promotions={promotions}
-      welcomeMessage={welcomeMessage}
-      wifiName={wifiName}
-      wifiPassword={wifiPassword}
-      todayHours={todayHours}
+      todaySlots={todaySlots}
     />
   );
 }

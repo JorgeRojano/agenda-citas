@@ -131,7 +131,6 @@ export default function MenuDashboard({ slug, stats }: Props) {
             { label: "Nuevo platillo",    href: `${base}/items` },
             { label: "Nuevo modificador", href: `${base}/modifiers` },
             { label: "Nueva promoción",   href: `${base}/promotions` },
-            { label: "Configuración",     href: `${base}/settings` },
           ].map((q) => (
             <Button key={q.label} component={Link} href={q.href} variant="default" size="sm" fullWidth>
               {q.label}

@@ -6,24 +6,22 @@ import { resolveAdminMenu, isStaff } from "../_admin";
 
 type Params = { slug: string };
 
-const daySchema = z.union([
-  z.null(),
-  z.object({ open: z.string(), close: z.string() }),
-]);
+const slotSchema = z.object({
+  start: z.string().regex(/^\d{2}:\d{2}$/),
+  end:   z.string().regex(/^\d{2}:\d{2}$/),
+});
+
+const daySlotsSchema = z.array(slotSchema);
 
 const schema = z.object({
-  welcomeMessage: z.string().optional(),
-  tableParam:     z.string().optional(),
-  wifiName:       z.string().optional(),
-  wifiPassword:   z.string().optional(),
   hours: z.object({
-    mon: daySchema,
-    tue: daySchema,
-    wed: daySchema,
-    thu: daySchema,
-    fri: daySchema,
-    sat: daySchema,
-    sun: daySchema,
+    mon: daySlotsSchema,
+    tue: daySlotsSchema,
+    wed: daySlotsSchema,
+    thu: daySlotsSchema,
+    fri: daySlotsSchema,
+    sat: daySlotsSchema,
+    sun: daySlotsSchema,
   }).optional(),
 });
 

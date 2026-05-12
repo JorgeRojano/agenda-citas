@@ -207,6 +207,7 @@ export const AppShellAdmin = ({
                 <NavLink label="Categorías"    leftSection={<IconLayoutDashboard size={16} />} active={pathname.startsWith(`${base}/menu/categories`)}  component={Link} href={`${base}/menu/categories`} />
                 <NavLink label="Modificadores" leftSection={<IconSettings size={16} />}        active={pathname.startsWith(`${base}/menu/modifiers`)}   component={Link} href={`${base}/menu/modifiers`} />
                 <NavLink label="Promociones"   leftSection={<IconQrcode size={16} />}          active={pathname.startsWith(`${base}/menu/promotions`)}  component={Link} href={`${base}/menu/promotions`} />
+                <NavLink label="Horarios"      leftSection={<IconClock size={16} />}           active={pathname.startsWith(`${base}/menu/settings`)}    component={Link} href={`${base}/menu/settings`} />
               </NavLink>
             )}
 

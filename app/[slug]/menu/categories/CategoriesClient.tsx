@@ -19,21 +19,18 @@ type Promotion = {
   description: string | null;
 };
 
-type DayHours = { open: string; close: string } | null;
+type TimeSlot = { start: string; end: string };
 
 type Props = {
-  slug:           string;
-  color:          string;
-  tableNum?:      string;
-  categories:     Category[];
-  promotions:     Promotion[];
-  welcomeMessage: string | null;
-  wifiName:       string | null;
-  wifiPassword:   string | null;
-  todayHours:     DayHours | undefined;
+  slug:       string;
+  color:      string;
+  tableNum?:  string;
+  categories: Category[];
+  promotions: Promotion[];
+  todaySlots: TimeSlot[] | undefined;
 };
 
-export default function CategoriesClient({ slug, color, tableNum, categories, promotions, welcomeMessage, wifiName, wifiPassword, todayHours }: Props) {
+export default function CategoriesClient({ slug, color, tableNum, categories, promotions, todaySlots }: Props) {
   const [search, setSearch] = useState("");
   const { totalItems } = useMenuList();
 
@@ -68,13 +65,7 @@ export default function CategoriesClient({ slug, color, tableNum, categories, pr
         .cat-name    { font-size: 14px; font-weight: 600; line-height: 1.3; }
         .cat-count   { font-size: 12px; color: var(--mantine-color-dimmed); }
         .empty       { text-align: center; padding: 40px 0; color: var(--mantine-color-dimmed); font-size: 14px; }
-        .cat-welcome { font-size: 13px; opacity: .85; margin-top: 6px; line-height: 1.4; }
         .cat-hours   { font-size: 12px; opacity: .75; margin-top: 4px; }
-        .wifi-card   { display: flex; align-items: center; gap: 10px; background: var(--mantine-color-default-hover); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; }
-        .wifi-icon   { font-size: 20px; flex-shrink: 0; }
-        .wifi-info   { flex: 1; min-width: 0; }
-        .wifi-name   { font-size: 13px; font-weight: 600; color: var(--mantine-color-text); }
-        .wifi-pass   { font-size: 12px; color: var(--mantine-color-dimmed); margin-top: 1px; }
         .bottom-nav  { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--mantine-color-body); border-top: 1px solid var(--mantine-color-default-border); display: flex; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
         .nav-btn     { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border: none; background: transparent; cursor: pointer; font-size: 11px; color: var(--mantine-color-dimmed); text-decoration: none; }
         .nav-btn.active { color: var(--mantine-color-${color}-6); }
@@ -87,11 +78,11 @@ export default function CategoriesClient({ slug, color, tableNum, categories, pr
           <div className="cat-header">
             <p className="cat-title">Menú completo</p>
             {tableNum && <p className="cat-table">🪑 Mesa {tableNum}</p>}
-            {welcomeMessage && <p className="cat-welcome">{welcomeMessage}</p>}
-            {todayHours
-              ? <p className="cat-hours">🕐 Hoy: {todayHours.open} – {todayHours.close}</p>
-              : todayHours === null && <p className="cat-hours">🔴 Cerrado hoy</p>
-            }
+            {todaySlots !== undefined && (
+              todaySlots.length > 0
+                ? <p className="cat-hours">🕐 Hoy: {todaySlots.map((s) => `${s.start}–${s.end}`).join(", ")}</p>
+                : <p className="cat-hours">🔴 Cerrado hoy</p>
+            )}
           </div>
 
           <div className="search-wrap">
@@ -112,16 +103,6 @@ export default function CategoriesClient({ slug, color, tableNum, categories, pr
           </div>
 
           <div className="body">
-
-            {wifiName && !search && (
-              <div className="wifi-card">
-                <span className="wifi-icon">📶</span>
-                <div className="wifi-info">
-                  <div className="wifi-name">{wifiName}</div>
-                  {wifiPassword && <div className="wifi-pass">Contraseña: {wifiPassword}</div>}
-                </div>
-              </div>
-            )}
 
             {promotions.length > 0 && !search && (
               <>
